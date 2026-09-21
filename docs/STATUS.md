@@ -13,6 +13,6 @@ Single running log — update in place each session, don't fork new files or app
 ## Pending
 - None (Milestone 1 delivered).
 
-## Next steps
-- Configure live Groq provider streaming with actual `GROQ_API_KEY` for real-world tasks.
-- Add live terminal interactive prompt for plan revisions.
+## Next up (start here)
+1. Configure live Groq provider streaming with actual `GROQ_API_KEY` for real-world tasks.
+2. Configure package bundling and prepare npm release under `@shrinivas-sn/shri` for global `npm install -g` usage.
