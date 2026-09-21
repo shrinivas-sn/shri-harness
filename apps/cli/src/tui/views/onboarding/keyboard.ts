@@ -204,6 +204,8 @@ export function useOnboardingKeyboard(input: {
 				if (!option) return;
 				if (isOnboardingOAuthProviderId(option.value)) {
 					input.startOAuthFlow(option.value);
+				} else if (option.value === "groq") {
+					input.selectProvider("groq");
 				} else {
 					input.setStep("byo_provider");
 				}

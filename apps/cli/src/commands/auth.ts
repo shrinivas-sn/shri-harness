@@ -410,36 +410,36 @@ export async function runAuthCommand(input: AuthCommandInput): Promise<number> {
 		return runQuickAuthSetup(input);
 	}
 
-	if (input.explicitProvider?.trim()) {
-		const providerId = normalizeAuthProviderId(input.explicitProvider);
-		if (isOAuthProvider(providerId)) {
-			return runAuthProviderCommand(
-				input.providerSettingsManager,
-				providerId,
-				input.io,
-			);
-		}
-		if (providerId === "groq") {
-			const { ensureGroqApiKey } = await import("../shri/auth/groq-auth");
-			try {
-				await ensureGroqApiKey({
-					manager: input.providerSettingsManager,
-					isTTY: Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY),
-					io: input.io,
-				});
-				return 0;
-			} catch (err: unknown) {
-				input.io.writeErr(err instanceof Error ? err.message : String(err));
-				return 1;
-			}
-		}
-		input.io.writeErr(
-			`provider "${providerId}" requires API key setup (use subcommand: auth --provider ${providerId} --apikey <key> --modelid <id>)`,
-		);
-		return 1;
+	if (!input.explicitProvider?.trim()) {
+		input.explicitProvider = "groq";
 	}
 
-	return runInteractiveAuthTui(input);
+	const providerId = normalizeAuthProviderId(input.explicitProvider);
+	if (isOAuthProvider(providerId)) {
+		return runAuthProviderCommand(
+			input.providerSettingsManager,
+			providerId,
+			input.io,
+		);
+	}
+	if (providerId === "groq") {
+		const { ensureGroqApiKey } = await import("../shri/auth/groq-auth");
+		try {
+			await ensureGroqApiKey({
+				manager: input.providerSettingsManager,
+				isTTY: Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY),
+				io: input.io,
+			});
+			return 0;
+		} catch (err: unknown) {
+			input.io.writeErr(err instanceof Error ? err.message : String(err));
+			return 1;
+		}
+	}
+	input.io.writeErr(
+		`provider "${providerId}" requires API key setup (use subcommand: auth --provider ${providerId} --apikey <key> --modelid <id>)`,
+	);
+	return 1;
 }
 
 export async function runAuthProviderCommand(

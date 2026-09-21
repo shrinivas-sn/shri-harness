@@ -66,21 +66,27 @@ export interface ClinePassSubscriptionOption {
 
 export const MAIN_MENU: MenuOption[] = [
 	{
+		label: "Connect with Groq (Recommended)",
+		value: "groq",
+		detail: "Free, ultra-fast cloud multi-agent inference",
+		icon: "⚡",
+	},
+	{
+		label: "Sign in with ChatGPT",
+		value: "openai-codex",
+		detail: "Use your ChatGPT Plus subscription",
+		icon: "\u2726",
+	},
+	{
 		label: "Sign in with Cline",
 		value: "cline",
-		detail: "Latest models with regular free promos",
+		detail: "Cline account and promotions",
 		icon: "\u263a",
 	},
 	{
 		label: "Sign in with ClinePass",
 		value: "cline-pass",
 		detail: "Low cost subscription for everyone",
-		icon: "\u2726",
-	},
-	{
-		label: "Sign in with ChatGPT",
-		value: "openai-codex",
-		detail: "Use your ChatGPT Plus subscription",
 		icon: "\u2726",
 	},
 	{
