@@ -1,7 +1,7 @@
 # Work Log: 2026-09-22
 
 ## Objective
-Implement storage isolation to `~/.shri`, default provider configuration to Groq (`openai/gpt-oss-120b`), and Option B interactive first-time auth setup with secure masked input and comprehensive edge case handling.
+Implement storage isolation to `~/.shri`, default provider configuration to Groq (`openai/gpt-oss-120b`), Option B interactive first-time auth setup with secure masked input, and verify live inference.
 
 ## Changes Made
 1. **Shri Directory Isolation (`apps/cli/src/shri/auth/shri-dir.ts`):**
@@ -28,3 +28,8 @@ Implement storage isolation to `~/.shri`, default provider configuration to Groq
    - 11 test suites / 44 tests pass via `bun -F @cline/cli test:unit src/shri/`.
    - Tested non-TTY error behavior: exits cleanly with code 1 and actionable instructions.
    - Tested `shri auth -k <key>`: successfully created and populated `~/.shri/data/settings/providers.json`.
+
+5. **Live Verification:**
+   - User ran `bun run shri -i` in interactive terminal.
+   - Successfully authenticated with saved Groq key.
+   - Live stream completed with model `openai/gpt-oss-120b`, reasoning thinking trace, and $0.00 cost.
