@@ -6,7 +6,8 @@ Single running log — update in place each session, don't fork new files or app
 - Shri V1 architecture fully implemented and verified in `E:\shri-harness`.
 - All 8 Shri test suites passing (27/27 unit tests pass in 2.5s).
 - Coordinator planning, Model Router, Budget Manager, and Scheduler operational.
-- CLI executable binary `shri` operational (`bun run shri "<task>"`).
+- CLI executable binary `shri` operational (`bun run shri` launches interactive visual TUI; `bun run shri:pipeline` runs multi-agent orchestration).
+- Command branded as `Shri CLI - Terminal-First AI Agent in your terminal`.
 - Full clean Git history committed.
 
 ## Pending
