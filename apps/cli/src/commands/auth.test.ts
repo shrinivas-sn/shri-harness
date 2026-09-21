@@ -118,17 +118,30 @@ if (typeof runtime.createRoot !== "function") throw new Error("missing createRoo
 if (typeof runtime.OnboardingView !== "function") throw new Error("missing OnboardingView");
 `;
 
-		const result = spawnSync(
-			"bun",
-			["--conditions=development", "-e", script],
-			{
-				cwd: cliRoot,
-				encoding: "utf8",
-			},
-		);
+		const { writeFileSync, unlinkSync, existsSync } = await import("node:fs");
+		const { join } = await import("node:path");
+		const tempScript = join(cliRoot, ".temp-auth-test.ts");
+		writeFileSync(tempScript, script, "utf8");
 
-		expect(result.error).toBeUndefined();
-		expect(result.stderr).toBe("");
-		expect(result.status).toBe(0);
-	});
+		try {
+			const bunBin = process.platform === "win32" ? "bun.cmd" : "bun";
+			const result = spawnSync(
+				bunBin,
+				["--conditions=development", "run", tempScript],
+				{
+					cwd: cliRoot,
+					encoding: "utf8",
+					shell: process.platform === "win32",
+				},
+			);
+
+			expect(result.error).toBeUndefined();
+			expect(result.stderr).toBe("");
+			expect(result.status).toBe(0);
+		} finally {
+			if (existsSync(tempScript)) {
+				unlinkSync(tempScript);
+			}
+		}
+	}, 60_000);
 });

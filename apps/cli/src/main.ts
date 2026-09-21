@@ -155,8 +155,11 @@ export async function runCli(): Promise<void> {
 	const { setClineDir, setHomeDir } = await import("@cline/shared/storage");
 	if (configDir) {
 		setClineDir(configDir);
+		setHomeDir(homedir());
+	} else {
+		const { initShriEnvironment } = await import("./shri/auth/shri-dir");
+		initShriEnvironment();
 	}
-	setHomeDir(homedir());
 
 	// Capture activation telemetry only after config/home directory selection
 	// has been applied, so the telemetry singleton's persisted distinct-id
@@ -949,7 +952,7 @@ export async function runCli(): Promise<void> {
 				isClinePassEnabled: true,
 			});
 		const provider = normalizeProviderId(
-			args.provider?.trim() || lastUsedProviderSettings?.provider || "cline",
+			args.provider?.trim() || lastUsedProviderSettings?.provider || "groq",
 		);
 		let selectedProviderSettings =
 			providerSettingsManager.getProviderSettings(provider);
@@ -978,6 +981,22 @@ export async function runCli(): Promise<void> {
 		);
 		const providedApiKey = args.key?.trim() || undefined;
 		let apiKey = providedApiKey || persistedApiKey || undefined;
+
+		if (provider === "groq" && !apiKey) {
+			const { ensureGroqApiKey } = await import("./shri/auth/groq-auth");
+			try {
+				apiKey = await ensureGroqApiKey({
+					manager: providerSettingsManager,
+					isTTY: Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY),
+					io,
+				});
+				selectedProviderSettings = providerSettingsManager.getProviderSettings("groq");
+			} catch (err: unknown) {
+				writeErr(err instanceof Error ? err.message : String(err));
+				process.exitCode = 1;
+				return;
+			}
+		}
 
 		const isYoloMode = args.mode === "yolo";
 		const isZenMode = args.mode === "zen";
@@ -1058,8 +1077,7 @@ export async function runCli(): Promise<void> {
 			modelId:
 				args.model ??
 				selectedProviderSettings?.model ??
-				knownModelIds[0] ??
-				"anthropic/claude-sonnet-4.6",
+				(provider === "groq" ? "openai/gpt-oss-120b" : knownModelIds[0] ?? "anthropic/claude-sonnet-4.6"),
 			apiKey: apiKey ?? "",
 			knownModels,
 			systemPrompt: await resolveSystemPrompt({
@@ -1237,9 +1255,17 @@ export async function runCli(): Promise<void> {
 			return;
 		}
 
-		await runAgent(effectivePrompt, config, userInstructionService);
-		// Exit once agent is done in non-interactive mode
-		return;
+		try {
+			await runAgent(effectivePrompt, config, userInstructionService);
+		} catch (err: unknown) {
+			const msg = String(err instanceof Error ? err.message : err);
+			if (msg.includes("401") || msg.includes("Invalid API Key") || msg.includes("Unauthorized")) {
+				writeErr("\n❌ Invalid Groq API Key (401 Unauthorized).\nPlease verify your key at https://console.groq.com/keys or run 'shri auth' to reconfigure.\n");
+				process.exitCode = 1;
+				return;
+			}
+			throw err;
+		}
 	} finally {
 		stopUserInstructionService();
 	}

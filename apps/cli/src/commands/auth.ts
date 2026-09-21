@@ -395,6 +395,11 @@ export async function runAuthCommand(input: AuthCommandInput): Promise<number> {
 		typeof input.baseurl === "string" ||
 		typeof input.azureApiVersion === "string";
 
+	if (input.apikey?.trim() && !input.explicitProvider?.trim()) {
+		input.explicitProvider = "groq";
+		input.modelid = input.modelid?.trim() || "openai/gpt-oss-120b";
+	}
+
 	if (hasQuickSetupFlags) {
 		if (!input.explicitProvider?.trim()) {
 			input.io.writeErr(
@@ -413,6 +418,20 @@ export async function runAuthCommand(input: AuthCommandInput): Promise<number> {
 				providerId,
 				input.io,
 			);
+		}
+		if (providerId === "groq") {
+			const { ensureGroqApiKey } = await import("../shri/auth/groq-auth");
+			try {
+				await ensureGroqApiKey({
+					manager: input.providerSettingsManager,
+					isTTY: Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY),
+					io: input.io,
+				});
+				return 0;
+			} catch (err: unknown) {
+				input.io.writeErr(err instanceof Error ? err.message : String(err));
+				return 1;
+			}
 		}
 		input.io.writeErr(
 			`provider "${providerId}" requires API key setup (use subcommand: auth --provider ${providerId} --apikey <key> --modelid <id>)`,
