@@ -1,20 +1,17 @@
-# Shri V1 Project Status
+# Project status
 
-**Date:** 2026-09-21  
-**Phase:** Milestone 1 - Engine Baseline Extracted  
-**Repository:** `E:\shri-harness`  
-**Command:** `shri`  
+Single running log — update in place each session, don't fork new files or append without pruning stale lines. This is the primary source `/recap` reads for "where things stand."
 
-## Current State
-- ✅ Clean monorepo extracted from Cline (size reduced from 1GB to ~18MB).
-- ✅ Core engine packages compiled cleanly (`@cline/shared`, `ui`, `llms`, `agents`, `core`, `sdk`).
-- ✅ CLI runs from source via Bun (`bun run cli version` -> 3.0.62).
-- ✅ Vitest test environment operational.
-- ✅ Canonical `DOCS/` structure and `.agents/skills` installed.
-- ✅ Initial clean Git baseline committed.
+## Current state
+- Shri V1 architecture fully implemented and verified in `E:\shri-harness`.
+- All 8 Shri test suites passing (27/27 unit tests pass in 2.5s).
+- Coordinator planning, Model Router, Budget Manager, and Scheduler operational.
+- CLI executable binary `shri` operational (`bun run shri "<task>"`).
+- Full clean Git history committed.
 
-## Next Steps
-1. Implement Coordinator upfront planning module (`openai/gpt-oss-120b`).
-2. Implement Model Router with Groq fallback and rate-limit guardrails.
-3. Wire terminal plan approval view into the TUI.
-4. Add unit tests for Coordinator schemas and budget tracking.
+## Pending
+- None (Milestone 1 delivered).
+
+## Next steps
+- Configure live Groq provider streaming with actual `GROQ_API_KEY` for real-world tasks.
+- Add live terminal interactive prompt for plan revisions.

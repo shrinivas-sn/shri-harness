@@ -1,11 +1,18 @@
 <!-- docs-structure: v1 -->
-# Shri Documentation
+# DOCS index
 
-Canonical project documentation for Shri V1:
+One row per `WORK/<date>/` folder. Keep this updated in place — don't let it drift from what's actually in `WORK/`. Add a row the same session a new day-folder is created.
 
-- [`CONTEXT/`](file:///E:/shri-harness/DOCS/CONTEXT): Specifications, requirements, and PRD.
-  - [`PRD.md`](file:///E:/shri-harness/DOCS/CONTEXT/PRD.md): The full 30-section V1 specification.
-- [`RESEARCH/`](file:///E:/shri-harness/DOCS/RESEARCH): External references, API limits, and model benchmarks.
-  - [`groq-models.md`](file:///E:/shri-harness/DOCS/RESEARCH/groq-models.md): Model specifications and free tier rate limits.
-- [`STATUS.md`](file:///E:/shri-harness/DOCS/STATUS.md): Current sprint/project status (< 40 lines).
-- [`WORK/`](file:///E:/shri-harness/DOCS/WORK): Merged implementation plans and execution notes organized by date.
+Dates in this table are written **DD/MM/YYYY** (user is India-based). This is display text only — the `WORK/<date>/` folder name underneath stays YYYY-MM-DD, since that's the only format that sorts correctly on disk and in `git log`.
+
+| Date | Summary | Status | Load-bearing | Touches | Continues |
+|---|---|---|---|---|---|
+| 21/09/2026 | Extracted lean harness and delivered complete Shri V1 multi-agent orchestration | done | yes | `apps/cli/src/shri/**`, `DOCS/**` | — |
+
+**Status** — `active` (in progress), `done` (finished, not touched again), `superseded` (a later entry replaced this approach), `abandoned` (started, dropped, note why in the WORK.md itself).
+
+**Load-bearing** — `yes` if this session's decisions still constrain current architecture/behavior, even if old. `no` once it's fully superseded or irrelevant to anything still standing.
+
+**Touches** — rough file paths or feature areas, used by `/recap` to decide whether an old-but-load-bearing entry is relevant to what you're doing right now.
+
+**Continues** — if this session picks up a multi-day work item, point at the earlier date so recap follows the thread instead of treating same-topic sessions as unrelated.
