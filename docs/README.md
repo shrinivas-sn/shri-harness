@@ -8,7 +8,7 @@ Dates in this table are written **DD/MM/YYYY** (user is India-based). This is di
 | Date | Summary | Status | Load-bearing | Touches | Continues |
 |---|---|---|---|---|---|
 | 21/09/2026 | Extracted lean harness and built Shri orchestration scaffolding; completion claim corrected on 22/09 | done | yes | `apps/cli/src/shri/**`, `DOCS/**` | — |
-| 22/09/2026 | Groq onboarding/live inference, npm preview plan, and `/model` crash investigation/checkpoint | active | yes | `apps/cli/**`, `package.json`, `DOCS/**` | `WORK/2026-09-21/WORK.md` |
+| 22/09/2026 | Groq onboarding/live inference, npm preview plan, `/model` investigation, final static review and Terra handoff | active | yes | `apps/cli/**`, `package.json`, `DOCS/**` | `WORK/2026-09-21/WORK.md` |
 
 **Status** — `active` (in progress), `done` (finished, not touched again), `superseded` (a later entry replaced this approach), `abandoned` (started, dropped, note why in the WORK.md itself).
 

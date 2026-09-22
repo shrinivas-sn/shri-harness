@@ -2,7 +2,7 @@
 
 **Written 22/09/2026.** Temporary live plan. Archive durable reasoning and verification before closing it.
 
-> **Executor:** Use `superpowers:executing-plans` and work sequentially. No subagents, delegation, or subagent reviews: the user explicitly prohibited them. Self-review each task. The user prefers a capable model with high reasoning, expressed as “Sonnet 5 xhigh”; that label is not a verified model identifier and this document does not select a model. Configure the actual available model in the execution tool.
+> **Executor:** Use `superpowers:executing-plans` and work sequentially in the existing `E:\shri-harness` workspace. No subagents, delegation, or subagent reviews: the user explicitly prohibited them. Self-review each task. The user selected GPT-5.6 Terra with high reasoning for the next implementation session; select `gpt-5.6-terra` / `high` in the session controls. This document does not switch models. Resume Task 0, then Tasks 1–7; do not restart planning or execute an archived plan. The 22/09/2026 “Final static review and Terra handoff” entry in `WORK/2026-09-22/WORK.md` records the reviewed findings and evidence limits.
 
 **What this changes:** CLI identity and initialization, build/package scripts, npm launcher, release tests, CI/release workflows, and documentation. SDK changes only where packaged execution or state isolation requires them; read `sdk/AGENTS.md` before editing that subtree.
 
@@ -103,13 +103,13 @@ bun run shri
 
 The last command is run from the repository root (the root owns the `shri` script); return there after the native test. Run the native test with a timeout and record a hang as a failure, not a pass. If renderer tests are added to CI, invoke the Bun command explicitly so they cannot silently be omitted by Vitest's existing `src/**/*.test.ts` include pattern.
 
-**Gate:** Actual renderer regression fails before the fix and passes after it; the reported `/model` interaction is verified on Windows without changing keys or suppressing errors. Task 5 must repeat it from the package. No preview publication while this crash is unresolved.
+**Gate:** Actual renderer regression fails before the fix and passes after it; the reported `/model` interaction is verified on Windows without changing keys or suppressing errors. Task 0 closes on source/Windows proof plus recorded Task 5 coverage requirements; actual installed-package execution belongs to Task 5, after packaging exists. Do not create a circular dependency between Tasks 0 and 5. No preview publication while this crash is unresolved. If Windows interaction cannot be driven in the execution environment, record the exact limitation and request the specific manual interaction evidence; do not count a skip or headless render as Windows interaction proof.
 
 ### Task 1 — Establish preview identity and runtime boundaries
 
-**Modify:** `apps/cli/package.json`, `src/index.ts`, `src/main.ts`, `src/commands/program.ts`, `src/commands/update.ts`, `src/utils/telemetry.ts`, `src/utils/common.ts`, `src/shri/auth/shri-dir.ts`, `apps/cli/README.md`.
+**Modify:** `apps/cli/package.json`, `src/index.ts`, `src/main.ts`, `src/commands/program.ts`, `src/commands/auth.ts`, `src/commands/update.ts`, `src/utils/telemetry.ts`, `src/utils/common.ts`, `src/shri/auth/shri-dir.ts`, `src/shri/auth/groq-auth.ts`, `apps/cli/README.md`.
 
-**Tests:** Extend `src/commands/update.test.ts` and existing auth tests; create `src/shri/release-identity.test.ts`. SDK path helpers are investigation targets only if process-level tests expose a leak.
+**Tests:** Extend `src/commands/update.test.ts`, `src/commands/auth.test.ts`, `src/main.test.ts`, `src/shri/auth/groq-auth.test.ts`, and `src/shri/auth/shri-auth-integration.test.ts`; create `src/shri/release-identity.test.ts`. SDK path helpers are investigation targets only if process-level tests expose a leak.
 
 **Interface:** Retain internal name `@cline/cli` so workspace filters keep working; mark source package private, set `displayName: "shri"` and preview version. Public identity belongs to generated manifests. Main and child processes must share the resolved Shri configuration directory.
 
@@ -117,11 +117,13 @@ The last command is run from the repository root (the root owns the `shri` scrip
 - [ ] Initialize Shri state before updater, telemetry or daemon state access. Inspect import side effects, then propagate the resolved directory through the existing SDK environment conventions.
 - [ ] Disable inherited telemetry/error export and automatic updates. Ensure explicit update behavior targets `@shrinivas-sn/shri@next` and cannot install `cline`.
 - [ ] Preserve Groq defaults; test missing/invalid credentials without printing raw values. Inspect outgoing requests with synthetic credentials so no non-provider reporting includes them.
+- [ ] Fix explicit auth recovery: `shri auth` must offer masked replacement of a saved Groq key rather than silently returning the existing value. Keep normal startup's reuse behavior. Cover a synthetic saved invalid key, successful replacement and persistence, cancellation preserving saved settings, and non-TTY failure with actionable guidance. Preserve the saved model when replacing only the key. An active environment key must not make explicit reconfiguration silently succeed; explain environment precedence without printing its value. Verify the 401 recovery instruction against the actual command flow; an assertion that the return code is merely defined is insufficient.
+- [ ] Fix startup key precedence end to end: nonblank command-line key > nonblank `GROQ_API_KEY` > saved key > onboarding. `main.ts` currently bypasses `ensureGroqApiKey` whenever a saved key exists, despite `resolveGroqApiKey` prioritizing the environment. Add regressions at the startup/runtime boundary, not just helper tests, using distinct synthetic keys and checking the selected provider configuration. Cover blank overrides and ensure environment/command-line overrides are not persisted implicitly. Carry replacement and precedence cases into Task 5's installed checks.
 - [ ] Correct public copy to single-agent preview; keep upstream credits. Mark the custom pipeline simulated in developer documentation and exclude its entrypoint from public release commands.
 - [ ] Run the focused suite; self-review initialization across normal CLI, daemon and connector modes.
 
 ```powershell
-bun -F @cline/cli test:unit src/shri/ src/commands/update.test.ts
+bun -F @cline/cli test:unit src/shri/ src/commands/update.test.ts src/commands/auth.test.ts src/main.test.ts
 ```
 
 **Gate:** Shri state applies before access in every supported process mode. Parent-only isolation and existing auth tests alone are insufficient.
@@ -219,6 +221,7 @@ bun run verify:release
 - [ ] Install wrapper and matching platform tarballs into the same disposable prefix, preventing npm from fetching not-yet-published optional packages. Exercise the actual npm-generated command shim and installed-package npx execution.
 - [ ] Check help/version, missing-key non-TTY failure, paths with spaces/non-ASCII characters, Ctrl+C and exit codes. Verify installation using `--ignore-scripts`.
 - [ ] Exercise onboarding and streaming with a controlled local provider fixture through an existing base-URL/provider seam: one file-read tool, one harmless command, history/restart, invalid auth, interrupted stream and transient provider errors. Synthetic provider tests are not live Groq evidence.
+- [ ] Repeat Task 1's saved-key replacement/cancellation and command-line/environment/saved-key precedence cases through the installed CLI with synthetic credentials. Inspect fixture requests/configuration without logging credential values; confirm temporary overrides do not overwrite saved settings.
 - [ ] Drive real TUI startup, masked input, rendering, syntax highlighting/parser worker and shutdown in a PTY on each advertised platform. Keep captures redacted. Help-only execution cannot pass this gate.
 - [ ] Repeat Task 0's `/model` open/search/select/cancel/reopen flow using installed artifacts and representative Groq catalog fixtures, including zero/missing metadata and transcription entries. Confirm chat choices exclude transcription models, no raw numeric child crashes the renderer, selection/cancel behaves correctly, and the prompt remains usable afterward. A passing source-only fix does not satisfy this gate.
 - [ ] Verify settings, logs, sessions and daemon discovery remain inside Shri's disposable config. Assert a fake `.cline` sentinel is unchanged through install, start, child spawn, shutdown and restart.
@@ -271,6 +274,7 @@ bun run smoke:installed
 - 22/09/2026: Build Windows x64 first; native installed proof controls advertised platform support, not a presumed six-platform matrix.
 - 22/09/2026: No subagents in planning, implementation or review. Model preference does not establish availability or select the execution model.
 - 22/09/2026: Add Task 0 before packaging for the user-reported `/model` crash and extend installed acceptance coverage. Leading hypothesis is a zero token-limit child plus unfiltered transcription catalog entries; actual renderer/interactive reproduction remains required. Do not label the bug fixed during planning.
+- 22/09/2026: Final static review retains the single-agent preview sequence and adds explicit saved-key recovery and startup key-precedence regressions to Tasks 1 and 5. User selected GPT-5.6 Terra / high for implementation and requested this documentation checkpoint. No implementation has started; source review is not runtime proof.
 
 ## Sources
 
@@ -310,3 +314,15 @@ Next: Start Task 0 in `E:\shri-harness`, reproduce the crash under bounded real-
 Commit: This checkpoint is prepared for a scoped save-check commit; the final response records the actual hash after verification.
 
 Verified (checkpoint): `git -c core.safecrlf=false diff --check` passed. The structural scan reported `Plan audit: 8 tasks; 55 pending steps; 0 completed steps`, `Plan order and status-size checks: PASS`, and `Original reference preserved: PASS`. A disposable Git fixture verified `git commit --only` commits the selected tracked/new files while preserving an unrelated staged file; fixture cleanup completed. The earlier broad word scan matched its own historical validation wording; the corrected scan checks only active plan content and passed.
+
+### Final static review and Terra handoff — 22/09/2026
+
+Done: Saved the final source review in `WORK/2026-09-22/WORK.md`, kept this live plan and its sequence, added explicit saved-key replacement and CLI/environment/saved-key precedence regressions to Tasks 1 and 5, and updated the executor to the user's GPT-5.6 Terra / high selection. Clarified that Task 0 requires source/Windows proof; installed proof follows in Task 5. No application implementation, runtime test or release occurred.
+
+Verified: `Get-Acl -LiteralPath 'E:\shri-harness'` returned `SSN-INSPIRON-35\Dell`; `git branch --show-current` returned `main`; initial status and both diffs were empty. `git -c core.safecrlf=false diff --check` exited 0. The PowerShell checklist/requirements/history/scope check using `git show HEAD:docs/PLAN.md` returned `Whitespace: PASS`, `Plan audit: 8 tasks; 58 pending steps; 0 completed steps`, `Handoff requirements and task order: PASS; status lines: 28`, `Historical progress log: preserved`, and `Scope: 4 documentation files only`.
+
+Surprises: The first history-preservation check used `HEAD:DOCS/PLAN.md` and failed because Git records the folder as lowercase `docs`, although Windows resolves the on-disk `DOCS` path. Corrected the read-only Git path and reran successfully; no rename was needed. The source review found that helper-level auth tests missed command-level recovery and precedence behavior. Those are source-confirmed findings awaiting failing/passing runtime regressions, not fixed bugs.
+
+Next: Execute Task 0 in the existing workspace, then Tasks 1–7 in order with no subagents. Follow the detailed review entry and tests in this plan, verify uncertainty rather than assuming it, retain credential/platform/publication boundaries, and record real command results at each gate. Do not restart the old multi-agent or packaging plans.
+
+Commit: This user-requested checkpoint includes only the four edited documentation files; the final response records the verified hash. No remote push requested.
