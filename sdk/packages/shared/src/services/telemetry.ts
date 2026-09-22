@@ -404,7 +404,15 @@ export function normalizeSdkError(
 	};
 }
 
-function sanitizeTelemetryErrorMessage(message: string): string {
+/**
+ * Redacts bearer tokens, api_key=/authorization=/secret=-style query params,
+ * and user home-directory segments from arbitrary error text. Originally
+ * telemetry-only; also the right tool for sanitizing what gets printed to
+ * stderr or written to the CLI's log file for a fatal/uncaught error, since
+ * a provider SDK's thrown error can otherwise echo request details
+ * (including credentials) straight to the console or a persisted log file.
+ */
+export function sanitizeTelemetryErrorMessage(message: string): string {
 	return message
 		.replace(/(authorization=Bearer\s+)[^&\s]+/gi, "$1[redacted]")
 		.replace(

@@ -7,6 +7,7 @@ import {
 	disableCurrentDirectoryExecutableSearch,
 	disposeAll,
 	initVcr,
+	sanitizeTelemetryErrorMessage,
 	setConnectorCliLaunchSpec,
 } from "@cline/shared";
 import { logCliProcessError } from "./logging/errors";
@@ -68,7 +69,11 @@ if (!isMainThread) {
 		handlingFatalProcessError = true;
 		logCliProcessError(kind, error);
 		writeErr(
-			error instanceof Error ? (error.stack ?? error.message) : String(error),
+			sanitizeTelemetryErrorMessage(
+				error instanceof Error
+					? (error.stack ?? error.message)
+					: String(error),
+			),
 		);
 		cleanupActiveRuntime();
 		abortActiveRuntime();
@@ -96,7 +101,11 @@ if (!isMainThread) {
 			await runCli();
 		} catch (err) {
 			logCliProcessError("runCli", err);
-			writeErr(err instanceof Error ? err.message : String(err));
+			writeErr(
+				sanitizeTelemetryErrorMessage(
+					err instanceof Error ? err.message : String(err),
+				),
+			);
 			cleanupActiveRuntime();
 			abortActiveRuntime();
 			exitCode = 1;
