@@ -149,6 +149,26 @@ export interface MissingTarget {
 }
 
 /**
+ * sdk/packages/core/src/extensions/plugin/plugin-sandbox.ts's
+ * resolveBootstrapFromExecutable() looks for this file at
+ * <installed-platform-package>/extensions/plugin-sandbox-bootstrap.js — a
+ * sibling of bin/, resolved from process.execPath (package-name-agnostic,
+ * so it still finds it after the @cline/cli-* -> @shrinivas-sn/shri-*
+ * rename). Without it, plugin sandboxing has no bootstrap to run.
+ */
+export function targetBootstrapSourcePath(
+	distDir: string,
+	target: ReleaseTarget,
+): string {
+	return join(
+		distDir,
+		targetBuildDirName(target),
+		"extensions",
+		"plugin-sandbox-bootstrap.js",
+	);
+}
+
+/**
  * Checks each of RELEASE_TARGETS against dist/cli-<os>-<arch>/bin/<binary>
  * (an explicit, known list — never a directory scan, so a stray or
  * partially-written dist/ entry can't silently become a published target).
@@ -225,6 +245,21 @@ if (import.meta.main) {
 		const binDir = join(pkgDir, "bin");
 		mkdirSync(binDir, { recursive: true });
 		cpSync(builtBinaryPath, join(binDir, targetBinaryName(target)));
+
+		const bootstrapSourcePath = targetBootstrapSourcePath(distDir, target);
+		if (existsSync(bootstrapSourcePath)) {
+			const extensionsDir = join(pkgDir, "extensions");
+			mkdirSync(extensionsDir, { recursive: true });
+			cpSync(
+				bootstrapSourcePath,
+				join(extensionsDir, "plugin-sandbox-bootstrap.js"),
+			);
+		} else {
+			console.error(
+				`Missing ${bootstrapSourcePath}: plugin sandboxing would have no bootstrap to run. Refusing to generate ${pkgName}.`,
+			);
+			process.exit(1);
+		}
 
 		const platformPkgJson = buildPlatformPackageJson({
 			target,

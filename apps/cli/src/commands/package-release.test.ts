@@ -11,6 +11,7 @@ import {
 	RELEASE_TARGETS,
 	RELEASE_VERSION,
 	targetBinaryName,
+	targetBootstrapSourcePath,
 	targetBuildDirName,
 	targetBuiltBinaryName,
 	targetDisplayOs,
@@ -60,6 +61,14 @@ describe("target naming", () => {
 				"@shrinivas-sn/shri-windows-arm64",
 				"@shrinivas-sn/shri-windows-x64",
 			].sort(),
+		);
+	});
+
+	it("points targetBootstrapSourcePath at Task 2's extensions/ sibling of bin/", () => {
+		const win = { os: "win32" as const, arch: "x64" as const };
+		const path = targetBootstrapSourcePath("/dist", win);
+		expect(path.replaceAll("\\", "/")).toBe(
+			"/dist/cli-windows-x64/extensions/plugin-sandbox-bootstrap.js",
 		);
 	});
 });
