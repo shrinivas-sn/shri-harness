@@ -19,9 +19,18 @@ const caCerts = require("../../bin/ca-certs.cjs") as {
 		userPems?: string[];
 	}) => string;
 	countCerts: (pems: string[]) => number;
+	resolveShriDir: (
+		env: Record<string, string>,
+		os: unknown,
+		path: unknown,
+	) => string;
 	configureNodeExtraCaCerts: (
 		env: Record<string, string>,
-		deps?: { tls?: unknown; fs?: unknown },
+		deps?: {
+			tls?: unknown;
+			fs?: unknown;
+			resolveDir?: (env: unknown, os: unknown, path: unknown) => string;
+		},
 	) => {
 		action: string;
 		path: string | null;
@@ -312,6 +321,30 @@ describe("ca-certs", () => {
 
 			expect(out.action).toBe("write-failed-reused");
 			expect(env2.NODE_EXTRA_CA_CERTS).toBe(managedPath);
+		});
+
+		it("writes the bundle under the injected resolveDir, not ~/.cline (Shri isolation)", () => {
+			const shriDir = join(dir, ".shri-like");
+			const env: Record<string, string> = {};
+			const out = caCerts.configureNodeExtraCaCerts(env, {
+				tls: fakeTls([certSystem]),
+				resolveDir: () => shriDir,
+			});
+			expect(out.path).toBe(join(shriDir, "cli-node-extra-ca-certs.pem"));
+			expect(readFileSync(out.path as string, "utf8")).toContain("SYSTEM");
+		});
+	});
+
+	describe("resolveShriDir", () => {
+		it("respects a SHRI_DIR override", () => {
+			expect(caCerts.resolveShriDir({ SHRI_DIR: dir }, {}, path)).toBe(dir);
+		});
+
+		it("falls back to <home>/.shri, not .cline", () => {
+			const fakeOs = { homedir: () => "/home/test-user" };
+			expect(caCerts.resolveShriDir({}, fakeOs, path)).toBe(
+				path.join("/home/test-user", ".shri"),
+			);
 		});
 	});
 

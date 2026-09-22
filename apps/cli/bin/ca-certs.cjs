@@ -150,6 +150,17 @@ function resolveClineDir(env, os, path) {
 }
 
 /**
+ * Resolves the Shri-isolated equivalent of resolveClineDir(), for callers
+ * (bin/shri.cjs) that must never touch ~/.cline: SHRI_DIR, else ~/.shri.
+ * Mirrors src/shri/auth/shri-dir.ts's resolveShriHomeDir() convention; this
+ * file stays dependency-free and cannot import that module directly since it
+ * ships verbatim in the published wrapper package, outside the CLI bundle.
+ */
+function resolveShriDir(env, os, path) {
+	return env.SHRI_DIR?.trim() || path.join(os.homedir(), ".shri");
+}
+
+/**
  * True when the api-unavailable warning should print. Stamped per Node version
  * in the cline dir so the nudge shows once rather than on every command; a
  * version change (upgrade that still falls short, or downgrade) re-arms it.
@@ -161,7 +172,8 @@ function shouldWarnApiUnavailable(env, deps = {}) {
 	const os = deps.os || require("node:os");
 	const path = deps.path || require("node:path");
 	const version = deps.nodeVersion || process.versions.node;
-	const dir = resolveClineDir(env, os, path);
+	const resolveDir = deps.resolveDir || resolveClineDir;
+	const dir = resolveDir(env, os, path);
 	const stamp = path.join(dir, `.ca-api-warned-${version}`);
 	try {
 		if (fs.existsSync(stamp)) {
@@ -214,6 +226,7 @@ function configureNodeExtraCaCerts(env, deps = {}) {
 	const os = deps.os || require("node:os");
 	const path = deps.path || require("node:path");
 	const tls = deps.tls || require("node:tls");
+	const resolveDir = deps.resolveDir || resolveClineDir;
 
 	// tls.getCACertificates("system") needs Node >= 22.15; on older Nodes the
 	// harvest cannot run at all, which the caller should surface to the user.
@@ -238,7 +251,7 @@ function configureNodeExtraCaCerts(env, deps = {}) {
 		};
 	}
 
-	const managedDir = resolveClineDir(env, os, path);
+	const managedDir = resolveDir(env, os, path);
 	const managedPath = path.join(managedDir, "cli-node-extra-ca-certs.pem");
 	const userValue = (env.NODE_EXTRA_CA_CERTS || "").trim() || null;
 	const userPems = readUserCerts(fs, path, userValue, managedPath);
@@ -276,6 +289,7 @@ module.exports = {
 	readUserCerts,
 	buildBundle,
 	countCerts,
+	resolveShriDir,
 	configureNodeExtraCaCerts,
 	shouldWarnApiUnavailable,
 };
