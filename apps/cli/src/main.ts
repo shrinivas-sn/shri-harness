@@ -144,10 +144,10 @@ function startupTargetTakesPrecedenceOverMigrationNotice(
 }
 
 export async function runCli(): Promise<void> {
-	registerClineClientIdentity("cline-cli");
-	installStreamErrorGuards();
-	autoUpdateOnStartup();
-
+	// Shri's storage isolation (~/.shri, or --config/SHRI_DIR) must resolve
+	// before anything that reads storage, telemetry, or daemon state, so
+	// this runs first, ahead of client identity, stream guards, and the
+	// update check.
 	const cliArgs = process.argv.slice(2);
 	const isFullTTY =
 		process.stdin.isTTY === true && process.stdout.isTTY === true;
@@ -160,6 +160,10 @@ export async function runCli(): Promise<void> {
 		const { initShriEnvironment } = await import("./shri/auth/shri-dir");
 		initShriEnvironment();
 	}
+
+	registerClineClientIdentity("cline-cli");
+	installStreamErrorGuards();
+	autoUpdateOnStartup();
 
 	// Capture activation telemetry only after config/home directory selection
 	// has been applied, so the telemetry singleton's persisted distinct-id

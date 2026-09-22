@@ -93,52 +93,52 @@ describe("getInstallationInfo", () => {
 	});
 
 	it("detects npm installs from the wrapper path passed to the compiled binary", () => {
-		const wrapperPath = createTempFile("lib/node_modules/cline/bin/cline");
+		const wrapperPath = createTempFile("lib/node_modules/shri/bin/shri");
 		process.env.CLINE_WRAPPER_PATH = wrapperPath;
-		process.argv = ["bun", "/$bunfs/root/cline", "update", "--verbose"];
+		process.argv = ["bun", "/$bunfs/root/shri", "update", "--verbose"];
 
 		expect(getInstallationInfo("1.2.3")).toEqual({
 			packageManager: PackageManager.NPM,
-			packageName: "cline",
-			updateCommand: "npm update -g cline --tag latest",
+			packageName: "@shrinivas-sn/shri",
+			updateCommand: "npm update -g @shrinivas-sn/shri --tag next",
 		});
 	});
 
-	it("uses the nightly tag when the current CLI version is nightly", () => {
-		const wrapperPath = createTempFile("lib/node_modules/cline/bin/cline");
+	it("always targets the next tag, including for -next prerelease versions", () => {
+		const wrapperPath = createTempFile("lib/node_modules/shri/bin/shri");
 		process.env.CLINE_WRAPPER_PATH = wrapperPath;
-		process.argv = ["bun", "/$bunfs/root/cline", "update", "--verbose"];
+		process.argv = ["bun", "/$bunfs/root/shri", "update", "--verbose"];
 
-		expect(getInstallationInfo("1.2.3-nightly.456")).toEqual({
+		expect(getInstallationInfo("0.1.0-next.5")).toEqual({
 			packageManager: PackageManager.NPM,
-			packageName: "cline",
-			updateCommand: "npm update -g cline --tag nightly",
+			packageName: "@shrinivas-sn/shri",
+			updateCommand: "npm update -g @shrinivas-sn/shri --tag next",
 		});
 	});
 
 	it("detects bun global installs from the resolved install path", () => {
-		// bun symlinks ~/.bun/bin/cline -> ~/.bun/install/global/node_modules/...,
+		// bun symlinks ~/.bun/bin/shri -> ~/.bun/install/global/node_modules/...,
 		// and realpathSync resolves through the symlink before detection runs.
 		const wrapperPath = createTempFile(
-			".bun/install/global/node_modules/cline/bin/cline",
+			".bun/install/global/node_modules/shri/bin/shri",
 		);
 		process.env.CLINE_WRAPPER_PATH = wrapperPath;
-		process.argv = ["bun", "/$bunfs/root/cline", "update", "--verbose"];
+		process.argv = ["bun", "/$bunfs/root/shri", "update", "--verbose"];
 
 		expect(getInstallationInfo("1.2.3")).toEqual({
 			packageManager: PackageManager.BUN,
-			packageName: "cline",
-			updateCommand: "bun add -g cline@latest",
+			packageName: "@shrinivas-sn/shri",
+			updateCommand: "bun add -g @shrinivas-sn/shri@next",
 		});
 	});
 
 	it("falls back to unknown when only Bun's virtual compiled path is available", () => {
 		delete process.env.CLINE_WRAPPER_PATH;
-		process.argv = ["bun", "/$bunfs/root/cline", "update", "--verbose"];
+		process.argv = ["bun", "/$bunfs/root/shri", "update", "--verbose"];
 
 		expect(getInstallationInfo("1.2.3")).toEqual({
 			packageManager: PackageManager.UNKNOWN,
-			packageName: "cline",
+			packageName: "@shrinivas-sn/shri",
 		});
 	});
 });
@@ -187,9 +187,9 @@ describe("auto update settings", () => {
 		}
 	});
 
-	it("skips startup auto update when disabled globally", () => {
+	it("never performs a background startup auto update, regardless of the global setting", () => {
 		const settingsPath = createTempFile("data/global-settings.json");
-		writeFileSync(settingsPath, JSON.stringify({ autoUpdateEnabled: false }));
+		writeFileSync(settingsPath, JSON.stringify({ autoUpdateEnabled: true }));
 		process.env.CLINE_GLOBAL_SETTINGS_PATH = settingsPath;
 		delete process.env.IS_DEV;
 		delete process.env.CLINE_NO_AUTO_UPDATE;
@@ -215,6 +215,22 @@ describe("auto update settings", () => {
 		await checkForUpdates({ includeKanban: false });
 
 		expect(fetchSpy).toHaveBeenCalled();
+	});
+
+	it("manual update checks target @shrinivas-sn/shri, never cline", async () => {
+		delete process.env.CLINE_GLOBAL_SETTINGS_PATH;
+		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+			ok: true,
+			json: async () => ({ version: "0.0.0" }),
+		} as Response);
+
+		await checkForUpdates({ includeKanban: false });
+
+		expect(fetchSpy).toHaveBeenCalledWith(
+			expect.stringContaining(encodeURIComponent("@shrinivas-sn/shri")),
+		);
+		const calledUrl = fetchSpy.mock.calls[0]?.[0];
+		expect(String(calledUrl)).not.toContain("registry.npmjs.org/cline/");
 	});
 });
 

@@ -1,7 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { realpathSync } from "node:fs";
 import {
-	isAutoUpdateEnabledGlobally,
 	NodeHubClient,
 	readHubDiscovery,
 	resolveProductionHubOwnerContext,
@@ -17,7 +16,7 @@ import {
 	spawnKanbanInstallProcess,
 } from "./kanban";
 
-const DEFAULT_PACKAGE_NAME = "cline";
+const DEFAULT_PACKAGE_NAME = "@shrinivas-sn/shri";
 
 type CliPackageName = typeof DEFAULT_PACKAGE_NAME;
 
@@ -41,30 +40,28 @@ interface ManualUpdateCommand {
 	env?: Readonly<Record<string, string>>;
 }
 
-function isNightlyVersion(v: string): boolean {
-	return v.includes("-nightly.");
-}
-
-function getNpmTag(v: string): string {
-	return isNightlyVersion(v) ? "nightly" : "latest";
+// The Shri preview only ever ships to the `next` npm dist-tag (see PLAN.md
+// Decisions, 22/09/2026); there is no `latest`/`nightly` channel to target.
+function getNpmTag(_v: string): string {
+	return "next";
 }
 
 interface ParsedVersion {
 	base: number[];
-	isNightly: boolean;
+	isNext: boolean;
 	timestamp: number;
 }
 
 function parseVersion(v: string): ParsedVersion {
-	const m = v.match(/^(\d+\.\d+\.\d+)-nightly\.(\d+)$/);
+	const m = v.match(/^(\d+\.\d+\.\d+)-next\.(\d+)$/);
 	if (m) {
 		return {
 			base: m[1].split(".").map(Number),
-			isNightly: true,
+			isNext: true,
 			timestamp: Number.parseInt(m[2], 10),
 		};
 	}
-	return { base: v.split(".").map(Number), isNightly: false, timestamp: 0 };
+	return { base: v.split(".").map(Number), isNext: false, timestamp: 0 };
 }
 
 function compareVersions(v1: string, v2: string): number {
@@ -76,9 +73,9 @@ function compareVersions(v1: string, v2: string): number {
 		if (a > b) return 1;
 		if (a < b) return -1;
 	}
-	if (p1.isNightly && !p2.isNightly) return -1;
-	if (!p1.isNightly && p2.isNightly) return 1;
-	if (p1.isNightly && p2.isNightly) {
+	if (p1.isNext && !p2.isNext) return -1;
+	if (!p1.isNext && p2.isNext) return 1;
+	if (p1.isNext && p2.isNext) {
 		if (p1.timestamp > p2.timestamp) return 1;
 		if (p1.timestamp < p2.timestamp) return -1;
 	}
@@ -293,41 +290,14 @@ const UPDATE_CHECK_EXIT_GRACE_MS = 250;
 const CLIENT_COUNT_EXIT_TIMEOUT_MS = 3_000;
 
 /**
- * Non-blocking auto-update check for CLI startup.
- *
- * Deliberately does NOT install right away: replacing the npm package while
- * cline processes are running swaps the binary under them — their respawn
- * paths break on the new build fingerprint — and historically also restarted
- * the hub daemon out from under live sessions. The check only records that an
- * update is available; the CLI entrypoint calls applyDeferredUpdate() from
- * its exit sequence (an explicit process.exit() follows, so a beforeExit hook
- * would never fire), and the install runs only when no other CLI is attached
- * to the hub — at that point nothing is running that the swap could hurt.
- * The next launch picks up the new binary and a fresh hub.
- *
- * Skipped for npx, dev, unknown installs. Disable with CLINE_NO_AUTO_UPDATE=1.
+ * Background, silent auto-update on CLI startup is disabled for the Shri
+ * preview (PLAN.md Task 1): upstream Cline's inherited auto-update must not
+ * silently install `@shrinivas-sn/shri` updates, and it must never install
+ * `cline`. Explicit update behavior (`shri update` / `--update`) still works
+ * via {@link checkForUpdates}, which targets `@shrinivas-sn/shri@next`.
  */
 export function autoUpdateOnStartup(): void {
-	if (process.env.IS_DEV === "true") return;
-	if (process.env.CLINE_NO_AUTO_UPDATE === "1") return;
-	if (!isAutoUpdateEnabledGlobally()) return;
-
-	const { packageName, packageManager, updateCommand } =
-		getInstallationInfo(version);
-	if (!updateCommand) return;
-
-	pendingAutoUpdateCheck = (async () => {
-		try {
-			const latest = await getLatestVersion(packageName, version);
-			if (!latest || compareVersions(version, latest) >= 0) return;
-			pendingAutoUpdate = withMinimumReleaseAgeBypass(
-				updateCommand,
-				packageManager,
-			);
-		} catch {
-			// Best-effort, silently ignore
-		}
-	})();
+	return;
 }
 
 /**
