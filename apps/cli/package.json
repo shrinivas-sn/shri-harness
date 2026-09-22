@@ -53,6 +53,7 @@
 		"build": "bun run bun.mts",
 		"build:platforms": "bun script/build.ts --install-native-variants",
 		"build:platforms:single": "bun script/build.ts --single",
+		"package:release": "bun script/package-release.ts",
 		"prepack": "bun script/guard-direct-publish.ts",
 		"prepublishOnly": "bun script/guard-direct-publish.ts",
 		"publish:npm": "bun script/publish-npm.ts",
