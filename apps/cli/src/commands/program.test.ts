@@ -1,10 +1,13 @@
+import { homedir } from "node:os";
 import { relative, sep } from "node:path";
 import {
+	getHomeDir,
 	resolveClineDataDir,
 	resolveClineDir,
 	setHomeDir,
 } from "@cline/shared/storage";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { initShriEnvironment } from "../shri/auth/shri-dir";
 import { createProgram } from "./program";
 
 /** Render an absolute path under `home` the way help text does: `~/...`. */
@@ -57,5 +60,60 @@ describe("root option help text", () => {
 		expect(help).toContain(
 			`Use isolated local state at this directory path (default: ${dataDirDefault})`,
 		);
+	});
+});
+
+describe("root option help text after Shri storage isolation initializes", () => {
+	const originalHomeDir = getHomeDir();
+	const originalShriDir = process.env.SHRI_DIR;
+	const originalClineDirEnv = process.env.CLINE_DIR;
+
+	afterEach(() => {
+		setHomeDir(originalHomeDir);
+		if (originalShriDir === undefined) {
+			delete process.env.SHRI_DIR;
+		} else {
+			process.env.SHRI_DIR = originalShriDir;
+		}
+		if (originalClineDirEnv === undefined) {
+			delete process.env.CLINE_DIR;
+		} else {
+			process.env.CLINE_DIR = originalClineDirEnv;
+		}
+	});
+
+	it("shows ~/.shri, not ~/.cline, once initShriEnvironment() has run", () => {
+		delete process.env.SHRI_DIR;
+		delete process.env.CLINE_DIR;
+		initShriEnvironment();
+
+		const help = createProgram()
+			.configureHelp({ helpWidth: 500 })
+			.helpInformation();
+
+		expect(help).toContain("Configuration directory (default: ~/.shri)");
+		expect(help).toContain(
+			"Directory path to additional hooks for runtime hook injection (default: ~/.shri/hooks)",
+		);
+		expect(help).toContain(
+			"Auto-create a detached git worktree under ~/.shri/worktrees/ and run the task there",
+		);
+		// --data-dir derives from resolveClineDataDir(), which honors the test
+		// suite's global CLINE_DATA_DIR sandbox pin (vitest.setup.ts) ahead of
+		// resolveClineDir()+"data" — so it deliberately doesn't assert ~/.shri/data
+		// here. Its ~/.shri-derived default is covered by the CLINE_DIR
+		// propagation tests in shri-dir.test.ts instead.
+	});
+
+	it("shows the absolute SHRI_DIR override, not a tilde path, when one is set", () => {
+		const customDir = `${homedir()}-shri-program-test-custom`;
+		process.env.SHRI_DIR = customDir;
+		initShriEnvironment();
+
+		const help = createProgram()
+			.configureHelp({ helpWidth: 500 })
+			.helpInformation();
+
+		expect(help).toContain(`Configuration directory (default: ${customDir})`);
 	});
 });

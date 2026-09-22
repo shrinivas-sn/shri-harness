@@ -125,6 +125,17 @@ export function setHomeDirIfUnset(dir: string) {
 	HOME_DIR = trimmed;
 }
 
+/**
+ * Returns the home directory resolveClineDir()/resolveClineDataDir() derive
+ * their defaults from — the same value setHomeDir() sets, not necessarily
+ * node:os's homedir() (callers, including tests, can override it). Useful
+ * for rendering resolver output relative to that home, e.g. `~/.shri` in
+ * help text.
+ */
+export function getHomeDir(): string {
+	return HOME_DIR;
+}
+
 let CLINE_DIR: string | undefined;
 let CLINE_DIR_SET_EXPLICITLY = false;
 

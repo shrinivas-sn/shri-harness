@@ -211,7 +211,7 @@ export async function runCli(): Promise<void> {
 		.option("-c, --cwd <path>", "Working directory")
 		.option(
 			"--data-dir <dir>",
-			"Use isolated local state at <dir> instead of ~/.cline (enables sandbox mode)",
+			"Use isolated local state at <dir> instead of ~/.shri (enables sandbox mode)",
 		)
 		.option("-v, --verbose", "Show verbose output")
 		.action(async (positionalProvider: string | undefined) => {
@@ -231,13 +231,13 @@ export async function runCli(): Promise<void> {
 			// for argv tokens it can spot before commander runs. Reapplying
 			// here ensures opts.config (parsed by commander, including the
 			// --config=<dir> form) is always respected before any provider
-			// settings manager is constructed against ~/.cline.
+			// settings manager is constructed against ~/.shri.
 			if (opts.config?.trim()) {
 				const { setClineDir } = await import("@cline/shared/storage");
 				setClineDir(opts.config.trim());
 			}
 			// Honor --data-dir before constructing the provider settings manager
-			// so writes land under the chosen data dir instead of ~/.cline.
+			// so writes land under the chosen data dir instead of ~/.shri.
 			configureSandboxEnvironment({
 				enabled: !!opts.dataDir || process.env.CLINE_SANDBOX?.trim() === "1",
 				cwd: opts.cwd ?? process.cwd(),
@@ -629,7 +629,7 @@ export async function runCli(): Promise<void> {
 		.option("-c, --cwd <path>", "Workspace root", process.cwd())
 		.option(
 			"--data-dir <dir>",
-			"Use isolated local state at <dir> instead of ~/.cline (enables sandbox mode)",
+			"Use isolated local state at <dir> instead of ~/.shri (enables sandbox mode)",
 		)
 		.option("--host <host>", "Dashboard bind host")
 		.option("--port <port>", "Dashboard HTTP/WebSocket port")

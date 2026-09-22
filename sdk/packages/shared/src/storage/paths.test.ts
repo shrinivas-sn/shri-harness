@@ -9,6 +9,7 @@ import {
 	CLINE_MCP_SETTINGS_FILE_NAME,
 	CLINE_WORKSPACES_DIRECTORY_NAME,
 	discoverPluginModulePaths,
+	getHomeDir,
 	getPluginDisplayName,
 	HOOKS_CONFIG_DIRECTORY_NAME,
 	isAgentPluginDirectory,
@@ -85,6 +86,18 @@ describe("storage path resolution", () => {
 
 	afterEach(() => {
 		restoreEnv(snapshot);
+	});
+
+	it("getHomeDir reflects the value setHomeDir() was last called with", () => {
+		const homeRoot = mkdtempSync(join(tmpdir(), "cline-get-home-dir-"));
+		const previousHome = getHomeDir();
+		try {
+			setHomeDir(homeRoot);
+			expect(getHomeDir()).toBe(homeRoot);
+		} finally {
+			setHomeDir(previousHome);
+			rmSync(homeRoot, { recursive: true, force: true });
+		}
 	});
 
 	it("only auto-discovers Agent Plugins from the user home", () => {

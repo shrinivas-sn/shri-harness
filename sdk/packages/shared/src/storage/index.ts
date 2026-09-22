@@ -12,6 +12,7 @@ export {
 	ensureFileExists,
 	ensureHookLogDir,
 	ensureParentDir,
+	getHomeDir,
 	getPluginDisplayName,
 	HOOKS_CONFIG_DIRECTORY_NAME,
 	isAgentPluginDirectory,

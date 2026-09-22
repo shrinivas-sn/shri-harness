@@ -1,3 +1,10 @@
+import { join, relative, sep } from "node:path";
+import {
+	getHomeDir,
+	HOOKS_CONFIG_DIRECTORY_NAME,
+	resolveClineDataDir,
+	resolveClineDir,
+} from "@cline/shared/storage";
 import { Command, CommanderError, Option } from "commander";
 import { version } from "../../package.json";
 import {
@@ -5,8 +12,30 @@ import {
 	parseCliCompactionMode,
 } from "../utils/compaction-mode";
 import type { ParsedArgs } from "../utils/types";
+import { getTaskWorktreesHomePath } from "../utils/worktree";
 
 export { CommanderError };
+
+/**
+ * Renders an absolute path under the current home directory as `~/...`, the
+ * way help text conventionally shows defaults. Computed live (not hardcoded)
+ * so this always reflects the actual resolver default: ~/.cline before Shri
+ * storage isolation initializes, ~/.shri (or a --config/SHRI_DIR override)
+ * once it has. See src/commands/program.test.ts for the regression that
+ * pins this contract.
+ *
+ * Falls back to the raw absolute path when it isn't under the home
+ * directory (e.g. an out-of-home SHRI_DIR/--config override) — a `~/../...`
+ * relative path would be technically correct but confusing in help text.
+ */
+function tildePath(absolutePath: string): string {
+	const home = getHomeDir();
+	const rel = relative(home, absolutePath);
+	if (rel.startsWith("..")) {
+		return absolutePath;
+	}
+	return `~/${rel.split(sep).join("/")}`;
+}
 
 function normalizeAutoApproveValue(
 	value: string | boolean | undefined,
@@ -64,18 +93,21 @@ export function addRootOptions(cmd: Command): Command {
 				"--acp",
 				"Run in Agent Client Protocol (ACP) mode for editor integration",
 			)
-			.option("--config <path>", "Configuration directory (default: ~/.cline)")
+			.option(
+				"--config <path>",
+				`Configuration directory (default: ${tildePath(resolveClineDir())})`,
+			)
 			.option(
 				"--data-dir <path>",
-				"Use isolated local state at this directory path (default: ~/.cline/data)",
+				`Use isolated local state at this directory path (default: ${tildePath(resolveClineDataDir())})`,
 			)
 			.option(
 				"--hooks-dir <path>",
-				"Directory path to additional hooks for runtime hook injection (default: ~/.cline/hooks)",
+				`Directory path to additional hooks for runtime hook injection (default: ${tildePath(join(resolveClineDir(), HOOKS_CONFIG_DIRECTORY_NAME))})`,
 			)
 			.option(
 				"--worktree",
-				"Auto-create a detached git worktree under ~/.cline/worktrees/ and run the task there",
+				`Auto-create a detached git worktree under ${tildePath(getTaskWorktreesHomePath())}/ and run the task there`,
 			)
 			.option("--update", "Check for updates and install if available")
 			.option("--kanban", "Run the kanban app")
