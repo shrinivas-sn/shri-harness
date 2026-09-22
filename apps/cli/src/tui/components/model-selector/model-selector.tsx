@@ -3,6 +3,7 @@ import type { Llms } from "@cline/core";
 import type { ChoiceContext } from "@opentui-ui/dialog";
 import { useDialogKeyboard } from "@opentui-ui/dialog/react";
 import { useMemo, useState } from "react";
+import { filterChatModels } from "../../../utils/chat-models";
 import { useDialogPalette } from "../../hooks/use-theme";
 import { ProviderRow } from "./provider-row";
 
@@ -579,11 +580,13 @@ function ModelRow(props: {
 			<text fg={isSelected ? palette.textOnSelection : undefined}>
 				{model.name}
 			</text>
-			{model.maxInputTokens && (
+			{typeof model.maxInputTokens === "number" &&
+			Number.isFinite(model.maxInputTokens) &&
+			model.maxInputTokens > 0 ? (
 				<text fg={isSelected ? palette.textOnSelection : "gray"} flexShrink={0}>
 					{formatTokenCount(model.maxInputTokens)}
 				</text>
-			)}
+			) : null}
 			{isCurrent && (
 				<text
 					fg={isSelected ? palette.textOnSelection : palette.success}
@@ -602,7 +605,7 @@ export function buildModelOptions(
 	knownModels?: Record<string, Llms.ModelInfo>,
 ): ModelOption[] {
 	if (!knownModels) return [];
-	return Object.entries(knownModels)
+	return Object.entries(filterChatModels(knownModels))
 		.map(([key, info]) => ({
 			key,
 			name: info.name ?? key,
