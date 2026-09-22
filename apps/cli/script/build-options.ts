@@ -3,6 +3,14 @@ export interface BuildOptions {
 	skipInstall: boolean;
 	skipSdkBuild: boolean;
 	installNativeVariants: boolean;
+	/**
+	 * The hub dashboard webview is not part of the Shri terminal preview and
+	 * its build currently fails outright (apps/cline-hub/src/webview isn't a
+	 * workspace member, so its vite/@vitejs/plugin-react-swc/@tailwindcss/vite
+	 * deps never get installed). Building it is an explicit, opt-in
+	 * development step — never a silent default the terminal build depends on.
+	 */
+	withHubWebview: boolean;
 }
 
 export function parseBuildOptions(args: readonly string[]): BuildOptions {
@@ -11,7 +19,12 @@ export function parseBuildOptions(args: readonly string[]): BuildOptions {
 		skipInstall: args.includes("--skip-install"),
 		skipSdkBuild: args.includes("--skip-sdk-build"),
 		installNativeVariants: args.includes("--install-native-variants"),
+		withHubWebview: args.includes("--with-hub-webview"),
 	};
+}
+
+export function shouldBuildHubWebview(options: BuildOptions): boolean {
+	return options.withHubWebview;
 }
 
 export function shouldInstallNativeVariants(input: {

@@ -1,11 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
 	parseBuildOptions,
+	shouldBuildHubWebview,
 	shouldInstallNativeVariants,
 	validateBuildOptions,
 } from "../../script/build-options";
 
 describe("CLI build options", () => {
+	it("skips the hub webview by default (terminal-only build)", () => {
+		expect(shouldBuildHubWebview(parseBuildOptions([]))).toBe(false);
+		expect(shouldBuildHubWebview(parseBuildOptions(["--single"]))).toBe(false);
+	});
+
+	it("opts into building the hub webview with --with-hub-webview", () => {
+		const options = parseBuildOptions(["--with-hub-webview"]);
+		expect(options.withHubWebview).toBe(true);
+		expect(shouldBuildHubWebview(options)).toBe(true);
+	});
+
 	it("does not install native variants during single-platform builds by default", () => {
 		const options = parseBuildOptions(["--single"]);
 

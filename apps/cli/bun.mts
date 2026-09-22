@@ -1,14 +1,11 @@
-import {
-	copyFileSync,
-	cpSync,
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	statSync,
-} from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { $ } from "bun";
+import {
+	parseBuildOptions,
+	shouldBuildHubWebview,
+} from "./script/build-options";
 
 function defineProcessEnv(name: string): string {
 	return JSON.stringify(process.env[name] ?? "");
@@ -17,46 +14,16 @@ function defineProcessEnv(name: string): string {
 const sourcemap = Bun.env.CLINE_SOURCEMAPS === "1" ? "linked" : "none";
 const rootDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(rootDir, "../../");
-const hubWebviewSourcePath = join(repoRoot, "apps/cline-hub/src/webview");
 const hubWebviewDistPath = join(repoRoot, "apps/cline-hub/dist/webview");
-const hubWebviewIndexPath = join(hubWebviewDistPath, "index.html");
 const cliHubWebviewDistPath = join(rootDir, "dist/cline-hub/webview");
 
-function newestFileMtimeMs(dir: string): number {
-	let newest = 0;
-	for (const entry of readdirSync(dir, { withFileTypes: true })) {
-		if (
-			entry.name === "node_modules" ||
-			entry.name === "dist" ||
-			entry.name === ".turbo"
-		) {
-			continue;
-		}
-		const path = join(dir, entry.name);
-		if (entry.isDirectory()) {
-			newest = Math.max(newest, newestFileMtimeMs(path));
-		} else if (entry.isFile()) {
-			newest = Math.max(newest, statSync(path).mtimeMs);
-		}
-	}
-	return newest;
-}
-
-function shouldBuildHubWebview(): boolean {
-	if (!existsSync(hubWebviewIndexPath)) {
-		return true;
-	}
-	try {
-		return (
-			newestFileMtimeMs(hubWebviewSourcePath) >
-			statSync(hubWebviewIndexPath).mtimeMs
-		);
-	} catch {
-		return true;
-	}
-}
-
-if (shouldBuildHubWebview()) {
+// The hub dashboard webview is not part of the Shri terminal preview: it is
+// an explicit, opt-in development step (--with-hub-webview), never a silent
+// default this build depends on. Its own workspace isn't wired up to
+// install vite/@vitejs/plugin-react-swc/@tailwindcss/vite, so building it
+// unconditionally here previously made every terminal build fail outright.
+const buildOptions = parseBuildOptions(Bun.argv.slice(2));
+if (shouldBuildHubWebview(buildOptions)) {
 	console.log("Building Cline Hub webview...");
 	await $`bun -F @cline/cline-hub build:webview`.cwd(repoRoot);
 }
@@ -82,6 +49,15 @@ const result = await Bun.build({
 		"react/jsx-runtime",
 		"react/jsx-dev-runtime",
 		"react-devtools-core",
+		// Optional, dynamically-imported (`await import(...)`) provider SDK:
+		// @jerome-benoit/sap-ai-provider only loads this if a user actually
+		// configures the SAP AI provider. Bundling it eagerly would make every
+		// build require it installed; it's legitimately absent here (a
+		// pre-existing Windows package-linking failure for this one package,
+		// unrelated to Shri/the Groq-focused preview) and that's fine — the
+		// dynamic import only fails at runtime for someone who tries to use
+		// the SAP provider without it installed, same as upstream's contract.
+		"@sap-ai-sdk/foundation-models",
 	],
 	define: {
 		"process.env.NODE_ENV": '"production"',

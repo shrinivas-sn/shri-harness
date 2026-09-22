@@ -4,15 +4,15 @@ import {
 	cpSync,
 	existsSync,
 	mkdirSync,
-	readdirSync,
 	readFileSync,
 	realpathSync,
-	statSync,
 } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { $ } from "bun";
 import {
 	parseBuildOptions,
+	shouldBuildHubWebview,
 	shouldInstallNativeVariants,
 	validateBuildOptions,
 } from "./build-options";
@@ -97,53 +97,34 @@ if (shouldInstallNativeVariants({ options: buildOptions, opentuiVersion })) {
 	await $`bun install --os="*" --cpu="*" @opentui/core@${opentuiVersion}`;
 }
 
-// Build the SDK first (the CLI bundles workspace packages)
+// Build only the SDK packages the terminal CLI actually depends on
+// (@cline/shared <- @cline/llms <- @cline/agents <- @cline/core), not the
+// repo-wide `build:sdk` (`-F './sdk/packages/*'`). That wildcard also builds
+// @cline/ui, used only by the hub dashboard webview (never by the terminal
+// CLI) and not wired into a workspace @cline/cli depends on — a break in
+// @cline/ui's own build (pre-existing, unrelated to this build) would
+// otherwise abort every terminal build for a package it never needed.
 if (!buildOptions.skipSdkBuild) {
 	console.log("Building SDK packages...");
-	await $`bun run build:sdk`.cwd(rootDir);
+	await $`bun --production -F @cline/shared -F @cline/llms -F @cline/agents -F @cline/core build`.cwd(
+		rootDir,
+	);
 
 	console.log("Building CLI bundle...");
-	await $`bun -F @cline/cli build`.cwd(rootDir);
+	const cliBuildArgs = buildOptions.withHubWebview
+		? ["--with-hub-webview"]
+		: [];
+	await $`bun -F @cline/cli build -- ${cliBuildArgs}`.cwd(rootDir);
 }
 
-const hubWebviewSource = join(cliDir, "../cline-hub/src/webview");
 const hubWebviewDist = join(cliDir, "../cline-hub/dist/webview");
-const hubWebviewIndex = join(hubWebviewDist, "index.html");
 
-function newestFileMtimeMs(dir: string): number {
-	let newest = 0;
-	for (const entry of readdirSync(dir, { withFileTypes: true })) {
-		if (
-			entry.name === "node_modules" ||
-			entry.name === "dist" ||
-			entry.name === ".turbo"
-		) {
-			continue;
-		}
-		const path = join(dir, entry.name);
-		if (entry.isDirectory()) {
-			newest = Math.max(newest, newestFileMtimeMs(path));
-		} else if (entry.isFile()) {
-			newest = Math.max(newest, statSync(path).mtimeMs);
-		}
-	}
-	return newest;
-}
-
-function shouldBuildHubWebview(): boolean {
-	if (!existsSync(hubWebviewIndex)) {
-		return true;
-	}
-	try {
-		return (
-			newestFileMtimeMs(hubWebviewSource) > statSync(hubWebviewIndex).mtimeMs
-		);
-	} catch {
-		return true;
-	}
-}
-
-if (shouldBuildHubWebview()) {
+// See build-options.ts's BuildOptions.withHubWebview doc comment: the hub
+// dashboard webview is opt-in only, never a silent default. The CLI bundle
+// step above already built it (or not) via the same flag; this second
+// build is only reached if that step was skipped (--skip-sdk-build) but
+// the webview is still explicitly wanted for this compiled-binary run.
+if (shouldBuildHubWebview(buildOptions) && !existsSync(hubWebviewDist)) {
 	console.log("Building Cline Hub webview...");
 	await $`bun -F @cline/cline-hub build:webview`.cwd(rootDir);
 }
@@ -183,17 +164,21 @@ async function buildCompiledBinary(input: {
 		"/",
 	);
 
-	// Build to /tmp first so Bun's temp-file rename stays on one filesystem
-	// layer in containerized environments (virtiofs, overlayfs).
+	// Build to a scoped staging directory under the OS temp root first, so
+	// Bun's temp-file rename stays on one filesystem layer in containerized
+	// environments (virtiofs, overlayfs). The literal path "/tmp" is not a
+	// real directory on Windows (join("/tmp", ...) resolves drive-relative,
+	// e.g. to E:\tmp when cwd is on E:, and isn't guaranteed to exist) —
+	// os.tmpdir() resolves the actual platform temp root everywhere.
 	const entrypoint = join(cliDir, "src/index.ts");
-	const tmpDir = join("/tmp", `cline-build-${input.dirName}`);
+	const tmpDir = join(tmpdir(), `cline-build-${input.dirName}`);
 	const tmpOutfile = join(
 		tmpDir,
 		input.outfile.endsWith(".exe") ? "cline.exe" : "cline",
 	);
 	mkdirSync(tmpDir, { recursive: true });
 
-	process.chdir("/tmp");
+	process.chdir(tmpDir);
 	const result = await Bun.build({
 		entrypoints: [entrypoint, parserWorker],
 		splitting: true,
@@ -202,7 +187,9 @@ async function buildCompiledBinary(input: {
 			outfile: tmpOutfile,
 		},
 		minify: true,
-		external: ["@anthropic-ai/vertex-sdk"],
+		// @sap-ai-sdk/foundation-models: see bun.mts's external list for why
+		// this optional, dynamically-imported provider SDK is excluded.
+		external: ["@anthropic-ai/vertex-sdk", "@sap-ai-sdk/foundation-models"],
 		define: {
 			OTUI_TREE_SITTER_WORKER_PATH: bunfsRoot + parserWorkerPath,
 			// Inline telemetry/OTEL env vars at build time so the compiled
