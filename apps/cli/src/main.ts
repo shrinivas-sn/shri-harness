@@ -156,6 +156,12 @@ export async function runCli(): Promise<void> {
 	if (configDir) {
 		setClineDir(configDir);
 		setHomeDir(homedir());
+		// Propagate through CLINE_DIR so a spawned hub daemon (a separate
+		// detached process that only inherits process.env) resolves the same
+		// --config directory instead of falling back to ~/.cline. See
+		// initShriEnvironment() in ./shri/auth/shri-dir for the same fix on
+		// the default/SHRI_DIR path.
+		process.env.CLINE_DIR = configDir;
 	} else {
 		const { initShriEnvironment } = await import("./shri/auth/shri-dir");
 		initShriEnvironment();
