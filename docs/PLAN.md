@@ -70,14 +70,14 @@ For behavior changes in every task: write a focused failing test, run it and rec
 
 **Do not assume:** A library-version mismatch is the cause; filtering alone makes rendering robust; passing auth tests covers dialogs; a source test proves an installed package. Do not upgrade/downgrade OpenTUI, blanket-catch renderer failures, disable `/model`, or remove valid chat models as the first fix.
 
-- [ ] Reproduce with Groq selected and the current model `openai/gpt-oss-120b`, using isolated configuration and no real key in test output. Record whether failure occurs in loading, list render, selection, or close. Use a bounded subprocess/PTY timeout; always close its renderer and terminate only task-owned children.
-- [ ] Build a deterministic renderer regression using the current Groq fixture plus explicit model rows with token limit `0`, missing, and positive. Include a list long enough to exercise windowed rows. Create renderer/root before render and tear them down in `finally`, so a render exception cannot leak a terminal/native handle. Capture the current failure with the actual OpenTUI renderer; a mocked React tree or a successful numeric-expression probe alone is insufficient.
-- [ ] Confirm or disprove the zero-child hypothesis by changing only that input/guard in the regression. If it does not reproduce the observed exception, trace loading-dialog, provider-row and dialog-portal children next and record the actual offending node before making a production change.
-- [ ] Once confirmed, make optional token metadata render only for a finite positive number, returning `null` otherwise. Retain a defensive row guard even when non-chat models are filtered. A suitable existing-row expression is shown below; it must be validated against the regression, not pasted as a presumed cure.
-- [ ] Reuse `filterChatModels` at the refreshed model-picker boundary so transcription models do not appear as chat choices. Cover initial and refreshed catalogs, provider changes, and model browsing routes sharing this picker. Preserve text/chat-compatible models and intentional manual custom-ID entry; test unknown metadata according to the existing filter contract rather than inventing name-based exclusions.
-- [ ] Verify empty list, no search matches, current model absent, reasoning and non-reasoning selections, custom-ID entry, cancel/Escape, reopen, and provider-change return. Ensure cancel preserves the selected model, successful selection updates it, focus returns to the prompt, and no unhandled rejection or leaked dialog remains.
-- [ ] Run the focused model/filter/native renderer tests, then the existing Shri/auth suite. Execute `bun run shri`, open `/model`, search, select, cancel, reopen and exit in a real Windows terminal. Record actual results separately from headless rendering. Use a user-entered key only if live provider confirmation is needed; no key should be needed for the fixture regression.
-- [ ] Carry this exact interaction into Task 5's installed-artifact suite on each advertised platform. Record root cause, failing/passing evidence, and limitations in the work log before marking Task 0 complete.
+- [x] Reproduce with Groq selected and the current model `openai/gpt-oss-120b`, using isolated configuration and no real key in test output. Record whether failure occurs in loading, list render, selection, or close. Use a bounded subprocess/PTY timeout; always close its renderer and terminate only task-owned children.
+- [x] Build a deterministic renderer regression using the current Groq fixture plus explicit model rows with token limit `0`, missing, and positive. Include a list long enough to exercise windowed rows. Create renderer/root before render and tear them down in `finally`, so a render exception cannot leak a terminal/native handle. Capture the current failure with the actual OpenTUI renderer; a mocked React tree or a successful numeric-expression probe alone is insufficient.
+- [x] Confirm or disprove the zero-child hypothesis by changing only that input/guard in the regression. If it does not reproduce the observed exception, trace loading-dialog, provider-row and dialog-portal children next and record the actual offending node before making a production change.
+- [x] Once confirmed, make optional token metadata render only for a finite positive number, returning `null` otherwise. Retain a defensive row guard even when non-chat models are filtered. A suitable existing-row expression is shown below; it must be validated against the regression, not pasted as a presumed cure.
+- [x] Reuse `filterChatModels` at the refreshed model-picker boundary so transcription models do not appear as chat choices. Cover initial and refreshed catalogs, provider changes, and model browsing routes sharing this picker. Preserve text/chat-compatible models and intentional manual custom-ID entry; test unknown metadata according to the existing filter contract rather than inventing name-based exclusions.
+- [x] Verify empty list, no search matches, current model absent, reasoning and non-reasoning selections, custom-ID entry, cancel/Escape, reopen, and provider-change return. Ensure cancel preserves the selected model, successful selection updates it, focus returns to the prompt, and no unhandled rejection or leaked dialog remains.
+- [x] Run the focused model/filter/native renderer tests, then the existing Shri/auth suite. Execute `bun run shri`, open `/model`, search, select, cancel, reopen and exit in a real Windows terminal. Record actual results separately from headless rendering. Use a user-entered key only if live provider confirmation is needed; no key should be needed for the fixture regression.
+- [x] Carry this exact interaction into Task 5's installed-artifact suite on each advertised platform. Record root cause, failing/passing evidence, and limitations in the work log before marking Task 0 complete.
 
 Candidate row guard after reproduction confirms the unsafe numeric child:
 
@@ -301,6 +301,66 @@ Next: Execute Task 1 sequentially: ownership/status checks, inspect current init
 
 Commit: Not committed.
 
+### Task 1 in progress — explicit Groq auth and startup precedence — 23/09/2026
+
+Done: Started Task 1 after Task 0's Windows gate. Added synthetic red/green tests for replacing a saved Groq key through bare `shri auth`, cancellation without writes, masked environment-precedence guidance, command-line/environment/saved selection at the startup boundary, and temporary override persistence. Implemented explicit reconfiguration, SIGINT cancellation, preserved saved settings/model during replacement, non-misleading Groq copy, and startup precedence `--key` > `GROQ_API_KEY` > saved. Command-line and environment keys now remain temporary; a pre-existing saved key is preserved rather than overwritten.
+
+Verified: `bun run test:unit src/shri/auth/groq-auth.test.ts` was red with three failures (saved key returned, cancellation reused it, environment bypassed prompt); after the implementation it passed. `bun run test:unit src/shri/auth/shri-auth-integration.test.ts` was red (`bare Groq auth` returned 1 instead of injected explicit reconfiguration success); after the command-flow change both auth files passed 17 tests. The startup tests were red for persisted command-line key and saved-over-environment selection; the focused final command `bun run test:unit src/shri/auth/groq-auth.test.ts src/shri/auth/shri-auth-integration.test.ts src/main.test.ts --testNamePattern="Groq Auth Management|Shri Auth Command Integration|prefers a command-line|prefers a nonblank"` passed 3 files / 20 tests, with 85 intentionally name-filtered tests skipped. All credentials in tests are synthetic.
+
+Surprises: The initial full `main.test.ts` attempt exposed an incomplete synthetic mock and started two task-owned hidden prompts. They were identified by start time and terminated; the user's existing long-running CLI process was not touched. The corrected name-filtered regressions completed normally. Do not count that aborted full-suite attempt as passing.
+
+Next: Complete Task 1 identity/state/updater/telemetry boundaries and run the required unfiltered focused suite. Explicit auth and precedence source work is green but Task 1 remains open; installed CLI repetition remains Task 5.
+
+Commit: Not committed.
+
+### Task 0 follow-up — rebuilt source retest prepared — 23/09/2026
+
+Done: Rebuilt the changed `@cline/llms` package so `bun run shri` consumes the current routing source, then reran the real OpenTUI model-selector regression.
+
+Verified: From `sdk`, `bun -F @cline/llms build` exited 0. From `apps/cli`, `bun test ./src/tui/components/model-selector/model-selector.render.test.tsx` passed 2 tests / 4 assertions, exit 0. These remain source/build checks; the pending Windows visible-terminal proof is not claimed.
+
+Surprises: None.
+
+Next: In the existing terminal, restart `bun run shri`, select Off through `/model`, and submit `hi`. It should succeed without a `▶ Thinking:` trace. Then provide the cancel/reopen/search outcomes required by Task 0.
+
+Commit: Not committed.
+
+### Task 0 follow-up — Groq Off hides GPT-OSS reasoning output — 23/09/2026
+
+Done: The first Windows retest proved that the invalid `"none"` effort error was fixed, but also showed a visible Thinking trace after selecting Off. Retrieved the current official Groq and AI SDK documentation before changing routing. GPT-OSS supports only low/medium/high internal reasoning; Groq documents `include_reasoning: false` as the supported way to hide its output. Added a named Groq provider-option rule that carries the original disabled user intent through generic normalization and passes that field to the OpenAI-compatible request body.
+
+Verified: The new provider-options regression was red: disabled Groq GPT-OSS returned only `{ strictJsonSchema: false }`, without `include_reasoning`. After the rule, `bun -F @cline/llms test src/providers/routing/provider-options.test.ts` passed 124 tests, `bun -F @cline/llms test src/providers/ai-sdk-reasoning.test.ts` passed 15 tests, and `bun -F @cline/llms typecheck` exited 0. Groq's official documentation distinguishes GPT-OSS effort values (low/medium/high) from its `include_reasoning: false` output control; AI SDK's OpenAI-compatible provider passes extra provider-option keys through as request-body fields. These are source/routing checks, not a rerun of the edited checkout or installed artifact.
+
+Surprises: The selector's universal Off label had two different implications: it cannot eliminate GPT-OSS's internal reasoning, but it can and should hide its returned trace. The provider-options normalizer deliberately removes unsupported disable controls, so the named Groq rule receives the unnormalized original intent only for output visibility; it does not alter generic normalization or valid Groq effort values.
+
+Next: Restart the edited checkout and repeat only `/model` → Off → `hi`. A successful result should have no error and no `▶ Thinking:` line. Then complete cancel/Escape, reopen, and `whisper` search evidence. Do not mark Task 0 complete until that Windows evidence is observed.
+
+Commit: Not committed.
+
+### Task 1 checkpoint — preview identity, storage propagation and explicit keys — 23/09/2026
+
+Done: Added synthetic source regressions for saved-key replacement/cancellation, CLI/environment/saved-key precedence, preview identity, Shri help text, and inherited-Cline storage-path replacement. `shri auth` now explicitly reconfigures Groq with a masked saved-key notice and preserves model/settings on replacement; normal startup keeps temporary command-line/environment keys out of persisted settings. The source package remains `@cline/cli` for workspace filters but is private with Shri preview identity. Normal CLI, daemon and ACP paths initialize Shri state; the initializer propagates the resolved directory via the SDK's `CLINE_*` child-process conventions. Automatic startup/deferred updates are disabled; explicit updater package resolution targets `@shrinivas-sn/shri@next`. The CLI telemetry factory requests a disabled/no-op service. Replaced inherited public README copy with single-agent preview scope and upstream attribution.
+
+Verified: Host `bun run test:unit src/shri/auth/groq-auth.test.ts` passed 15 tests; `bun run test:unit src/shri/auth/shri-auth-integration.test.ts` passed 2 tests; selected `src/main.test.ts` Task 1 cases passed 4 tests (83 intentionally name-filtered); `bun run test:unit src/shri/release-identity.test.ts` passed 1 test; `bun run test:unit src/shri/auth/shri-dir.test.ts` was red on inherited `CLINE_DIR`, then passed 5 tests after propagation; `bun run test:unit src/shri/auth/shri-dir.test.ts src/commands/program.test.ts` passed 5 tests; `bun run typecheck` emitted no diagnostics; `git -c core.safecrlf=false diff --check` passed. The required unfiltered `bun -F @cline/cli test:unit src/shri/ src/commands/update.test.ts src/commands/auth.test.ts src/main.test.ts` started on the host and printed only Vitest's RUN header before its task-owned workers outlived the wrapper. It has no final pass/fail result and is not counted as passed.
+
+Surprises: The sandbox continues to fail Vitest setup with `spawn EPERM`; host retries are required. The inherited updater suite can leave task-owned worker processes after returning only its RUN header; isolated updater test `never checks` passed 1 test / 9 skipped in 25.12s, but the broader updater suite needs a bounded runner result. The existing user Bun session was not stopped.
+
+Next: Complete Task 1's required unfiltered suite with a reliable bounded result and inspect remaining updater/daemon paths; do not check off Task 1 or claim installed/daemon execution proof. Continue Task 2 only after its gate.
+
+Commit: Pending save-check checkpoint.
+
+### Task 0 follow-up — Groq reasoning-off request regression — 23/09/2026
+
+Done: A real Windows interaction found a second Task 0 failure after choosing the model selector's `Off` reasoning choice: the next prompt was rejected by Groq. Traced the user selection through interactive config into the SDK's portable reasoning adapter. Added a focused synthetic regression and the minimal Groq-only disabled-reasoning exception; the model-selector's enabled effort behavior is unchanged.
+
+Verified: The initial `bun -F @cline/llms test src/providers/ai-sdk-reasoning.test.ts` host run was red: `omits the unsupported portable disable value for Groq` received `"none"` instead of `undefined`. The application sent the portable `reasoning: "none"` value for a disabled Groq request, matching the user's actual `reasoning_effort must be one of low, medium, or high` error. After the fix, `bun -F @cline/llms test src/providers/ai-sdk-reasoning.test.ts` passed 15 tests and `bun -F @cline/llms test src/providers/routing/provider-options.test.ts` passed 123 tests; `bun -F @cline/llms typecheck` exited 0 without diagnostics. This is source-level verification only, not a live Groq request or installed-package proof.
+
+Surprises: The selector correctly persists `thinking: false` and clears its explicit effort. The invalid value arose later because `resolvePortableReasoning` treated Groq as supporting portable disable and emitted `"none"`; Groq accepts only enabled effort values. The test asserts both that resolver returns `undefined` and that the AI SDK stream config has no `reasoning` field for disabled Groq.
+
+Next: Rerun the real Windows interaction from the edited checkout: `/model`, choose a chat model, select `Off`, submit `hi`, then verify cancel/Escape and reopen/search behavior. Record the visible response or exact error without key values. Task 0 remains open until this is seen in the Windows terminal; installed-artifact proof still belongs to Task 5.
+
+Commit: Not committed.
+
 ### `/model` investigation and save-check — 22/09/2026
 
 Done: Added Task 0 to the same live plan with reproduction, targeted row guard, chat-model eligibility checks, real-renderer regression, Windows interaction checks and installed-package coverage. Preserved earlier Progress Log entries. This checkpoint includes the preceding packaging-plan rewrite and its archived reference; no application source was changed.
@@ -326,3 +386,15 @@ Surprises: The first history-preservation check used `HEAD:DOCS/PLAN.md` and fai
 Next: Execute Task 0 in the existing workspace, then Tasks 1–7 in order with no subagents. Follow the detailed review entry and tests in this plan, verify uncertainty rather than assuming it, retain credential/platform/publication boundaries, and record real command results at each gate. Do not restart the old multi-agent or packaging plans.
 
 Commit: This user-requested checkpoint includes only the four edited documentation files; the final response records the verified hash. No remote push requested.
+
+### Task 0 source regression and Windows-PTY limitation — 22/09/2026
+
+Done: Reproduced the reported OpenTUI error in a new real-renderer regression, confirmed that only removing the zero token value makes the same render pass, and applied the minimal positive-finite token guard in `ModelRow`. Applied the existing `filterChatModels` helper in shared `buildModelOptions`, so initial, refresh, provider-change and browse routes using that builder exclude dedicated transcription rows while the row remains defensive. Task 0 remains open: Windows visible-terminal interaction and the complete search/select/cancel/reopen flow are not verified.
+
+Verified: From `apps/cli`, pre-fix `bun test ./src/tui/components/model-selector/model-selector.render.test.tsx` exited 1 with OpenTUI `Text must be created inside of a text node`; the stack names `ModelRow`, `ModelList` and `ModelSelectorContent`. The same test with only the zero fixture value removed passed. After the guard/filter change the command passed 2 tests / 4 assertions, exit 0. The required source suite could not start sandboxed (`spawn EPERM` while Vite resolved the config); the unchanged host retry `bun run test:unit src/utils/chat-models.test.ts src/shri/` passed 12 files / 47 tests, exit 0. The root-filter spelling `bun -F @cline/cli test:unit ...` failed to start its child process; this is not counted as verification.
+
+Surprises: A task-owned PowerShell PTY launched `bun run shri` with an isolated Shri directory and synthetic key but emitted no rendered frame or `/model` feedback in 50 seconds; it exited 1 only after Ctrl+C. The existing tuistory real-PTY source harness likewise emitted no test result in 120 seconds and was terminated. The repository has no installed `node-pty` Windows driver. These are environment/harness limitations, not Windows interaction evidence.
+
+Next: Obtain manual Windows-terminal evidence without sharing a key: start `bun run shri` with Groq and `openai/gpt-oss-120b`, open `/model`, search/select a chat model, reopen and Escape to cancel, reopen once more, search `whisper` to confirm no transcription choice, then exit. Record only model names, visible outcomes and errors. After that evidence, complete Task 0's remaining command-flow coverage before Task 1.
+
+Commit: Not committed.

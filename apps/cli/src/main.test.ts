@@ -21,6 +21,7 @@ const originalArgv = [...process.argv];
 const originalStdinIsTTY = process.stdin.isTTY;
 const originalStdoutIsTTY = process.stdout.isTTY;
 const originalGlobalSettingsPath = process.env.CLINE_GLOBAL_SETTINGS_PATH;
+const originalShriDir = process.env.SHRI_DIR;
 const mockState = vi.hoisted(() => ({
 	coreImports: 0,
 	wizardImports: [] as string[],
@@ -247,6 +248,7 @@ describe("runCli lightweight command dispatch", () => {
 		// Startup now reads persisted general settings; point the resolver at a
 		// fresh temp file so the developer's real settings cannot leak in.
 		globalSettingsRoot = mkdtempSync(join(tmpdir(), "cline-cli-main-test-"));
+		process.env.SHRI_DIR = join(globalSettingsRoot, "shri");
 		process.env.CLINE_GLOBAL_SETTINGS_PATH = join(
 			globalSettingsRoot,
 			"global-settings.json",
@@ -355,13 +357,18 @@ describe("runCli lightweight command dispatch", () => {
 		});
 	});
 
-	afterEach(() => {
+		afterEach(() => {
 		process.exitCode = undefined;
 
 		if (originalGlobalSettingsPath === undefined) {
 			delete process.env.CLINE_GLOBAL_SETTINGS_PATH;
 		} else {
 			process.env.CLINE_GLOBAL_SETTINGS_PATH = originalGlobalSettingsPath;
+		}
+		if (originalShriDir === undefined) {
+			delete process.env.SHRI_DIR;
+		} else {
+			process.env.SHRI_DIR = originalShriDir;
 		}
 		if (globalSettingsRoot) {
 			rmSync(globalSettingsRoot, { recursive: true, force: true });
@@ -391,6 +398,8 @@ describe("runCli lightweight command dispatch", () => {
 
 		await expect(runCli()).resolves.toBeUndefined();
 		expect(process.exitCode).toBe(0);
+		expect(updateMocks.autoUpdateOnStartup).not.toHaveBeenCalled();
+		expect(telemetryMocks.captureCliExtensionActivated).not.toHaveBeenCalled();
 		expect(historyMocks.runHistoryList).toHaveBeenCalledWith(
 			expect.objectContaining({
 				limit: 50,
@@ -1342,10 +1351,7 @@ describe("runCli lightweight command dispatch", () => {
 		);
 	});
 
-	it("identifies saved Cline accountId for telemetry before runtime events", async () => {
-		// CLINE-2406: when persisted Cline auth includes an accountId, the
-		// runtime path must call identifyTelemetryAccount(accountContext) so
-		// subsequent task.* and workspace.* events carry user_id.
+	it("does not export a saved account identity through telemetry", async () => {
 		const clineSettings = {
 			provider: "cline",
 			model: "anthropic/claude-sonnet-4.6",
@@ -1363,12 +1369,7 @@ describe("runCli lightweight command dispatch", () => {
 		const { runCli } = await import("./main");
 
 		await expect(runCli()).resolves.toBeUndefined();
-		expect(telemetryMocks.identifyTelemetryAccount).toHaveBeenCalledWith(
-			expect.objectContaining({
-				id: "usr-abc-123",
-				provider: "cline",
-			}),
-		);
+		expect(telemetryMocks.identifyTelemetryAccount).not.toHaveBeenCalled();
 	});
 
 	it("does not call identifyTelemetryAccount in runtime path when no saved Cline accountId", async () => {
@@ -1591,6 +1592,84 @@ describe("runCli lightweight command dispatch", () => {
 			}),
 			expect.anything(),
 		);
+	});
+
+	it("prefers a command-line Groq key without persisting the temporary override", async () => {
+		const priorGroqKey = process.env.GROQ_API_KEY;
+		try {
+			process.env.GROQ_API_KEY = "gsk_test_environment_key";
+			forcePromptModeInput();
+			authMocks.normalizeProviderId.mockImplementation(
+				(providerId?: string) => providerId ?? "groq",
+			);
+			authMocks.getPersistedProviderApiKey.mockReturnValue(
+				"gsk_test_saved_key",
+			);
+			providerSettingsMocks.getProviderSettings.mockReturnValue({
+				provider: "groq",
+				apiKey: "gsk_test_saved_key",
+			});
+			process.argv = [
+				"bun",
+				"src/index.ts",
+				"--provider",
+				"groq",
+				"--key",
+				"gsk_test_command_key",
+				"say hello",
+			];
+
+			const { runCli } = await import("./main");
+			await runCli();
+
+			expect(runtimeMocks.runAgent).toHaveBeenCalledWith(
+				"say hello",
+				expect.objectContaining({ apiKey: "gsk_test_command_key" }),
+				expect.anything(),
+			);
+			for (const [settings] of providerSettingsMocks.saveProviderSettings.mock
+				.calls as Array<[Record<string, unknown>]>) {
+				expect(settings.apiKey).toBe("gsk_test_saved_key");
+			}
+		} finally {
+			if (priorGroqKey === undefined) delete process.env.GROQ_API_KEY;
+			else process.env.GROQ_API_KEY = priorGroqKey;
+		}
+	});
+
+	it("prefers a nonblank GROQ_API_KEY over a saved Groq key without persisting it", async () => {
+		const priorGroqKey = process.env.GROQ_API_KEY;
+		try {
+			process.env.GROQ_API_KEY = "gsk_test_environment_key";
+			forcePromptModeInput();
+			authMocks.normalizeProviderId.mockImplementation(
+				(providerId?: string) => providerId ?? "groq",
+			);
+			authMocks.getPersistedProviderApiKey.mockReturnValue(
+				"gsk_test_saved_key",
+			);
+			providerSettingsMocks.getProviderSettings.mockReturnValue({
+				provider: "groq",
+				apiKey: "gsk_test_saved_key",
+			});
+			process.argv = ["bun", "src/index.ts", "--provider", "groq", "say hello"];
+
+			const { runCli } = await import("./main");
+			await runCli();
+
+			expect(runtimeMocks.runAgent).toHaveBeenCalledWith(
+				"say hello",
+				expect.objectContaining({ apiKey: "gsk_test_environment_key" }),
+				expect.anything(),
+			);
+			for (const [settings] of providerSettingsMocks.saveProviderSettings.mock
+				.calls as Array<[Record<string, unknown>]>) {
+				expect(settings.apiKey).toBe("gsk_test_saved_key");
+			}
+		} finally {
+			if (priorGroqKey === undefined) delete process.env.GROQ_API_KEY;
+			else process.env.GROQ_API_KEY = priorGroqKey;
+		}
 	});
 
 	it("disables thinking when --thinking none is explicitly provided", async () => {

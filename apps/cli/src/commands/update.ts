@@ -17,7 +17,7 @@ import {
 	spawnKanbanInstallProcess,
 } from "./kanban";
 
-const DEFAULT_PACKAGE_NAME = "cline";
+const DEFAULT_PACKAGE_NAME = "@shrinivas-sn/shri";
 
 type CliPackageName = typeof DEFAULT_PACKAGE_NAME;
 
@@ -41,12 +41,8 @@ interface ManualUpdateCommand {
 	env?: Readonly<Record<string, string>>;
 }
 
-function isNightlyVersion(v: string): boolean {
-	return v.includes("-nightly.");
-}
-
-function getNpmTag(v: string): string {
-	return isNightlyVersion(v) ? "nightly" : "latest";
+function getNpmTag(_v: string): string {
+	return "next";
 }
 
 interface ParsedVersion {
@@ -308,26 +304,8 @@ const CLIENT_COUNT_EXIT_TIMEOUT_MS = 3_000;
  * Skipped for npx, dev, unknown installs. Disable with CLINE_NO_AUTO_UPDATE=1.
  */
 export function autoUpdateOnStartup(): void {
-	if (process.env.IS_DEV === "true") return;
-	if (process.env.CLINE_NO_AUTO_UPDATE === "1") return;
-	if (!isAutoUpdateEnabledGlobally()) return;
-
-	const { packageName, packageManager, updateCommand } =
-		getInstallationInfo(version);
-	if (!updateCommand) return;
-
-	pendingAutoUpdateCheck = (async () => {
-		try {
-			const latest = await getLatestVersion(packageName, version);
-			if (!latest || compareVersions(version, latest) >= 0) return;
-			pendingAutoUpdate = withMinimumReleaseAgeBypass(
-				updateCommand,
-				packageManager,
-			);
-		} catch {
-			// Best-effort, silently ignore
-		}
-	})();
+	// Preview updates are explicit only. In particular, startup must not make
+	// a registry request or replace the executable under a live session.
 }
 
 /**
@@ -399,44 +377,11 @@ async function otherCliClientsAttached(): Promise<boolean> {
  * process and its postinstall never blocks an exit.
  */
 export async function applyDeferredUpdate(
-	pending?: ManualUpdateCommand,
+	_pending?: ManualUpdateCommand,
 ): Promise<"none" | "deferred" | "started"> {
-	if (!pending) {
-		// Short-lived commands can reach exit before the startup version check
-		// resolves; give it a brief grace so one-shot-only usage still updates.
-		if (pendingAutoUpdateCheck) {
-			await Promise.race([
-				pendingAutoUpdateCheck,
-				sleep(UPDATE_CHECK_EXIT_GRACE_MS),
-			]);
-		}
-		pending = pendingAutoUpdate;
-	}
-	if (!pending) {
-		return "none";
-	}
-	// The whole query is bounded: the user is waiting on their prompt, and a
-	// wedged hub must not turn a finished command into a hung one. A timeout
-	// counts as "attached" — never install unless the hub positively confirms.
-	const attached = await Promise.race([
-		otherCliClientsAttached(),
-		sleep(CLIENT_COUNT_EXIT_TIMEOUT_MS).then(() => true),
-	]).catch(() => true);
-	if (attached) {
-		return "deferred";
-	}
-	pendingAutoUpdate = undefined;
-	const child = spawn(pending.command, {
-		shell: true,
-		detached: true,
-		stdio: "ignore",
-		env: pending.env ? { ...process.env, ...pending.env } : process.env,
-		// Prevent a console window from flashing on Windows; detached
-		// processes otherwise allocate a new visible console.
-		windowsHide: true,
-	});
-	child.unref();
-	return "started";
+	// Compatibility boundary for callers retained during the preview. Shri
+	// never queues background updates, so it cannot spawn an updater here.
+	return "none";
 }
 
 export interface CheckForUpdatesOptions {
@@ -452,9 +397,9 @@ export async function checkForUpdates(
 	options: CheckForUpdatesOptions = {},
 ): Promise<number> {
 	const currentVersion = version;
-	const includeKanban = options.includeKanban ?? true;
+	const includeKanban = options.includeKanban ?? false;
 	writeln(
-		`${c.cyan}Checking for updates${includeKanban ? " to Cline CLI and kanban" : ""}…${c.reset}`,
+		`${c.cyan}Checking for Shri updates${includeKanban ? " and kanban" : ""}…${c.reset}`,
 	);
 
 	const { packageName, updateCommand, packageManager } =

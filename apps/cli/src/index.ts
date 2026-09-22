@@ -18,6 +18,7 @@ import {
 import { registerClineClientIdentity } from "./utils/cline-client-identity";
 import { resolveCliLaunchSpec } from "./utils/internal-launch";
 import { writeErr } from "./utils/output";
+import { initShriEnvironment } from "./shri/auth/shri-dir";
 
 // Initialize VCR before any HTTP requests are made.
 // Set CLINE_VCR=record|playback and CLINE_VCR_CASSETTE=<path> to enable.
@@ -33,7 +34,8 @@ if (!isMainThread) {
 	// daemon-hosted session spawns do not inherit it and try to become daemons.
 	// The hub daemon owns its process-level abort handling. Installing the CLI's
 	// fatal rejection handler first would make expected abort rejections exit it.
-	registerClineClientIdentity("cline-cli");
+	initShriEnvironment();
+	registerClineClientIdentity("shri-cli");
 	void import("@cline/core/hub/daemon-entry");
 } else {
 	// Same reasoning as the daemon sentinel above: consume the supervised-connector
@@ -102,15 +104,6 @@ if (!isMainThread) {
 			exitCode = 1;
 		} finally {
 			await disposeAll();
-		}
-		// The explicit process.exit below means beforeExit never fires, so a
-		// startup-recorded auto-update must be applied here, after all runtime
-		// teardown. It spawns detached and only when no other CLI is attached.
-		try {
-			const { applyDeferredUpdate } = await import("./commands/update");
-			await applyDeferredUpdate();
-		} catch {
-			// Best-effort; never block exit on the updater.
 		}
 		process.exit(exitCode || (process.exitCode as number) || 0);
 	})();

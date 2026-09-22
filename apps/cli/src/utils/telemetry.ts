@@ -44,6 +44,10 @@ export function getCliTelemetryService(
 		});
 		const handle = createConfiguredTelemetryHandle({
 			...config,
+			// Shri preview deliberately has no inherited upstream telemetry or
+			// error export. Keep the no-op service so runtime event call sites do
+			// not need conditional branches.
+			enabled: false,
 			logger,
 		});
 		telemetrySingleton = {

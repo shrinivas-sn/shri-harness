@@ -64,10 +64,10 @@ export function addRootOptions(cmd: Command): Command {
 				"--acp",
 				"Run in Agent Client Protocol (ACP) mode for editor integration",
 			)
-			.option("--config <path>", "Configuration directory (default: ~/.cline)")
+			.option("--config <path>", "Configuration directory (default: ~/.shri)")
 			.option(
 				"--data-dir <path>",
-				"Use isolated local state at this directory path (default: ~/.cline/data)",
+				"Use isolated local state at this directory path (default: ~/.shri/data)",
 			)
 			.option(
 				"--hooks-dir <path>",

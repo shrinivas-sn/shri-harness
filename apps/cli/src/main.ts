@@ -1,5 +1,4 @@
 import { fstatSync } from "node:fs";
-import { homedir } from "node:os";
 import { basename } from "node:path";
 import type { ToolPolicy } from "@cline/core";
 
@@ -11,10 +10,7 @@ import {
 	commanderToParsedArgs,
 	createProgram,
 } from "./commands/program";
-import {
-	autoUpdateOnStartup,
-	getPreferredKanbanInstaller,
-} from "./commands/update";
+import { getPreferredKanbanInstaller } from "./commands/update";
 import { CLI_DEFAULT_CHECKPOINT_CONFIG } from "./runtime/defaults";
 import type { TuiStartupTarget } from "./tui/types";
 import { filterChatModels } from "./utils/chat-models";
@@ -53,11 +49,7 @@ import {
 	resolveStartupToolAutoApprove,
 } from "./utils/startup-settings";
 import { rewriteTeamPrompt, TEAM_COMMAND_USAGE } from "./utils/team-command";
-import {
-	captureCliExtensionActivated,
-	getCliTelemetryService,
-	identifyTelemetryAccount,
-} from "./utils/telemetry";
+import { getCliTelemetryService } from "./utils/telemetry";
 import type { Config } from "./utils/types";
 
 export function stdinHasPipedInput(): boolean {
@@ -144,28 +136,15 @@ function startupTargetTakesPrecedenceOverMigrationNotice(
 }
 
 export async function runCli(): Promise<void> {
-	registerClineClientIdentity("cline-cli");
-	installStreamErrorGuards();
-	autoUpdateOnStartup();
-
 	const cliArgs = process.argv.slice(2);
 	const isFullTTY =
 		process.stdin.isTTY === true && process.stdout.isTTY === true;
 	const configDir = resolveConfigDirArg(cliArgs);
-	const { setClineDir, setHomeDir } = await import("@cline/shared/storage");
-	if (configDir) {
-		setClineDir(configDir);
-		setHomeDir(homedir());
-	} else {
-		const { initShriEnvironment } = await import("./shri/auth/shri-dir");
-		initShriEnvironment();
-	}
-
-	// Capture activation telemetry only after config/home directory selection
-	// has been applied, so the telemetry singleton's persisted distinct-id
-	// (and any other storage it touches) lands under the user-selected
-	// `--config <dir>` rather than the default home/config location.
-	captureCliExtensionActivated();
+	const { initShriEnvironment } = await import("./shri/auth/shri-dir");
+	// Resolve isolation before any updater, telemetry, hub, or runtime import.
+	initShriEnvironment(configDir);
+	registerClineClientIdentity("shri-cli");
+	installStreamErrorGuards();
 
 	const normalizedArgs = normalizeAutoApproveArgs(cliArgs);
 
@@ -957,30 +936,15 @@ export async function runCli(): Promise<void> {
 		let selectedProviderSettings =
 			providerSettingsManager.getProviderSettings(provider);
 
-		// Apply locally persisted Cline account identity so subsequent events
-		// (task.*, workspace.initialized) carry user_id when available.
-		// Note: user.extension_activated fires anonymously earlier in startup
-		// and cannot be retroactively updated; this is by design for
-		// lightweight subcommand and pre-auth CLI flows. See CLINE-2406.
-		if (provider === "cline") {
-			const savedAuth = selectedProviderSettings?.auth;
-			if (savedAuth?.accountId) {
-				identifyTelemetryAccount({
-					id: savedAuth.accountId,
-					provider: "cline",
-					organizationId: savedAuth.organizationId,
-					organizationName: savedAuth.organizationName,
-					memberId: savedAuth.memberId,
-				});
-			}
-		}
-
 		const persistedApiKey = getPersistedProviderApiKey(
 			provider,
 			selectedProviderSettings,
 		);
 		const providedApiKey = args.key?.trim() || undefined;
-		let apiKey = providedApiKey || persistedApiKey || undefined;
+		const environmentGroqKey =
+			provider === "groq" ? process.env.GROQ_API_KEY?.trim() || undefined : undefined;
+		let apiKey =
+			providedApiKey ?? environmentGroqKey ?? persistedApiKey ?? undefined;
 
 		if (provider === "groq" && !apiKey) {
 			const { ensureGroqApiKey } = await import("./shri/auth/groq-auth");
@@ -1111,7 +1075,7 @@ export async function runCli(): Promise<void> {
 			workspaceRoot,
 			extensionContext: {
 				client: {
-					name: "cline-cli",
+				name: "shri-cli",
 					version: cliBuildInfo.version,
 					platform: "cli",
 					platformVersion: cliBuildInfo.version,
@@ -1132,11 +1096,10 @@ export async function runCli(): Promise<void> {
 			// For OAuth providers, don't write the resolved key into apiKey;
 			// the token lives in auth.accessToken and apiKey is reserved for
 			// migrated/manual keys.
+			const hasTemporaryKeyOverride =
+				providedApiKey !== undefined || environmentGroqKey !== undefined;
 			const persistApiKey =
-				// Persist explicit `-k/--key` even for OAuth-capable providers.
-				providedApiKey
-					? { apiKey: providedApiKey }
-					: apiKey && !isOAuthProvider(provider)
+				apiKey && !isOAuthProvider(provider) && !hasTemporaryKeyOverride
 						? { apiKey }
 						: {};
 			providerSettingsManager.saveProviderSettings({

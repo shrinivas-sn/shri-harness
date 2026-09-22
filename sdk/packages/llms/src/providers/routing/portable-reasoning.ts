@@ -36,6 +36,11 @@ export function resolvePortableReasoning(
 	}
 	const fullySupported = PORTABLE_REASONING_PROVIDERS.has(request.providerId);
 	if (reasoning.enabled === false) {
+		// Groq rejects AI SDK's portable `none` value: its wire API permits only
+		// low, medium, and high. Leave this unset so its default behavior applies.
+		if (request.providerId === "groq") {
+			return undefined;
+		}
 		return fullySupported ? "none" : undefined;
 	}
 	if (typeof reasoning.budgetTokens === "number") {

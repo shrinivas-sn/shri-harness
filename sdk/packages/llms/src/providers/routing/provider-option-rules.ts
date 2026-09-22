@@ -223,6 +223,22 @@ const openRouterReasoningRule: ProviderOptionRule = {
 		),
 };
 
+const groqReasoningVisibilityRule: ProviderOptionRule = {
+	id: "provider.groq.reasoning-visibility",
+	phase: "provider-reasoning",
+	description:
+		"Groq GPT-OSS cannot disable internal reasoning, but can hide its reasoning trace.",
+	applies: (input) =>
+		input.request.providerId === "groq" &&
+		input.originalRequest.reasoning?.enabled === false,
+	build: (input) =>
+		buildProviderAndAliasPatch({
+			providerId: input.request.providerId,
+			providerOptionsKey: input.providerOptionsKey,
+			bucketOptions: { include_reasoning: false },
+		}),
+};
+
 const clineMiniMaxM3GatewayReasoningRule: ProviderOptionRule = {
 	id: "provider.cline.minimax-m3.gateway-reasoning",
 	phase: "provider-reasoning",
@@ -516,6 +532,7 @@ export const PROVIDER_OPTION_RULES: ReadonlyArray<ProviderOptionRule> = [
 	genericProviderFanoutRule,
 	clineGatewayReasoningRule,
 	openRouterReasoningRule,
+	groqReasoningVisibilityRule,
 	clineMiniMaxM3GatewayReasoningRule,
 	vercelReasoningRule,
 	directMoonshotReasoningRule,

@@ -99,20 +99,20 @@ describe("getInstallationInfo", () => {
 
 		expect(getInstallationInfo("1.2.3")).toEqual({
 			packageManager: PackageManager.NPM,
-			packageName: "cline",
-			updateCommand: "npm update -g cline --tag latest",
+			packageName: "@shrinivas-sn/shri",
+			updateCommand: "npm update -g @shrinivas-sn/shri --tag next",
 		});
 	});
 
-	it("uses the nightly tag when the current CLI version is nightly", () => {
+	it("uses the preview tag regardless of the source version", () => {
 		const wrapperPath = createTempFile("lib/node_modules/cline/bin/cline");
 		process.env.CLINE_WRAPPER_PATH = wrapperPath;
 		process.argv = ["bun", "/$bunfs/root/cline", "update", "--verbose"];
 
 		expect(getInstallationInfo("1.2.3-nightly.456")).toEqual({
 			packageManager: PackageManager.NPM,
-			packageName: "cline",
-			updateCommand: "npm update -g cline --tag nightly",
+			packageName: "@shrinivas-sn/shri",
+			updateCommand: "npm update -g @shrinivas-sn/shri --tag next",
 		});
 	});
 
@@ -127,8 +127,8 @@ describe("getInstallationInfo", () => {
 
 		expect(getInstallationInfo("1.2.3")).toEqual({
 			packageManager: PackageManager.BUN,
-			packageName: "cline",
-			updateCommand: "bun add -g cline@latest",
+			packageName: "@shrinivas-sn/shri",
+			updateCommand: "bun add -g @shrinivas-sn/shri@next",
 		});
 	});
 
@@ -138,12 +138,12 @@ describe("getInstallationInfo", () => {
 
 		expect(getInstallationInfo("1.2.3")).toEqual({
 			packageManager: PackageManager.UNKNOWN,
-			packageName: "cline",
+			packageName: "@shrinivas-sn/shri",
 		});
 	});
 });
 
-describe("auto update settings", () => {
+describe("automatic updates", () => {
 	afterEach(() => {
 		process.argv = [...originalArgv];
 		if (originalBuildEnv === undefined) {
@@ -187,12 +187,7 @@ describe("auto update settings", () => {
 		}
 	});
 
-	it("skips startup auto update when disabled globally", () => {
-		const settingsPath = createTempFile("data/global-settings.json");
-		writeFileSync(settingsPath, JSON.stringify({ autoUpdateEnabled: false }));
-		process.env.CLINE_GLOBAL_SETTINGS_PATH = settingsPath;
-		delete process.env.IS_DEV;
-		delete process.env.CLINE_NO_AUTO_UPDATE;
+	it("never checks the registry on startup", () => {
 		const fetchSpy = vi
 			.spyOn(globalThis, "fetch")
 			.mockRejectedValue(new Error("should not fetch"));
@@ -202,11 +197,7 @@ describe("auto update settings", () => {
 		expect(fetchSpy).not.toHaveBeenCalled();
 	});
 
-	it("still lets manual update checks run when startup auto update is disabled", async () => {
-		const settingsPath = createTempFile("data/global-settings.json");
-		writeFileSync(settingsPath, JSON.stringify({ autoUpdateEnabled: false }));
-		process.env.CLINE_GLOBAL_SETTINGS_PATH = settingsPath;
-		delete process.env.CLINE_NO_AUTO_UPDATE;
+	it("keeps explicit update checks available", async () => {
 		const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
 			ok: true,
 			json: async () => ({ version: "0.0.0" }),
@@ -274,77 +265,12 @@ describe("deferred auto update", () => {
 		expect(mockSpawn).not.toHaveBeenCalled();
 	});
 
-	it("starts the detached install when no hub is discoverable", async () => {
-		const root = mkdtempSync(join(tmpdir(), "cline-update-test-"));
-		tempDirs.push(root);
-		process.env.CLINE_BUILD_ENV = "production";
-		process.env.CLINE_HUB_DISCOVERY_PATH = join(root, "production.json");
-		const unref = vi.fn();
-		mockSpawn.mockReturnValue({ unref } as unknown as ChildProcess);
-
-		const outcome = await applyDeferredUpdate({
-			command: "npm update -g cline --tag latest --min-release-age=0",
-		});
-
-		expect(outcome).toBe("started");
-		expect(mockSpawn).toHaveBeenCalledWith(
-			"npm update -g cline --tag latest --min-release-age=0",
-			expect.objectContaining({
-				detached: true,
-				shell: true,
-				stdio: "ignore",
-			}),
+	it("does not spawn even if a caller supplies a pending install command", async () => {
+		expect(await applyDeferredUpdate({ command: "npm update -g cline" })).toBe(
+			"none",
 		);
-		expect(unref).toHaveBeenCalled();
+		expect(mockSpawn).not.toHaveBeenCalled();
 	});
-
-	it("defers while another cli client is attached to the hub", async () => {
-		const root = mkdtempSync(join(tmpdir(), "cline-update-test-"));
-		tempDirs.push(root);
-		const discoveryPath = join(root, "production.json");
-		process.env.CLINE_BUILD_ENV = "production";
-		process.env.CLINE_HUB_DISCOVERY_PATH = discoveryPath;
-		const {
-			createLocalHubScheduleRuntimeHandlers,
-			NodeHubClient,
-			startHubWebSocketServer,
-		} = await import("@cline/core");
-		const server = await startHubWebSocketServer({
-			host: "127.0.0.1",
-			port: 0,
-			owner: { ownerId: "update-test", discoveryPath },
-			runtimeHandlers: createLocalHubScheduleRuntimeHandlers(),
-		});
-		const cliClient = new NodeHubClient({
-			url: server.url,
-			authToken: server.authToken,
-			clientType: "cli",
-			displayName: "fake attached cli",
-		});
-		try {
-			await cliClient.command("client.list", {});
-
-			expect(await applyDeferredUpdate({ command: "echo update" })).toBe(
-				"deferred",
-			);
-			expect(mockSpawn).not.toHaveBeenCalled();
-
-			await cliClient.dispose();
-			const unref = vi.fn();
-			mockSpawn.mockReturnValue({ unref } as unknown as ChildProcess);
-			// The hub unregisters the client when its socket closes; poll
-			// briefly rather than assuming the close is processed instantly.
-			let outcome = "deferred";
-			const deadline = Date.now() + 3_000;
-			while (outcome === "deferred" && Date.now() < deadline) {
-				outcome = await applyDeferredUpdate({ command: "echo update" });
-			}
-			expect(outcome).toBe("started");
-		} finally {
-			await cliClient.dispose().catch(() => undefined);
-			await server.close();
-		}
-	}, 15_000);
 });
 
 describe("withMinimumReleaseAgeBypass", () => {

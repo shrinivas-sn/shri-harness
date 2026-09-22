@@ -1,18 +1,20 @@
 import { Readable, Writable } from "node:stream";
 import { registerClineClientIdentity } from "../utils/cline-client-identity";
 import { writeDiagnostic } from "../utils/output";
+import { initShriEnvironment } from "../shri/auth/shri-dir";
 
 export interface AcpModeOptions {
 	autoApproveTools?: boolean;
 }
 
 export async function runAcpMode(options?: AcpModeOptions): Promise<void> {
+	initShriEnvironment();
 	const { AgentSideConnection, ndJsonStream } = await import(
 		"@agentclientprotocol/sdk"
 	);
 	const { AcpAgent } = await import("./acpAgent");
 
-	registerClineClientIdentity("cline-acp");
+	registerClineClientIdentity("shri-acp");
 
 	writeDiagnostic("[acp] starting ACP mode over stdio…");
 

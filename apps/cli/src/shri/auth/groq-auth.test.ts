@@ -69,6 +69,14 @@ describe("Groq Auth Management", () => {
 			expect(resolveGroqApiKey(mockManager)).toBe("gsk_stored_key");
 		});
 
+		it("ignores a blank environment override and falls back to persisted settings", () => {
+			process.env.GROQ_API_KEY = "   ";
+			const mockManager = {
+				getProviderSettings: vi.fn().mockReturnValue({ apiKey: "gsk_stored_key" }),
+			} as any;
+			expect(resolveGroqApiKey(mockManager)).toBe("gsk_stored_key");
+		});
+
 		it("returns undefined when no key exists anywhere", () => {
 			const mockManager = {
 				getProviderSettings: vi.fn().mockReturnValue(undefined),
@@ -152,6 +160,90 @@ describe("Groq Auth Management", () => {
 			);
 			expect(writeln).toHaveBeenCalledWith(
 				expect.stringContaining("Groq API key saved"),
+			);
+		});
+
+		it("replaces a saved key only when explicit reconfiguration is requested", async () => {
+			const saveFn = vi.fn();
+			const mockManager = {
+				getProviderSettings: vi.fn().mockReturnValue({
+					provider: "groq",
+					apiKey: "gsk_saved_invalid_key",
+					model: "meta-llama/llama-4-scout-17b-16e-instruct",
+					extraSetting: "preserve-me",
+				}),
+				saveProviderSettings: saveFn,
+			} as any;
+			const promptFn = vi.fn().mockResolvedValue("gsk_replacement_key");
+
+			const key = await ensureGroqApiKey({
+				manager: mockManager,
+				isTTY: true,
+				promptFn,
+				reconfigure: true,
+				io: { writeln: vi.fn(), writeErr: vi.fn() },
+			});
+
+			expect(key).toBe("gsk_replacement_key");
+			expect(promptFn).toHaveBeenCalledOnce();
+			expect(saveFn).toHaveBeenCalledWith(
+				expect.objectContaining({
+					apiKey: "gsk_replacement_key",
+					model: "meta-llama/llama-4-scout-17b-16e-instruct",
+					extraSetting: "preserve-me",
+				}),
+			);
+		});
+
+		it("cancels explicit reconfiguration without changing saved settings", async () => {
+			const saveFn = vi.fn();
+			const mockManager = {
+				getProviderSettings: vi.fn().mockReturnValue({
+					provider: "groq",
+					apiKey: "gsk_saved_key",
+					model: "openai/gpt-oss-120b",
+				}),
+				saveProviderSettings: saveFn,
+			} as any;
+
+			const key = await ensureGroqApiKey({
+				manager: mockManager,
+				isTTY: true,
+				promptFn: vi.fn().mockResolvedValue(undefined),
+				reconfigure: true,
+				io: { writeln: vi.fn(), writeErr: vi.fn() },
+			});
+
+			expect(key).toBeUndefined();
+			expect(saveFn).not.toHaveBeenCalled();
+		});
+
+		it("does not let an environment key silently bypass explicit reconfiguration", async () => {
+			process.env.GROQ_API_KEY = "gsk_environment_override";
+			const writeln = vi.fn();
+			const mockManager = {
+				getProviderSettings: vi.fn().mockReturnValue({
+					provider: "groq",
+					apiKey: "gsk_saved_key",
+				}),
+				saveProviderSettings: vi.fn(),
+			} as any;
+			const promptFn = vi.fn().mockResolvedValue("gsk_replacement_key");
+
+			await ensureGroqApiKey({
+				manager: mockManager,
+				isTTY: true,
+				promptFn,
+				reconfigure: true,
+				io: { writeln, writeErr: vi.fn() },
+			});
+
+			expect(promptFn).toHaveBeenCalledOnce();
+			expect(writeln).toHaveBeenCalledWith(
+				expect.stringContaining("GROQ_API_KEY"),
+			);
+			expect(writeln).not.toHaveBeenCalledWith(
+				expect.stringContaining("gsk_environment_override"),
 			);
 		});
 	});

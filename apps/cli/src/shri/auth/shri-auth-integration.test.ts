@@ -30,19 +30,25 @@ describe("Shri Auth Command Integration", () => {
 		);
 	});
 
-	it("runs interactive groq setup when explicit provider is groq without quick setup flags", async () => {
+	it("uses explicit reconfiguration for bare Groq auth", async () => {
 		const manager = new ProviderSettingsManager();
 		const writeln = vi.fn();
 		const writeErr = vi.fn();
+		const ensureGroqApiKey = vi.fn().mockResolvedValue("gsk_replacement_key");
 
-		// Simulate interactive entry
 		const code = await runAuthCommand({
 			providerSettingsManager: manager,
 			explicitProvider: "groq",
 			io: { writeln, writeErr },
+			ensureGroqApiKey,
 		});
 
-		// If running in test (non-TTY without promptFn), groq setup throws/catches gracefully
-		expect(code).toBeDefined();
+		expect(code).toBe(0);
+		expect(ensureGroqApiKey).toHaveBeenCalledWith(
+			expect.objectContaining({
+			manager,
+			reconfigure: true,
+		}),
+		);
 	});
 });

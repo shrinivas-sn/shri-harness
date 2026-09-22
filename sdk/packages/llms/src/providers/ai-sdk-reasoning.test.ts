@@ -47,6 +47,20 @@ describe("resolvePortableReasoning", () => {
 		).toBe("none");
 	});
 
+	it("omits the unsupported portable disable value for Groq", () => {
+		const groqRequest = {
+			...request({ enabled: false }),
+			providerId: "groq",
+			modelId: "openai/gpt-oss-120b",
+		} as const;
+		expect(
+			resolvePortableReasoning(groqRequest),
+		).toBeUndefined();
+		expect(
+			buildAiSdkStreamConfig(groqRequest, undefined as never),
+		).not.toHaveProperty("reasoning");
+	});
+
 	it("removes conflicting controls from native disable requests", () => {
 		const normalized = withoutPortableReasoning({
 			...request({ enabled: false, effort: "high", budgetTokens: 12_000 }),

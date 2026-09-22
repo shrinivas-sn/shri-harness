@@ -26,6 +26,8 @@ export type ProviderOptionSuppression = {
 };
 
 export type ProviderOptionMatchInput = {
+	/** Intent before generic reasoning normalization removes unsupported controls. */
+	originalRequest: GatewayStreamRequest;
 	request: GatewayStreamRequest;
 	context: GatewayProviderContext;
 	providerOptionsKey: string;

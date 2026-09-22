@@ -51,26 +51,26 @@ export function resolveGroqApiKey(manager?: Pick<ProviderSettingsManager, "getPr
 export function saveGroqApiKey(
 	key: string,
 	manager: Pick<ProviderSettingsManager, "getProviderSettings" | "saveProviderSettings">,
-	model = "openai/gpt-oss-120b",
+	model?: string,
 ): void {
 	const existing = manager.getProviderSettings("groq") ?? { provider: "groq" as ProviderSettings["provider"] };
 	manager.saveProviderSettings({
 		...existing,
 		provider: "groq" as ProviderSettings["provider"],
 		apiKey: key.trim(),
-		model,
+		model: model ?? existing.model ?? "openai/gpt-oss-120b",
 	});
 }
 
 /**
  * Prompts the user for sensitive input in the terminal without echoing raw characters in plain text.
  */
-export async function promptHiddenInputInTerminal(promptText: string): Promise<string> {
+export async function promptHiddenInputInTerminal(promptText: string): Promise<string | undefined> {
 	if (!process.stdin.isTTY || !process.stdout.isTTY) {
 		throw new Error("Interactive input requires a TTY terminal session");
 	}
 
-	return new Promise<string>((resolve) => {
+	return new Promise<string | undefined>((resolve) => {
 		// Custom writable stream that masks input with asterisks
 		let muted = false;
 		const mutableStdout = new Writable({
@@ -99,10 +99,18 @@ export async function promptHiddenInputInTerminal(promptText: string): Promise<s
 		process.stdout.write(promptText);
 		muted = true;
 
-		rl.question("", (answer) => {
+		let settled = false;
+		const finish = (answer: string | undefined) => {
+			if (settled) return;
+			settled = true;
 			muted = false;
 			rl.close();
-			resolve(answer.trim());
+			resolve(answer?.trim());
+		};
+
+		rl.on("SIGINT", () => finish(undefined));
+		rl.question("", (answer) => {
+			finish(answer);
 		});
 	});
 }
@@ -110,19 +118,19 @@ export async function promptHiddenInputInTerminal(promptText: string): Promise<s
 export interface EnsureGroqApiKeyOptions {
 	manager: Pick<ProviderSettingsManager, "getProviderSettings" | "saveProviderSettings">;
 	isTTY?: boolean;
-	promptFn?: () => Promise<string>;
+	promptFn?: () => Promise<string | undefined>;
 	io?: {
 		writeln: (text: string) => void;
 		writeErr: (text: string) => void;
 	};
 	model?: string;
+	/** Explicit `shri auth` reconfiguration must not silently reuse a key. */
+	reconfigure?: boolean;
 }
 
-export async function ensureGroqApiKey(options: EnsureGroqApiKeyOptions): Promise<string> {
+export async function ensureGroqApiKey(options: EnsureGroqApiKeyOptions): Promise<string | undefined> {
 	const existingKey = resolveGroqApiKey(options.manager);
-	if (existingKey) {
-		return existingKey;
-	}
+	if (existingKey && !options.reconfigure) return existingKey;
 
 	const isTTY = options.isTTY ?? (Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY));
 	if (!isTTY && !options.promptFn) {
@@ -136,32 +144,42 @@ export async function ensureGroqApiKey(options: EnsureGroqApiKeyOptions): Promis
 		writeErr: (msg: string) => console.error(msg),
 	};
 
-	io.writeln("\n⚡ Welcome to Shri!");
-	io.writeln("Shri uses Groq Cloud for ultra-fast, free multi-agent inference.");
+	const savedKey = options.manager.getProviderSettings("groq")?.apiKey?.trim();
+	if (options.reconfigure) {
+		if (savedKey) {
+			io.writeln(`Replacing saved Groq API key (${maskApiKey(savedKey)}).`);
+		}
+		if (process.env.GROQ_API_KEY?.trim()) {
+			io.writeln(
+				"GROQ_API_KEY takes precedence during normal startup; this command updates only the saved key.",
+			);
+		}
+	} else {
+		io.writeln("\n⚡ Welcome to Shri!");
+	}
+	io.writeln("Shri uses your configured Groq Cloud API key for inference.");
 	io.writeln("Get your free API key at: https://console.groq.com/keys\n");
-	io.writeln("🔒 Your key is saved locally in ~/.shri/data/settings/providers.json and never sent elsewhere.");
+	io.writeln("🔒 Your key is saved locally in ~/.shri/data/settings/providers.json.");
 
-	let enteredKey = "";
-	while (!enteredKey) {
+	while (true) {
 		const prompt = "Enter your Groq API key (input is hidden): ";
-		enteredKey = options.promptFn
+		const enteredKey = options.promptFn
 			? await options.promptFn()
 			: await promptHiddenInputInTerminal(prompt);
+		if (enteredKey === undefined) return undefined;
 
 		const validation = validateGroqKeyFormat(enteredKey);
 		if (!validation.valid) {
 			io.writeErr(`\n❌ ${validation.error ?? "Invalid key"}. Please try again.\n`);
-			enteredKey = "";
 			continue;
 		}
 
 		if (validation.warning) {
 			io.writeln(`\n⚠️  ${validation.warning}`);
 		}
+
+		saveGroqApiKey(enteredKey, options.manager, options.model);
+		io.writeln(`\n✔ Groq API key saved successfully (${maskApiKey(enteredKey)}). Starting Shri...\n`);
+		return enteredKey;
 	}
-
-	saveGroqApiKey(enteredKey, options.manager, options.model);
-	io.writeln(`\n✔ Groq API key saved successfully (${maskApiKey(enteredKey)}). Starting Shri...\n`);
-
-	return enteredKey;
 }

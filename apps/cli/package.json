@@ -1,8 +1,9 @@
 {
 	"name": "@cline/cli",
-	"displayName": "cline",
-	"version": "3.0.62",
-	"description": "Autonomous coding agent CLI - capable of creating/editing files, running commands, using the browser, and more",
+	"private": true,
+	"displayName": "shri",
+	"version": "0.1.0-next.0",
+	"description": "Shri single-agent terminal preview",
 	"type": "module",
 	"publishConfig": {
 		"access": "public"

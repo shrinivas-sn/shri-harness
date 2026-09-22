@@ -11,6 +11,7 @@ import {
 } from "@cline/core";
 import { Command } from "commander";
 import React from "react";
+import type { EnsureGroqApiKeyOptions } from "../shri/auth/groq-auth";
 import { disableOpenTuiGraphicsProbe } from "../tui/opentui-env";
 import open from "../utils/open";
 import {
@@ -61,6 +62,9 @@ type AuthCommandInput = {
 	modelid?: string;
 	baseurl?: string;
 	azureApiVersion?: string;
+	ensureGroqApiKey?: (
+		options: EnsureGroqApiKeyOptions,
+	) => Promise<string | undefined>;
 };
 
 type ParsedAuthCommandArgs = {
@@ -423,13 +427,20 @@ export async function runAuthCommand(input: AuthCommandInput): Promise<number> {
 		);
 	}
 	if (providerId === "groq") {
-		const { ensureGroqApiKey } = await import("../shri/auth/groq-auth");
+		const ensureGroqApiKey =
+			input.ensureGroqApiKey ??
+			(await import("../shri/auth/groq-auth")).ensureGroqApiKey;
 		try {
-			await ensureGroqApiKey({
+			const key = await ensureGroqApiKey({
 				manager: input.providerSettingsManager,
 				isTTY: Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY),
 				io: input.io,
+				reconfigure: true,
 			});
+			if (!key) {
+				input.io.writeln("Groq API key update cancelled.");
+				return 1;
+			}
 			return 0;
 		} catch (err: unknown) {
 			input.io.writeErr(err instanceof Error ? err.message : String(err));

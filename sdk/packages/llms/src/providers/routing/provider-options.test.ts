@@ -834,6 +834,25 @@ describe("composeAiSdkProviderOptions: family/provider thinking patches", () => 
 			],
 		},
 		{
+			name: "Groq GPT-OSS disabled reasoning hides the reasoning trace",
+			request: {
+				providerId: "groq",
+				modelId: "openai/gpt-oss-120b",
+				reasoning: { enabled: false },
+			},
+			context: {
+				family: "gpt-oss",
+				reasoningOptions: effortOptions(["low", "medium", "high"]),
+			},
+			expect: [
+				{
+					bucket: "groq",
+					has: { include_reasoning: false },
+					lacks: ["reasoningEffort"],
+				},
+			],
+		},
+		{
 			name: "Anthropic default effort uses adaptive thinking without an invalid effort",
 			request: {
 				providerId: "anthropic",
