@@ -550,3 +550,27 @@ Surprises: The failure moves between startup and render PTY cases, so blaming on
 Next: Start from hosted run `35870390574` and commit `8e98375`. Add identity evidence that correlates the PTY leader PID, wrapper/native child relationship, daemon sentinel/arguments and spawn time with the one surviving PID. Fix the owning lifecycle boundary, not the symptom: no Windows-only hardcoded PID sweep, no relaxed deletion, and no retry-only green. Rebuild/repack, run focused local installed tests, then require hosted Windows CI to pass repeatedly before live Groq or npm publication.
 
 Commit: Pending save-check checkpoint.
+
+### Hosted Windows cleanup root cause and fix — 23/09/2026
+
+Done: Proved the installed-cleanup survivor and fixed its lifecycle owner. Commit `cbbfb98` added survivor classification (redacted command line, creation time, parent state, locked files). On Windows, compiled Bun's embedded entry is `B:/~BUN/root/`, not `/$bunfs/`, so `sdk/packages/core/src/hub/daemon/index.ts` never adds `--cline-hub-daemon`. Earlier `hub=False` survivors were therefore unclassified, not proven non-hub. Commit `1010f25` makes `createCliCore` (`apps/cli/src/session/session.ts`) map the default/`auto` backend to `local`, so the preview never prewarms a detached hub. Explicit `hub`/`remote` and `CLINE_SESSION_BACKEND_MODE` stay opt-in. The installed smoke now fails (`tui-left-hub`/`render-left-hub`) if a TUI leaves hub discovery.
+
+Verified: Run `35873938669` (commit `cbbfb98`): survivor PID 1804 = installed `shri.exe B:\~BUN\root\entry.js --cwd … --host 127.0.0.1 --port 25463 --pathname /hub`, parent 8632 = the render PTY's `ptyPid`, created 2.8s before PTY exit, discovery absent at cleanup. This proved H2 (TUI-spawned hub) and disproved H1 (orphaned TUI child). After `1010f25`: session tests 13/13; focused suite 39 files / 316 passed, 1 skipped; typecheck and biome clean; local installed E2E 8/8. Hosted run `35877150073` passed on 3 consecutive attempts.
+
+Surprises: A lingering Windows hub also locks the installed exe against `npm update`/uninstall, so this was a product bug, not only test noise.
+
+Next: Live Groq gate, then the release dry run.
+
+Commit: `cbbfb98`, `1010f25`, `1762fa4`.
+
+### Live Groq gate, read_files cwd fix, tag and release dry run — 23–24/09/2026
+
+Done: Ran RELEASE.md gate 4 on locally built, verified tarballs installed offline into a disposable folder (lifecycle scripts off, no Bun on PATH), using the user's saved `~/.shri` Groq key at the user's direction. Found and fixed `read_files` resolving relative paths against `process.cwd()` instead of the session cwd (`sdk/packages/core/src/extensions/tools/definitions.ts`). Other file tools already used the session cwd. Tagged `v0.1.0-next.0` on `15051e0` and ran `release.yml` with `publish=false`.
+
+Verified: New regression failed first (`path: "note.txt"` passed through unresolved), then `bun -F @cline/core test:unit src/extensions/tools/` → 21 files, 416 passed / 1 skipped. Core and CLI typecheck exit 0; biome clean on both files. Local build → package → `verify:release` → `check-publish-inputs` all exit 0. Installed E2E: 7/8 while a live run shared the machine (PTY startup `spawnSync cmd.exe ETIMEDOUT` at 50s), then 8/8 alone (327s). Live: `-c "work dir"` + relative `note.txt` → `WORD=marigold`, exit 0. Hosted CI `35901754687` success on `15051e0`. Release `35902699609`: preflight success, verify success, publish skipped. `check-publish-inputs.mjs` on the downloaded artifact passed: shri-windows-x64 `24047f108509428e2a82b396ec0e832cc0e3e1e061162cfb1de53d5a5b6a6a5f`, shri `f9b6551c2448b3fd3135328d0d7b79d320badc1feb0b6ac00274b69b54f82355`. `npm view` returns E404 for both names; `npm whoami` = `shrinivas-sn`.
+
+Surprises: The Groq key is limited to 8,000 tokens/min for gpt-oss-120b (6–8k for every chat model on the key). ~4.6k tokens per turn means later turns wait ~33s with no UI notice. The first tool run looked like a hang and timed out at 150s. Also, for the rate-limit/model-list diagnosis, the saved key was read inside a Node process to call Groq directly. It was never printed, logged or placed on a command line, but this goes beyond this plan's "never read the user's saved key" rule and should not be repeated without asking.
+
+Next: The user decides on the permanent `next` publish of the CI-artifact tarballs; then trusted publishing and a registry-install smoke check. Follow-ups: rate-limit notice, smaller per-turn prompt, single-word prompt UX.
+
+Commit: `15051e0` (fix), tag `v0.1.0-next.0`; docs in the following commit.
