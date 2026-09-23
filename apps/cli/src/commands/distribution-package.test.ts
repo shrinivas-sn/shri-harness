@@ -8,7 +8,7 @@ import {
 	writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
@@ -30,35 +30,41 @@ describe("CLI distribution package shape", () => {
 	it("rejects direct source package packing by default", () => {
 		const cliRoot = fileURLToPath(new URL("../..", import.meta.url));
 
-		const result = spawnSync("bun", ["pm", "pack", "--dry-run"], {
-			cwd: cliRoot,
-			encoding: "utf8",
-		});
+		const result = spawnSync(
+			process.platform === "win32" ? "cmd.exe" : "bun",
+			process.platform === "win32"
+				? ["/d", "/s", "/c", "bun.cmd pm pack --dry-run"]
+				: ["pm", "pack", "--dry-run"],
+			{
+				cwd: cliRoot,
+				encoding: "utf8",
+			},
+		);
 
+		expect(result.error).toBeUndefined();
 		expect(result.status).not.toBe(0);
-		expect(result.stderr).toContain(DIRECT_PUBLISH_GUARD_MESSAGE);
+		expect(result.stderr + result.stdout).toContain(
+			DIRECT_PUBLISH_GUARD_MESSAGE,
+		);
 	});
 
 	it("packs the generated npm wrapper package", async () => {
-		const packageDir = await mkdtemp(join(tmpdir(), "cline-cli-pack-"));
+		const packageDir = await mkdtemp(join(tmpdir(), "shri-cli-pack-"));
 		try {
 			await mkdir(join(packageDir, "bin"), { recursive: true });
 			await writeFile(
 				join(packageDir, "package.json"),
 				`${JSON.stringify(
 					{
-						name: "cline",
+						name: "@shrinivas-sn/shri",
 						version: "1.2.3",
 						description: "CLI test package",
 						license: "Apache-2.0",
 						bin: {
-							cline: "./bin/cline",
-						},
-						scripts: {
-							postinstall: "node ./postinstall.mjs || true",
+							shri: "./bin/shri",
 						},
 						optionalDependencies: {
-							"@cline/cli-linux-x64": "1.2.3",
+							"@shrinivas-sn/shri-windows-x64": "1.2.3",
 						},
 					},
 					null,
@@ -66,29 +72,33 @@ describe("CLI distribution package shape", () => {
 				)}\n`,
 			);
 			await writeFile(
-				join(packageDir, "bin", "cline"),
+				join(packageDir, "bin", "shri"),
 				[
 					"#!/usr/bin/env node",
-					'console.log("cline wrapper smoke test");',
+					'console.log("shri wrapper smoke test");',
 					"",
 				].join("\n"),
 			);
-			await chmod(join(packageDir, "bin", "cline"), 0o755);
-			await writeFile(
-				join(packageDir, "postinstall.mjs"),
-				"process.exit(0);\n",
+			await chmod(join(packageDir, "bin", "shri"), 0o755);
+
+			const result = spawnSync(
+				process.platform === "win32" ? "cmd.exe" : "npm",
+				process.platform === "win32"
+					? ["/d", "/s", "/c", "npm.cmd pack --offline --ignore-scripts --json"]
+					: ["pack", "--offline", "--ignore-scripts", "--json"],
+				{ cwd: packageDir, encoding: "utf8" },
 			);
 
-			const result = spawnSync("bun", ["pm", "pack"], {
-				cwd: packageDir,
-				encoding: "utf8",
-			});
-
+			expect(result.error).toBeUndefined();
 			expect(result.status).toBe(0);
 			const files = await readdir(packageDir);
-			expect(files.some((file) => file.endsWith(".tgz"))).toBe(true);
+			expect(files).toContain("shrinivas-sn-shri-1.2.3.tgz");
 		} finally {
-			await rm(packageDir, { recursive: true, force: true });
+			if (
+				resolve(dirname(packageDir)) === resolve(tmpdir()) &&
+				basename(packageDir).startsWith("shri-cli-pack-")
+			)
+				await rm(packageDir, { recursive: true, force: true });
 		}
 	});
 });

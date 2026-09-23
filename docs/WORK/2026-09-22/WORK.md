@@ -145,3 +145,59 @@ Surprises: A generic OTEL variable-name string remains in bundled third-party ru
 Next: Execute Task 3's local-only Shri package generator and Node launcher. Do not publish or configure a remote without explicit approval.
 
 Commit: Not committed.
+
+## Task 3 completion — local Windows package gate — 23/09/2026
+
+Done: Connected the scoped Shri package generator to `package:release`, restricted planned targets to Windows x64, Linux x64, and macOS arm64, and generated only the explicitly requested Windows package from Task 2's artifact. The Node launcher now resolves locally linked installs, validates matching platform package versions, forwards stdio/arguments/status, and uses a Shri-owned CA bundle. Generated folders contain the executable, plugin bootstrap, CA helper, README, LICENSE, and NOTICE. Source package publish scripts inherited from Cline were disconnected; the direct source-package guard remains.
+
+Verified: Focused launcher/generator/CA tests passed 3 files / 45 tests (2 Windows host skips); CLI typecheck, targeted Biome, Node syntax check, and diff check passed. `bun run package:release --target windows-x64` succeeded. Offline `npm install --ignore-scripts` into an isolated local consumer added both generated folders; the wrapper printed `0.1.0-next.0` with empty `PATH` and no `SHRI_BIN_PATH`, and wrote its CA bundle only in Shri state. This is local folder-install evidence, not packed tarball or native cross-platform acceptance.
+
+Surprises: Local npm junctions exposed a `realpathSync` lookup bug; the failing regression is now covered. The emitted plugin sandbox bootstrap still imports host SDK modules; third-party plugins are not advertised. The inherited distribution-packaging test's nested Bun subprocess failed to start in this host runner; Task 4 must evaluate real tarballs independently. POSIX signal and executable-mode cases remain native Task 5 proof.
+
+Next: Run Task 4 tarball inventory and canary scan; keep publication gated on later installed-platform checks and explicit approval.
+
+Commit: Not committed.
+
+Verified (same-session follow-up): Final focused suite passed 3 files / 46 tests, with 2 Windows host skips; typecheck, targeted Biome and diff check exited 0. A sibling-over-stale-nested resolution regression failed then passed. Regenerated Windows folders launched from the offline local consumer with empty `PATH`, no binary override, and Shri-only CA state. The test's shared temp fixture was inspected, removed by exact path, and replaced with a fixture under its own disposable directory.
+
+### Task 4 — Actual npm tarballs and credential exclusion — 23/09/2026
+
+Done: Added a local-only verifier for the generated wrapper and Windows x64 platform package. It invokes offline `npm pack --json --ignore-scripts`, validates tar entry checksums/paths/types, extracts into a disposable directory, and checks exact file inventory, safe manifests, attribution, credential patterns, embedded worker/native markers, source equality, build-artifact equality, and patched dependency source inputs. Added `verify:release` and fixed both generated `files` lists to include NOTICE. The report records package/version/target, inventory sizes and SHA-256, tarball size/hash and check outcomes without secrets.
+
+Verified: 17 new verifier fixtures passed, including failure IDs for missing binary/worker/native/bootstrap, version/dependency skew, forbidden paths and a synthetic key in text and binary. The combined focused suite passed 4 files / 63 tests, 2 Windows host skips; CLI typecheck and targeted Biome exited 0. The initial real wrapper pack failed because npm omitted NOTICE; regenerated folders and actual tarballs passed `bun run verify:release`. A fresh host Windows build with synthetic `GROQ_API_KEY` and a disposable config holding the same canary exited 0. Captured build output (24 lines), all three built artifact files, extracted tar contents and the report had zero canary hits; the disposable config contained it and was removed afterward. Final local tarballs: wrapper 10,117 bytes, SHA-256 `c2bde4b62372b07335fca1dfe9611e0938d3360058085fed4a3197ec3c258731`; Windows x64 44,781,099 bytes, SHA-256 `b8e6ee8939801df292b669e69f85fb32aed8897ebb60945ae95ecb8b762327c5`. Both contain six required files, including NOTICE. The report is `apps/cli/dist/npm/verification-report.json`.
+
+Surprises: Bun's Windows spawn needs `npm.cmd`, not bare `npm`. A private-key header alone exists in third-party compiled code; complete PEM blocks are checked to avoid a false positive. The exact compiled executable and plugin bootstrap match the packed bytes, and local patched dependency sources are present. This is packaging/provenance evidence, not native installed TUI proof or an exhaustive historical Git credential audit. Only the explicitly generated Windows target was packed; Linux/macOS remain pending. No registry request, live key or publication occurred.
+
+Next: Task 5 isolated installation and native interaction using these tarballs; then Linux x64/glibc and macOS arm64 native checks. Keep live Groq and publication gates separate.
+
+Commit: Not committed.
+
+Verified (same-session follow-up): Tar path validation now rejects Windows alternate data streams, reserved device names and paths outside the `package/` root before extraction. The final focused run passed 4 files / 66 tests with 2 Windows skips; typecheck, targeted Biome and real-tarball `bun run verify:release` passed. The report's tarball hashes remained unchanged.
+
+## Task 5 Windows installed model-catalog checkpoint — 23/09/2026
+
+Done: The installed native `/model` PTY now serves a controlled Groq catalog from loopback, with a tool-capable chat entry missing optional metadata and an audio-to-text transcription entry. The picker respects the saved `modelCatalog.url`. It visibly lists the sparse chat entry, excludes transcription, and retains the previous select/cancel/reopen checks. This is a fixture, not live Groq inference.
+
+Verified: The fixture test failed on the absent chat entry before the picker change; that initial fixture also lacked required `tool_call` eligibility, so the red result was not solely attributable to the picker. After correcting it, a fresh Windows build, release package generation, two-tarball verification, and `smoke:installed --model-pty` passed. Full installed Windows E2E passed 6/6 in 126.60s; focused source unit run reported 2 files / 9 tests; CLI typecheck, targeted Biome, and diff check exited 0. The test observed a loopback catalog request but does not prove the absence of other outbound catalog requests.
+
+Next: Installed parser/syntax highlighting and deeper session/daemon state isolation on Windows, then native Linux/macOS and a separate user-key live Groq check. No publication.
+
+## Task 5 Windows hub-status and rendered-code checkpoint — 23/09/2026
+
+Done: Added a fake valid-looking Cline hub discovery record inside the disposable legacy directory, then checked the installed `hub status` ignored its marker and left the record unchanged. A separate installed native PTY consumed a loopback streamed reply with a TypeScript fenced code block; the terminal displayed the code with different keyword and number foreground colors and shut down cleanly. The test reported only booleans, not terminal content or credentials.
+
+Verified: New E2E assertions failed before their harness implementation, then focused status and render tests passed. The final Windows installed-release E2E suite passed 7/7 in 164.40s; CLI typecheck and targeted Biome exited 0. The prior two-tarball verifier result remains the artifact gate; no production binary changed in this checkpoint.
+
+Limits: This is behavioral syntax-highlighted rendering, not direct worker-thread observation. `hub status` is discovery isolation, not actual daemon spawn/stop or child state proof. Those, native Linux/macOS, live Groq with a user-supplied key, and publication remain pending.
+
+## Task 5 Windows daemon and session-store checkpoint — 23/09/2026
+
+Done: The installed Windows native binary now has a bounded daemon test: start on ephemeral loopback, verify fresh Shri-owned discovery/log and running PID, stop in `finally`, confirm process/discovery removal, and preserve the fake Cline record. The installed provider fixture confirms its persisted `sessions.db` is in Shri state and absent from fake Cline state while history survives process restart.
+
+Verified: The new assertions failed before harness checks were implemented. The final full installed E2E suite passed 8/8 in 184.00s; CLI typecheck, targeted Biome and diff check exited 0. A post-run process check found no `shri` process. The earlier verified Windows tarballs were reused; application source/binary did not change during this checkpoint.
+
+Limits: Native Linux/macOS, direct worker-thread observation, third-party plugin execution and user-key live Groq are not proven. The broad CLI unit suite remains failed/incomplete as recorded in `STATUS.md`. No publication.
+
+## Focused packaging-test repair — 23/09/2026
+
+The earlier two `distribution-package.test.ts` failures were caused by Windows `spawnSync("bun")` returning `EPERM` before packaging ran. A direct `bun.cmd pm pack --dry-run` proved the Shri source prepack guard rejects direct packing. The test now uses Windows command shims and an offline Shri-shaped npm wrapper fixture. Its focused run passed 3/3; the broad unit suite was not rerun, so its stall remains unverified. No artifact or production runtime changed.

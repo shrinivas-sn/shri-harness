@@ -31,7 +31,7 @@
 | R9 | `/model` opens, searches, selects, cancels and reopens without a renderer crash | 0, 5 |
 
 - Initial version: `0.1.0-next.0`, npm tag `next`. Intended commands: `npm install -g @shrinivas-sn/shri@next`, `shri auth`, `shri -i`, and `shri "<prompt>"`. Do not promote to `latest` in this plan.
-- Build Windows x64 first. Planned release support: Windows x64, Linux x64/glibc, macOS arm64. Each requires native installed testing. Windows arm64, macOS x64, Linux arm64 and musl are deferred. If a planned target cannot pass, resolve it or obtain acceptance of a smaller release set before publication.
+- First preview support is Windows x64 only. Linux x64/glibc and macOS arm64 remain future targets in the platform model, but are not advertised or published until each passes native installed testing. Windows arm64, macOS x64, Linux arm64 and musl remain deferred. The launcher must derive advertised targets from the generated wrapper manifest, not a Windows-only source constant.
 - Default configuration is `~/.shri`; preserve `--config` and `SHRI_DIR` overrides and verify daemon/child behavior as well as the parent.
 - Users supply their own runtime Groq keys. Provider requests necessarily send authentication and prompt/context to the configured provider; do not describe inference as local.
 - Build and release jobs receive no real Groq keys. Use a synthetic canary for credential tests. Never read the user's saved key to populate a test, shell command, log, report or scan pattern.
@@ -176,17 +176,17 @@ Wrapper manifest contract (generator adds exact-version platform optional depend
 
 The Windows platform package is `@shrinivas-sn/shri-windows-x64`, with `os: ["win32"]`, `cpu: ["x64"]`, and `bin/shri.exe`. Linux/macOS equivalents contain `bin/shri`. All versions must match the wrapper exactly. Include README, license and notices in actual generated package contents.
 
-- [ ] Test launcher platform selection, spaces/non-ASCII paths, argv forwarding, terminal I/O, exit status, signals, missing platform package and unsupported architecture. Use a controlled child fixture that exits 7; assert the launcher also exits 7.
-- [ ] Implement `shri.cjs` with Node APIs only. Resolve installed platform files without repository paths. Forward Shri wrapper identity and configuration. Preserve corporate CA handling without touching Cline state.
-- [ ] Omit inherited postinstall entirely; resolve binaries at launch. Installations with lifecycle scripts disabled must work and must not move Cline discovery files.
-- [ ] Generate scoped public manifests and reject `workspace:*` dependencies or inherited upstream SDK dependencies. Keep internal source names private.
-- [ ] Audit `sdk/packages/core/src/extensions/plugin/plugin-module-import.ts`. Supported built-in functionality must use packaged local code. If supported plugin loading needs unbundled host SDK files, include locally built support files/dependencies and test their resolution. Do not silently fall back to upstream packages. Do not advertise plugin support without an installed test.
-- [ ] Keep the direct-publish guard; update its guidance to generated Shri artifacts. Publisher dry runs must never write to the registry.
+- [x] Test launcher platform selection, spaces/non-ASCII paths, argv forwarding, terminal I/O, exit status, signals, missing platform package and unsupported architecture. Use a controlled child fixture that exits 7; assert the launcher also exits 7. The POSIX signal case is host-skipped on Windows and remains native Task 5 evidence.
+- [x] Implement `shri.cjs` with Node APIs only. Resolve installed platform files without repository paths. Forward Shri wrapper identity and configuration. Preserve corporate CA handling without touching Cline state.
+- [x] Omit inherited postinstall entirely; resolve binaries at launch. Installations with lifecycle scripts disabled must work and must not move Cline discovery files.
+- [x] Generate scoped public manifests and reject `workspace:*` dependencies or inherited upstream SDK dependencies. Keep internal source names private.
+- [x] Audit `sdk/packages/core/src/extensions/plugin/plugin-module-import.ts`. Supported built-in functionality must use packaged local code. If supported plugin loading needs unbundled host SDK files, include locally built support files/dependencies and test their resolution. Do not silently fall back to upstream packages. Do not advertise plugin support without an installed test. Plugin loading is not advertised; its installed support remains unverified.
+- [x] Keep the direct-publish guard; update its guidance to generated Shri artifacts. Publisher dry runs must never write to the registry. The inherited publish scripts are disconnected until Task 6 supplies verified Shri publication.
 
 ```powershell
 bun -F @cline/cli test:unit src/commands/bin-wrapper.test.ts src/commands/package-release.test.ts
 # New script after implementation, from apps/cli:
-bun run package:release
+bun run package:release --target windows-x64
 ```
 
 **Gate:** All public identity/launch paths target Shri; no workspace dependency escapes; launcher works without postinstall or Bun on PATH.
@@ -197,12 +197,12 @@ bun run package:release
 
 **Interface:** Pack each explicitly generated package with lifecycle scripts disabled. Extract the actual tarballs safely into a disposable directory. Produce a report with package/version, target, inventory, size, SHA-256, and check outcomes; never include secrets.
 
-- [ ] Add failing fixtures for missing executable/worker/native/bootstrap files, mismatched versions, `workspace:*`, forbidden config files, and a synthetic key embedded in both text and binary bytes. Assert failure by check identifier without echoing matched secrets.
-- [ ] Run `npm pack --json --ignore-scripts` in each generated directory. Validate extracted paths against traversal. Inspect the resulting files, not just the manifest allowlist or dry-run output.
-- [ ] Compare contents to Task 2's asset inventory and verify locally patched code survives packaging. Consumers must not need the root Bun patch configuration.
-- [ ] Build with only the synthetic `GROQ_API_KEY=gsk_SHRI_RELEASE_TEST_CANARY_DO_NOT_USE` and a disposable config holding that same canary. Scan executable bytes, tarball contents, assets, sourcemaps, build logs and reports for it. Never use the actual user's key.
-- [ ] Scan release inputs for credential patterns and prohibited paths. Narrowly identify synthetic test fixtures; do not exempt every `gsk_` match. Record that this check covers release inputs/outputs, not an exhaustive historical Git audit.
-- [ ] Verify licensing/attribution and README inclusion. Reject home directories, sessions, VCR recordings and unrelated repository files.
+- [x] Add failing fixtures for missing executable/worker/native/bootstrap files, mismatched versions, `workspace:*`, forbidden config files, and a synthetic key embedded in both text and binary bytes. Assert failure by check identifier without echoing matched secrets.
+- [x] Run `npm pack --json --ignore-scripts` in each generated directory. Validate extracted paths against traversal. Inspect the resulting files, not just the manifest allowlist or dry-run output.
+- [x] Compare contents to Task 2's asset inventory and verify locally patched code survives packaging. Consumers must not need the root Bun patch configuration.
+- [x] Build with only the synthetic `GROQ_API_KEY=gsk_SHRI_RELEASE_TEST_CANARY_DO_NOT_USE` and a disposable config holding that same canary. Scan executable bytes, tarball contents, assets, sourcemaps, build logs and reports for it. Never use the actual user's key.
+- [x] Scan release inputs for credential patterns and prohibited paths. Narrowly identify synthetic test fixtures; do not exempt every `gsk_` match. Record that this check covers release inputs/outputs, not an exhaustive historical Git audit.
+- [x] Verify licensing/attribution and README inclusion. Reject home directories, sessions, VCR recordings and unrelated repository files.
 
 ```powershell
 bun -F @cline/cli test:unit src/commands/release-artifacts.test.ts
@@ -233,18 +233,18 @@ bun run verify:release
 bun run smoke:installed
 ```
 
-**Gate:** Windows first; repeat on Linux x64/glibc and macOS arm64. Cross-compilation is not native execution evidence. Live Groq verification has its own result.
+**Gate:** The first preview requires full native Windows x64 installed-artifact proof and a separate live Groq result. Linux x64/glibc and macOS arm64 native proof is required before those targets are added later; cross-compilation is not native execution evidence.
 
 ### Task 6 — Automate releases and document the preview
 
-**Create:** `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `.changeset/config.json`, `DOCS/RELEASE.md`. Modify scripts, `apps/cli/README.md`, `DOCS/STATUS.md`, `DOCS/README.md` as needed.
+**Create:** `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `DOCS/RELEASE.md`. Modify scripts, `apps/cli/README.md`, `DOCS/STATUS.md`, `DOCS/README.md` as needed.
 
 - [ ] Confirm the destination GitHub repository before remote creation or publication metadata. Local work can continue without it; remote setup/provenance cannot. Do not invent ownership, URL or an existing remote.
-- [ ] Recheck verify-claims' Changesets/OIDC workflow and current official npm requirements. Reuse the release conventions, not its small-library build commands. Keep Bun's lockfile; do not add npm lockfiles just to imitate the other repo.
-- [ ] Add native build/test jobs for all planned targets. Select runner labels by verified runner architecture; never assume `macos-latest` architecture. Pin Bun and use frozen-lockfile installs.
+- [ ] Recheck verify-claims' release/OIDC workflow and current official npm requirements. Reuse applicable release conventions, not its small-library build commands. Keep Bun's lockfile; do not add npm lockfiles just to imitate the other repo.
+- [ ] Add a native Windows x64 build/test job for the first preview. Keep the target matrix extensible for later Linux x64/glibc and macOS arm64 jobs, which require their own verified runner architecture and native gates before advertisement. Pin Bun and use frozen-lockfile installs.
 - [ ] Separate artifact generation/testing from publication. Require every target job and package check to pass on the exact commit/version. Publish the tested tarballs after comparing their recorded hashes; do not rebuild them in the publish job.
-- [ ] Configure Changesets to version only the release source (including its intentionally private source package if required). Generate wrapper/platform versions from that single value. Do not publish unrelated SDK workspaces. Validate the versioning flow locally before trusting CI.
-- [ ] Retain prerelease mode and tag `next`. Publisher rejects unapproved names, missing planned targets, skewed versions, different artifact hashes, and accidental `latest` promotion.
+- [ ] For the first preview, use the private CLI source package's exact prerelease version and matching `v<version>` Git tag as the single version source. Generate wrapper/platform versions from it; never publish unrelated SDK workspaces. Defer Changesets until multiple independently versioned release packages actually need it.
+- [ ] Retain prerelease mode and tag `next`. Publisher rejects unapproved names, missing advertised targets, skewed versions, different artifact hashes, and accidental `latest` promotion. For this preview the advertised target set is exactly Windows x64; future targets come from tested release configuration, not hardcoded platform branching.
 - [ ] Restrict `id-token: write` to publishing. Use a pinned compatible release npm version after verifying requirements: official docs currently require npm >=11.5.1 and Node >=22.14.0; the preview's Node floor is >=22.15.0. No real Groq key in CI.
 - [ ] Document install, supported targets, own-key onboarding, local configuration, provider data transmission, update/uninstall, preview limitations and deferred orchestration. Use measured package sizes.
 
@@ -254,14 +254,14 @@ bun run smoke:installed
 
 **Update:** Release report, `DOCS/RELEASE.md`, `DOCS/STATUS.md`, current `DOCS/WORK/` record, and this plan's Progress Log.
 
-- [ ] Present package names/versions/targets, inventory, sizes, hashes, test results, credential exclusion evidence and limitations. Obtain explicit publication authorization at this final step; this session authorizes plan edits, not public publication.
+- [ ] Present package names/versions/targets, inventory, sizes, hashes, test results, credential exclusion evidence and limitations. The user authorized creating/pushing a public GitHub repository and publishing the Windows preview on 23/09/2026. Do not publish if account access, license/security review, live Groq proof, CI or registry verification is missing; reconfirm if the release scope or package identity changes.
 - [ ] Verify npm account/scope interactively without displaying tokens. Check current first-publish/trusted-publisher bootstrap support. Configure trust for every generated package. Never put npm credentials in the repository or workflow YAML.
 - [ ] Publish platform tarballs first using `--access public --tag next`, confirm registry versions/integrities, then publish the wrapper. On retry, skip an existing matching version and reject different content at that version.
-- [ ] On each supported target, install `@shrinivas-sn/shri@next` from npm into a fresh prefix and repeat installed smoke checks. Verify `npx @shrinivas-sn/shri@next --help` without Bun or this checkout.
+- [ ] On Windows x64, install `@shrinivas-sn/shri@next` from npm into a fresh prefix and repeat installed smoke checks. Verify `npx @shrinivas-sn/shri@next --help` without Bun or this checkout. Repeat the same gate before enabling any later target.
 - [ ] If installation fails, stop promotion and prepare a corrected prerelease. Do not overwrite published versions or treat unpublish as the default rollback.
 - [ ] Record actual published URLs/versions/hashes and command outputs. Preserve deferred platforms and real multi-agent work. Archive durable reasoning/evidence before retiring this live plan.
 
-**Gate:** Explicit publication authorization and actual registry-installation proof. No stable/latest release is authorized here.
+**Gate:** Existing explicit Windows-preview publication authorization, all release blockers cleared, and actual Windows registry-installation proof. No stable/latest or Linux/macOS release is authorized here.
 
 ## Decisions
 
@@ -275,6 +275,8 @@ bun run smoke:installed
 - 22/09/2026: No subagents in planning, implementation or review. Model preference does not establish availability or select the execution model.
 - 22/09/2026: Add Task 0 before packaging for the user-reported `/model` crash and extend installed acceptance coverage. Leading hypothesis is a zero token-limit child plus unfiltered transcription catalog entries; actual renderer/interactive reproduction remains required. Do not label the bug fixed during planning.
 - 22/09/2026: Final static review retains the single-agent preview sequence and adds explicit saved-key recovery and startup key-precedence regressions to Tasks 1 and 5. User selected GPT-5.6 Terra / high for implementation and requested this documentation checkpoint. No implementation has started; source review is not runtime proof.
+- 23/09/2026: User narrowed the first production-grade preview to Windows x64, authorized a public GitHub repository/push and npm publication, and required the code to remain extensible to Linux/macOS. Defer those native gates and platform packages until separately proven. Existing security, CI, live-provider and registry-install gates remain in force; this is not permission to publish an unverified artifact.
+- 23/09/2026: User selected `shrinivas-sn/shri-harness`; the empty public repository exists. For the first preview, exact source prerelease version plus matching Git tag drives all generated package versions. Defer Changesets to avoid a second version source; this means the next prerelease increment remains a deliberate manual step.
 
 ## Sources
 
@@ -398,3 +400,141 @@ Surprises: A task-owned PowerShell PTY launched `bun run shri` with an isolated 
 Next: Obtain manual Windows-terminal evidence without sharing a key: start `bun run shri` with Groq and `openai/gpt-oss-120b`, open `/model`, search/select a chat model, reopen and Escape to cancel, reopen once more, search `whisper` to confirm no transcription choice, then exit. Record only model names, visible outcomes and errors. After that evidence, complete Task 0's remaining command-flow coverage before Task 1.
 
 Commit: Not committed.
+
+### Task 3 — Local Shri packages and Node launcher — 23/09/2026
+
+Done: Wired `package:release` and generated local-only `@shrinivas-sn/shri` and Windows x64 platform folders from an explicit Task 2 artifact. Restricted planned targets to Windows x64, Linux x64, and macOS arm64; each generated wrapper lists only targets actually supplied. Included the Node launcher, Shri-scoped CA helper, README, LICENSE, NOTICE, executable and plugin bootstrap. The launcher resolves normal and locally linked installs, validates platform package name/version, forwards arguments and stdio, preserves exit status and wrapper identity, and keeps CA state under Shri rather than inherited Cline storage. Removed inherited npm publish scripts from the source package while retaining its direct-publish guard. Audited `plugin-module-import.ts` and the emitted sandbox bootstrap: third-party plugins are not advertised because the bootstrap still has host SDK imports that need installed verification.
+
+Verified: The focused host command `bun run test:unit src/commands/bin-wrapper.test.ts src/commands/package-release.test.ts src/bin/ca-certs.test.ts` passed 3 files / 45 tests, with 2 platform-specific tests skipped on Windows; each new behavior had a targeted failing test before its fix. `bun run typecheck` exited 0. Targeted `bun biome check --diagnostic-level=error`, `node --check apps/cli/bin/shri.cjs`, and `git -c core.safecrlf=false diff --check` exited 0. `bun run package:release --target windows-x64` generated real local folders. An offline `npm install --ignore-scripts` of both folders into an isolated local consumer added 2 packages; with empty `PATH`, no `SHRI_BIN_PATH`, and isolated `SHRI_DIR`, its Node launcher printed `0.1.0-next.0` and exited 0. The Shri CA bundle appeared under that state directory; the inherited Cline state directory was absent. No registry publish or live-key test occurred.
+
+Surprises: The first offline local install failed because `realpathSync(__filename)` followed npm's local Windows junction out of `node_modules`, making the optional platform package invisible. A linked-install regression failed before the logical-install-path fallback fixed it. Windows reports no executable mode change after `chmod`, so the POSIX mode assertion is skipped here and remains a native platform check. A broader inherited `distribution-package.test.ts` run had 2 failures because its nested Bun pack subprocess could not start; it is not Task 3's focused suite or tarball acceptance. The legacy publisher source remains in the repository but has no source package script; Task 6 must replace it before publication.
+
+Next: Task 4: pack and inspect actual tarballs, including binary assets and synthetic credential canary. Task 5 must repeat installed behavior on each advertised native platform, including POSIX signals and any plugin support before claiming it. Confirm destination GitHub repository before Task 6; publication still requires final explicit approval.
+
+Commit: Not committed.
+
+Verified (same-session follow-up): A stale nested optional package could take precedence over a matching installed sibling. Its regression failed with `missing`, then passed after checking the sibling first and validating package name/version. The final focused suite passed 3 files / 46 tests with 2 Windows host skips; typecheck, targeted Biome and diff check exited 0. The regenerated Windows folder again launched through the offline local consumer with empty `PATH` and no binary override, printing `0.1.0-next.0`; only Shri state contained the CA bundle. A test fixture accidentally created `C:\Users\Dell\AppData\Local\Temp\shri-windows-x64`; its three synthetic entries were inspected and the exact folder was removed after path/content validation. The regression now creates its sibling inside a dedicated disposable temp directory.
+
+### Task 4 — Real tarball verification — 23/09/2026
+
+Done: Added `verify:release` to pack every target named by the generated wrapper with npm lifecycle scripts disabled and offline. It validates tar checksums and entry paths/types before extracting to a scoped disposable directory, then checks exact inventory, manifest names/versions/dependencies, credential patterns, executable/embedded worker/native markers, bootstrap, attribution and source/build artifact byte equality. The local patched dependency sources are checked before report emission. Fixed the generator's `files` lists so npm actually includes NOTICE in both tarballs. Produced a no-secret local report with package names, targets, sizes, SHA-256 hashes, file inventories and check outcomes. Only the explicitly generated Windows x64 platform and wrapper are in scope; Linux/macOS packages remain for native builds and Task 5.
+
+Verified: A missing-verifier regression failed first. The fixture suite then passed 17 cases; the combined Task 3/4 focused suite passed 4 files / 63 tests with 2 Windows host skips. `bun run typecheck` and targeted Biome checks exited 0. A real first pack failed `inventory`, `attribution` and `source-equality` because NOTICE was omitted; after the manifest fix, `bun run package:release --target windows-x64` and `bun run verify:release` succeeded. A fresh Windows build with only a synthetic Groq canary and disposable Shri config exited 0; the captured 24 build-log lines and all three built artifact files had zero canary matches, while the config held the canary. Regenerated wrapper and Windows tarballs passed all checks, including report canary exclusion. The final report is `apps/cli/dist/npm/verification-report.json` and both `.tgz` files are local-only. The synthetic config file and its empty directories were removed after verification.
+
+Surprises: Bun on Windows could not spawn `npm` by bare name, so the verifier uses `npm.cmd` there. npm did not automatically include NOTICE despite it existing in the package folders. A private-key header pattern matched third-party runtime code in the compiled executable; the scan now requires a complete PEM private-key block, while retaining narrow Groq/OpenAI/GitHub/AWS credential patterns. Embedded worker/native markers and artifact byte equality are packaging evidence, not installed TUI execution proof. The scan covers current release inputs/outputs, not historical Git.
+
+Next: Task 5 must install these actual tarballs in an isolated prefix and exercise native Windows use; repeat on Linux x64/glibc and macOS arm64 before advertising those targets. Live Groq interaction still needs user-entered local key outside build/CI. No publication without final approval.
+
+Commit: Not committed.
+
+Verified (same-session follow-up): Hardened tar entry validation for Windows alternate data streams, reserved device names and paths outside `package/`, with three added failing-path fixtures. Final focused suite passed 4 files / 66 tests with 2 Windows skips; CLI typecheck, targeted Biome and the final `bun run verify:release` passed. The generated tarball hashes in the report were unchanged.
+
+### Task 5 — Windows installed-tarball checkpoint — 23/09/2026
+
+Done: Added a local-only installed smoke runner and Windows E2E harness. It consumes Task 4's hashed tarballs/report, installs the wrapper and matching platform package into a disposable npm prefix offline with scripts disabled, and launches the actual npm shim and local npx from an unrelated path containing spaces and a non-ASCII character. The child environment has a fresh home/Shri directory, no Bun on PATH, and a fake inherited `.cline` sentinel. The runner checks version/help, missing-key non-TTY failure, optional-package absence and unsupported target diagnostics. A Node-backed real PTY launches the installed wrapper, observes the prompt and exits via Ctrl+C. No publication or real key use occurred.
+
+Verified: The initial missing-script and optional-package assertions failed before implementation. The first Windows E2E run passed 2 tests (headless and PTY) after fixing Windows npm invocation and local npx argument parsing. A later unsupported-target assertion exposed an unhandled Bun stack trace; the focused regression failed before the diagnostic was moved into the CLI error handler. `bun run typecheck` exited 0. Final post-change E2E and formatting checks are pending at this log point.
+
+Surprises: The installed `tuistory` Bun PTY backend crashed Bun 1.3.14 on Windows, whereas its Node/zigpty backend drove the same installed executable successfully. The one crash-left disposable prefix was inspected and removed by exact validated path; unrelated running processes were left alone. Groq's installed model refresh has no existing CLI seam for a local catalog fixture, so source-only selector tests cannot be counted as installed `/model` proof.
+
+Next: Complete final Windows E2E verification, then add a controlled local provider/model-catalog fixture and installed `/model`/auth/streaming/state checks. Keep Task 5 open. Native Linux x64/glibc and macOS arm64 execution and a separate user-key live Groq test remain pending; do not advertise or publish those targets before their gates pass.
+
+Commit: Not committed.
+
+Verified (same-session follow-up): The final host `bun run test:e2e src/commands/installed-release.e2e.test.ts` passed 1 file / 3 tests in 53.48s, including the unsupported-target diagnostic, offline npm shim/npx install and Node-backed PTY startup/Ctrl+C shutdown. `bun run typecheck` exited 0. Targeted Biome checked 4 source/JSON files with no fixes, and `git -c core.safecrlf=false diff --check` exited 0. These are Windows installed-package checks only; Task 5 remains open.
+
+Verified (same-session follow-up): Extended the disposable Windows install with synthetic saved-key quick setup and a separate real-PTY replacement/cancellation check. Both new assertions failed before implementation. The focused auth-PTY test then passed, and the full host `bun run test:e2e src/commands/installed-release.e2e.test.ts` passed 1 file / 4 tests in 67.25s. `bun run typecheck` exited 0. The helper emits only boolean outcomes, checks replacement input is absent from the PTY screen, and confirms cancellation preserved the replacement key on disk. This is not CLI/environment/saved-key precedence or live Groq proof.
+
+Verified (same-session follow-up): Added an isolated loopback Groq-compatible provider fixture to the Windows installed runner. The missing `--provider-fixture`, file-read, and harmless-command assertions each failed before implementation. The installed native binary then made real streamed HTTP requests to `127.0.0.1`; the fixture compared authorization headers for saved-only, environment-over-saved, and CLI-over-environment keys without emitting values, while each run kept the saved key unchanged. A tool-call stream read a disposable file and returned its marker in the next request; another ran only a fixed local Node print command and returned its marker. The full host installed E2E suite passed 1 file / 5 tests in 140.64s, CLI typecheck exited 0, targeted Biome checked 5 files without fixes, and diff whitespace check exited 0. The installed fixture still needs history/restart, invalid-auth, interruption and transient-error cases; this is not live Groq.
+
+Surprises: The wrapper synchronously spawns the native executable, so the provider fixture launches the installed native binary directly for bounded child-process cleanup. Shim/npx and PTY cases separately cover the wrapper. The broad `bun run test:unit` command reported two inherited `distribution-package.test.ts` failures while still running; its final outcome must be recorded separately, not counted as a pass.
+
+Next: Collect the broad unit command's final result, then continue Windows installed `/model`, error/restart/state and parser gates. Repeat native Linux x64/glibc and macOS arm64 checks later; keep Task 5 open and do not publish.
+
+Commit: Not committed.
+
+Verified (same-session follow-up): The broad host `bun run test:unit` started and immediately reported two failures in `src/commands/distribution-package.test.ts` (direct source pack rejection and generated wrapper pack). It then produced no additional result for several minutes; process inspection showed an idle Vitest task tree. Sent Ctrl+C, observed exit code 1, and confirmed the exact task-owned PIDs had exited. This command is incomplete and not a passing suite. The targeted Windows installed E2E result (5/5) and CLI typecheck (exit 0) stand separately. Task 5 remains open.
+
+### Task 5 — Windows provider resilience and history checkpoint — 23/09/2026
+
+Done: Extended the installed local Groq-compatible fixture with synthetic invalid-key rejection, one transient 503 and recovery, interrupted stream timeout, and history persistence across separate installed CLI processes. A failing installed interrupted-stream check exposed a real runtime defect: the one-shot `sessionManager.start()` performs the first stream before returning, but `runAgent` originally scheduled its timeout only afterward. Added a focused failing source regression, moved the timeout before `start()` with the planned session ID available for abort, rebuilt the Windows executable, and repacked/reverified the local tarballs. The installed fixture now checks that the interrupted connection closes, the run fails with a timeout diagnostic, no synthetic key appears in output, and saved settings remain unchanged. History inspection uses JSON session IDs only; fixture output contains boolean outcomes and counts, not session contents or keys.
+
+Verified: The focused timeout regression failed before the source fix, then `bun run test:unit src/runtime/run-agent.test.ts` passed 18 tests. `bun run build:platforms:single` rebuilt Windows x64 and its executable returned version `0.1.0-next.0`; `bun run package:release --target windows-x64` and `bun run verify:release` passed for both local tarballs. `bun run smoke:installed --target windows-x64 --provider-fixture` reported all checks true, including invalid auth, transient recovery, interrupted stream, history restart and state isolation. The new history E2E assertion failed before fixture implementation (`undefined`), then the focused test passed. Final host `bun run test:e2e src/commands/installed-release.e2e.test.ts` passed 1 file / 5 tests in 97.80s; `bun run typecheck` exited 0; targeted Biome checked 5 files without fixes. No live provider or registry was contacted.
+
+Surprises: The timeout bug was masked by the post-`start()` timer placement; the prior interrupted fixture hit its 25-second harness kill instead of the CLI's 2-second timeout. Bun could not spawn SDK/npm verification subprocesses inside the sandbox, so the same bounded local commands ran with host approval. The unit-test Vitest config excludes `.e2e.test.ts`; the first full-file invocation used that config and ran no tests, then the correct E2E config passed. The earlier broad CLI unit-suite attempt remains failed/incomplete and is not superseded by these focused results.
+
+Next: Keep Task 5 open. Drive installed `/model` search/select/cancel/reopen and parser rendering in a PTY; inspect Shri settings/log/session/daemon paths and fake inherited state through child/restart. Then obtain native Linux x64/glibc and macOS arm64 installed results. A user-entered key is still needed for separate live Groq proof outside build/CI. Do not publish.
+
+Commit: Not committed.
+
+### Task 5 — Windows installed model-picker and spinner checkpoint — 23/09/2026
+
+Done: Added a real installed PTY `/model` path against the packaged Windows native executable. It opens the picker, searches `whisper` and confirms baked Groq transcription entries with zero token limits are absent, cancels, selects `llama-3.3-70b-versatile`, reopens and cancels while the prompt remains usable. The wrapper is separately covered by npm shim/npx and TUI startup tests. The first installed model test failed: opening `/model` or `/settings` destroyed the dialog manager. Temporary TUI render-error logging identified the preceding error as `Unknown component type: spinner`. Removed that instrumentation after diagnosis and explicitly registered the installed `opentui-spinner/react` component before the first TUI render; a focused source test enforces registration order. The installed startup PTY now also checks it survives eight idle seconds before Ctrl+C.
+
+Verified: The new model E2E test was red before the fix; the spinner source regression failed with zero registration calls, then `bun run test:unit src/tui/index.test.ts` passed 6 tests after the explicit call. `bun run typecheck` exited 0. Rebuilt Windows x64 with `bun run build:platforms:single`; `bun run package:release --target windows-x64` and `bun run verify:release` passed for two local tarballs. `bun run smoke:installed --target windows-x64 --model-pty` reported every check true. The final host `bun run test:e2e src/commands/installed-release.e2e.test.ts` passed 1 file / 6 tests in 123.87s. Targeted Biome checked 8 files without fixes and `git -c core.safecrlf=false diff --check` exited 0. No successful live Groq inference or npm publication occurred; model-catalog/provider network isolation has not been established.
+
+Surprises: The side-effect imports of `opentui-spinner/react` in dialog components did not leave `spinner` registered in the compiled installed TUI; the source-only model-row regression could not reveal that packaging failure. A source-level tuistory `/settings` comparison produced no result beyond the RUN header for over 90 seconds, so it was interrupted (exit 1); the task-owned test processes exited. The installed model PTY uses the native executable for bounded cleanup, while other installed checks exercise the Node wrapper. The model search uses the baked Groq catalog's zero-token transcription entries; a controlled installed fixture for missing model metadata is still pending.
+
+Next: Keep Task 5 open. Prove missing-metadata catalog handling, parser/syntax-highlighting rendering, and Shri settings/log/session/daemon isolation through installed interactions. Then repeat native Linux x64/glibc and macOS arm64 gates and a separate user-key live Groq check. Do not publish.
+
+Commit: Not committed.
+
+### Task 5 — Windows installed missing-metadata catalog checkpoint — 23/09/2026
+
+Done: Extended the installed native `/model` PTY test with a loopback models.dev-shaped Groq catalog. Its chat entry omits optional name, limits, cost and modality metadata; a second entry declares audio-to-text transcription. The PTY asserts the local catalog was requested, the chat entry appears, the transcription entry does not, and the existing select/cancel/reopen flow remains usable. The picker now passes the saved provider model-catalog options to catalog resolution instead of ignoring its configured URL. No production test-only endpoint was added.
+
+Verified: The new installed test initially failed because the fixture chat entry was absent. The first fixture lacked models.dev's `tool_call` eligibility field; after correcting the fixture and rebuilding, `bun run smoke:installed --target windows-x64 --model-pty` reported all checks true. `bun run build:platforms:single`, `bun run package:release --target windows-x64`, and `bun run verify:release` succeeded for two local tarballs. The full `bun run test:e2e src/commands/installed-release.e2e.test.ts` passed 1 file / 6 tests in 126.60s. Focused source `bun run test:unit src/tui/components/model-selector/model-selector.render.test.tsx src/utils/chat-models.test.ts src/tui/index.test.ts` reported 2 files / 9 tests passed; the render test was not collected by that command, so it is not claimed. CLI typecheck, targeted Biome on four touched code files, and `git -c core.safecrlf=false diff --check` exited 0.
+
+Surprises: The models.dev normalizer discards otherwise chat-shaped entries unless they explicitly advertise `tool_call: true`; the initial red result included that fixture defect, so it is not a clean isolated proof of the picker change. A local request was observed, but the test does not establish that no other catalog request occurred. The current registered-source fixture normalizes missing limits to defaults before rendering; this proves a sparse upstream entry through installed use, not a literal missing-limit renderer value.
+
+Next: Keep Task 5 open. Verify installed parser/syntax-highlighting rendering and deeper Shri settings/log/session/daemon isolation on Windows, then native Linux x64/glibc and macOS arm64 installed gates. A separate user-key live Groq test remains pending. Do not publish.
+
+Commit: Not committed.
+
+### Task 5 — Windows installed hub-status and syntax-rendering checkpoint — 23/09/2026
+
+Done: Seeded a valid-looking synthetic Cline hub discovery record under the disposable fake legacy state before installation. The installed `hub status` command reports no running Shri hub without echoing the Cline record's marker, and the record remains byte-for-byte unchanged through the smoke run. Added a separate installed native PTY with a loopback Groq-compatible streamed reply containing a fenced TypeScript block. It confirms the code reaches the terminal and the displayed `const` keyword and `42` number have distinct foreground colors; the PTY then shuts down. No daemon was started in this checkpoint.
+
+Verified: The new E2E assertions failed before their installed harness checks were added. Focused installed hub-status and render-PTY tests each passed after the checks were wired. `bun run smoke:installed --target windows-x64 --render-pty` reported all checks true. The final `bun run test:e2e src/commands/installed-release.e2e.test.ts` passed 1 file / 7 tests in 164.40s. `bun run typecheck` exited 0; targeted Biome checked three touched code files without fixes.
+
+Surprises: The terminal capture exposes rendered spans and foreground colors, making a behavioral syntax-highlight check possible without writing terminal contents or credentials to test output. It does not directly observe a parser worker thread; Task 4's artifact verifier separately checks the embedded worker marker. `hub status` is a safe discovery-path check, not child-process or live daemon proof. A read-only process inventory found one unrelated Node process; Windows command-line inspection was denied, so it was not touched.
+
+Next: Keep Task 5 open. Design bounded, exact-process cleanup before attempting installed daemon start/stop and child-state isolation. Then native Linux x64/glibc and macOS arm64 installed gates, plus a separate user-key live Groq check. Do not publish.
+
+Commit: Not committed.
+
+### Task 5 — Windows installed daemon and session-store checkpoint — 23/09/2026
+
+Done: Added an installed native daemon smoke helper that starts a hub on loopback port 0 in disposable Shri state, checks a fresh discovery PID and daemon log there, reads live status, then stops in `finally` and verifies the process and discovery are gone. If graceful stop leaves the fresh test-owned PID alive, the helper terminates that exact PID; it never targets the unrelated Node process found in the host inventory. The fake Cline discovery and sentinel remain unchanged. The installed provider/history fixture now also asserts `sessions.db` exists under Shri's disposable `data/db` and not under fake Cline state while history survives separate processes.
+
+Verified: Each new E2E assertion was observed failing before its harness implementation. `bun run smoke:installed --target windows-x64 --daemon` reported all checks true. The full `bun run test:e2e src/commands/installed-release.e2e.test.ts` passed 1 file / 8 tests in 182.34s, then passed again after the session-store assertion in 184.00s. `bun run typecheck` exited 0; targeted Biome checked four touched code files without fixes; `git -c core.safecrlf=false diff --check` exited 0. `Get-Process -Name shri` returned no processes after the daemon run and full suite. No production binary changed in this checkpoint, so the previously verified local tarballs remain the tested artifacts.
+
+Surprises: The installed compiled daemon accepted explicit port 0, advertised its assigned loopback port in fresh Shri discovery, and shut down cleanly. The fallback PID termination path was not exercised; its target is constrained to a newly created discovery record with a recent `startedAt`. The broader CLI unit-suite failures/stall and separate source tuistory stall remain unresolved and are not hidden by this E2E pass.
+
+Next: Keep Task 5 open for native Linux x64/glibc and macOS arm64 installed-package proof, then a separate user-entered-key live Groq check outside build/CI. Third-party plugin loading is not advertised without installed verification. Do not publish.
+
+Commit: Not committed.
+
+### Task 5 — Focused distribution-test repair — 23/09/2026
+
+Done: Investigated the two failures previously emitted by the broad CLI unit run. The test's nested `spawnSync("bun")` returned `EPERM` on Windows, so neither failure had exercised packaging. A direct host `bun.cmd pm pack --dry-run` verified the source prepack guard rejects packaging. Updated the focused tests to launch through Windows command shims, use offline `npm pack --ignore-scripts` for the generated-wrapper shape, and represent Shri names without an inherited Cline postinstall. The disposable fixture cleanup is guarded to its generated temp prefix.
+
+Verified: `bun run test:unit src/commands/distribution-package.test.ts` was red at 2 failures / 1 pass before the correction and passed 1 file / 3 tests afterward (final run 1.60s). Targeted Biome passed after formatting. The earlier broad-suite stall has not been rerun; no broad pass is claimed.
+
+Surprises: Node could launch `cmd.exe /d /s /c bun.cmd --version` on the host but not `bun` or nonexistent `bun.exe` directly. The old test's Cline package fixture did not reflect the preview wrapper; Task 4's real two-tarball verifier remains the stronger artifact check.
+
+Next: Stop adding Windows-only edge cases unless a release blocker appears. Obtain native Linux x64/glibc and macOS arm64 installed checks, then separate live Groq proof with a user-entered key; continue Task 6 only after those gates. No publication.
+
+Commit: Not committed.
+
+### Windows-only release preparation and local ship gate — 23/09/2026
+
+Done: Fixed the Windows path-mention parser; made the launcher derive supported targets from the generated wrapper; aligned source and generated repository metadata with `shrinivas-sn/shri-harness`; added a hash-checked publish-input validator, Windows CI/release workflows, public README and release instructions. Created the empty public repository. Kept Linux/macOS targets in the extensible build model but out of the first package. Deferred Changesets for this single-version preview.
+
+Verified: `bun run build:sdk`, `bun run build:platforms:single`, `bun run package:release --target windows-x64`, and `bun run verify:release --target windows-x64` exited 0. The final clean installed Windows suite passed 1 file / 8 tests in 179.61s. The exact CI-focused source selection passed 24 files / 230 tests with 2 Windows skips; CLI typecheck, targeted Biome, Node syntax checks, and `git -c core.safecrlf=false diff --check` passed. `check-publish-inputs.mjs` accepted only the wrapper and Windows x64 tarballs, with SHA-256 `6ecb3b920f537af7ac78f3feb073338dd07d6aa74ae3fc05a2b6a7bddda4efe0` and `53fe51485ae9810cd14cab54597b6ec3962dbccc5de5965d8fbac7c0601f9638` respectively. GitHub CLI identifies `shrinivas-sn`, npm CLI identifies `shrinivas-sn`, and the selected repo is public and empty. No real Groq key entered, no code pushed, and no npm publish occurred at this log point.
+
+Surprises: The broader inherited CLI unit run emitted doctor, kanban, plugin, connector and prompt failures, then stalled without a final summary. The prompt failures exposed a real Windows drive-path bug and the corrected focused prompt suite passed 5/5. Default `git@github.com` SSH identifies `shrinivas-work`, so it must not be used for this repository; a one-command HTTPS GitHub CLI credential helper reached the empty repo without changing global Git settings. Hosted CI and live Groq proof remain unverified.
+
+Next: Commit the audited source, push only with an account-scoped credential route, and run hosted Windows CI. Then obtain a user-entered-key live installed-package Groq interaction, prove the exact tag/release workflow, bootstrap npm packages if required, publish only to `next`, and verify a clean registry install. Do not claim a broad-suite pass or publish Linux/macOS packages.
+
+Commit: Pending scoped checkpoint.

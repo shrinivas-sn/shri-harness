@@ -166,8 +166,55 @@ describe("runAgent", () => {
 	});
 
 	afterEach(() => {
+		vi.useRealTimers();
 		process.exitCode = originalExitCode;
 		vi.clearAllMocks();
+	});
+
+	it("starts the timeout while the first headless turn is still starting", async () => {
+		vi.useFakeTimers();
+		let rejectStart: ((error: Error) => void) | undefined;
+		sessionManagerMocks.start.mockImplementation(
+			() =>
+				new Promise((_resolve, reject) => {
+					rejectStart = reject;
+				}),
+		);
+		const { runAgent } = await import("./run-agent");
+		const running = runAgent("test prompt", {
+			cwd: process.cwd(),
+			enableAgentTeams: false,
+			enableSpawnAgent: false,
+			enableTools: [],
+			execution: { maxConsecutiveMistakes: 3 },
+			mode: "act",
+			modelId: "llama-3.3-70b-versatile",
+			outputMode: "json",
+			providerId: "groq",
+			systemPrompt: "system",
+			thinking: false,
+			toolPolicies: { "*": { autoApprove: true } },
+			verbose: false,
+			workspaceRoot: process.cwd(),
+			timeoutSeconds: 1,
+		} as never);
+		try {
+			for (let attempt = 0; attempt < 30 && !rejectStart; attempt++) {
+				await Promise.resolve();
+			}
+			expect(rejectStart).toBeTypeOf("function");
+			await vi.advanceTimersByTimeAsync(1_000);
+			const input = sessionManagerMocks.start.mock.calls[0]?.[0] as
+				| { config?: { sessionId?: string } }
+				| undefined;
+			expect(sessionManagerMocks.abort).toHaveBeenCalledWith(
+				input?.config?.sessionId,
+				expect.any(Error),
+			);
+		} finally {
+			rejectStart?.(new Error("test cleanup"));
+			await running;
+		}
 	});
 
 	it("starts the session with normalized user input", async () => {

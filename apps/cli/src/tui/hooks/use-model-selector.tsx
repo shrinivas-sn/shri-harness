@@ -60,14 +60,18 @@ async function refreshCurrentProviderModels(config: Config): Promise<void> {
 	await refreshProviderModelsFromSource(manager, config.providerId).catch(
 		() => {},
 	);
+	const providerConfig = manager.getProviderConfig(config.providerId, {
+		includeKnownModels: false,
+	});
 	const resolved = await resolveProviderConfig(
 		config.providerId,
 		{
+			...providerConfig?.modelCatalog,
 			loadLatestOnInit: true,
 			loadPrivateOnAuth: true,
 			failOnError: false,
 		},
-		manager.getProviderConfig(config.providerId, { includeKnownModels: false }),
+		providerConfig,
 	);
 	if (resolved?.knownModels) {
 		config.knownModels = resolved.knownModels;

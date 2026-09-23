@@ -1,5 +1,6 @@
 import { createCliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
+import { registerSpinner } from "opentui-spinner/react";
 import { getInitialThemeId } from "./hooks/theme-provider";
 import { Root } from "./root";
 import { installTuiStdioCapture } from "./stdio-capture";
@@ -11,6 +12,7 @@ export type { TuiProps } from "./types";
 export async function renderOpenTui(
 	props: TuiProps,
 ): Promise<{ destroy: () => void; waitUntilExit: () => Promise<void> }> {
+	registerSpinner();
 	const renderer = await createCliRenderer({
 		exitOnCtrlC: false,
 		autoFocus: false,

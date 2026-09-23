@@ -1,6 +1,8 @@
 <!-- docs-structure: v1 -->
 # DOCS index
 
+The Windows preview publication gates and operator steps are in [RELEASE.md](RELEASE.md).
+
 One row per `WORK/<date>/` folder. Keep this updated in place — don't let it drift from what's actually in `WORK/`. Add a row the same session a new day-folder is created.
 
 Dates in this table are written **DD/MM/YYYY** (user is India-based). This is display text only — the `WORK/<date>/` folder name underneath stays YYYY-MM-DD, since that's the only format that sorts correctly on disk and in `git log`.

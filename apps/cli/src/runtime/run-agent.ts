@@ -220,7 +220,11 @@ export async function runAgent(
 	// --- Abort & signal handling ---
 	let abortRequested = false;
 	let timedOut = false;
-	let activeSessionId: string | undefined;
+	let activeSessionId: string | undefined = plannedSessionId;
+	let timeoutId: ReturnType<typeof setTimeout> | undefined;
+	const clearRunTimeout = () => {
+		if (timeoutId) clearTimeout(timeoutId);
+	};
 
 	const abortAll = () => {
 		if (abortRequested) return false;
@@ -280,6 +284,18 @@ export async function runAgent(
 		} = await buildUserInputMessage(prompt, userInstructionService, {
 			mode: config.mode,
 		});
+		const timeoutMs =
+			typeof config.timeoutSeconds === "number" &&
+			Number.isFinite(config.timeoutSeconds) &&
+			config.timeoutSeconds > 0
+				? config.timeoutSeconds * 1000
+				: undefined;
+		timeoutId = timeoutMs
+			? setTimeout(() => {
+					timedOut = true;
+					abortAll();
+				}, timeoutMs)
+			: undefined;
 		const started = await sessionManager.start({
 			source: SessionSource.CLI,
 			config: {
@@ -310,23 +326,6 @@ export async function runAgent(
 		setActiveCliSession({
 			manifest: started.manifest,
 		});
-
-		// Schedule timeout abort if configured.
-		const timeoutMs =
-			typeof config.timeoutSeconds === "number" &&
-			Number.isFinite(config.timeoutSeconds) &&
-			config.timeoutSeconds > 0
-				? config.timeoutSeconds * 1000
-				: undefined;
-		const timeoutId = timeoutMs
-			? setTimeout(() => {
-					timedOut = true;
-					abortAll();
-				}, timeoutMs)
-			: undefined;
-		const clearRunTimeout = () => {
-			if (timeoutId) clearTimeout(timeoutId);
-		};
 
 		// When start() already ran the first turn (non-interactive with prompt),
 		// the session is finalized before start() returns. Use that result
@@ -417,11 +416,14 @@ export async function runAgent(
 		);
 		process.exitCode = 0;
 	} catch (err) {
-		const message = formatCliErrorMessage(err, { modelId: config.modelId });
+		const message = timedOut
+			? `run timed out after ${config.timeoutSeconds}s`
+			: formatCliErrorMessage(err, { modelId: config.modelId });
 		logCliError(config.logger, "CLI task run failed", { error: err });
 		writeErr(message);
 		process.exitCode = 1;
 	} finally {
+		clearRunTimeout();
 		await cleanupRuntime();
 	}
 }

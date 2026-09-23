@@ -2,9 +2,9 @@
 
 export const DIRECT_PUBLISH_GUARD_MESSAGE = [
 	"Direct packaging or publishing from apps/cli is disabled.",
-	"The source package points its development bin at src/index.ts, while the npm package is generated under dist/cli.",
-	"Run `bun run build:platforms` first, then `bun run publish:npm:dry` to preview the generated npm packages.",
-	"Use `bun run publish:npm` to publish those generated packages.",
+	"The source package points its development bin at src/index.ts; Shri packages are generated under dist/npm.",
+	"Run `bun run build:platforms:single`, then `bun run package:release --target windows-x64` for local artifacts.",
+	"Publication remains disabled until the release verification gates are complete.",
 ].join("\n");
 
 export function shouldAllowDirectPublish(env: NodeJS.ProcessEnv): boolean {

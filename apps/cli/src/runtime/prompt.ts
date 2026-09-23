@@ -37,7 +37,7 @@ export async function resolveSystemPrompt(input: {
 	});
 }
 
-const FILE_MENTION_PREFIX = String.raw`(?:\/|~\/|\.{1,2}\/)`;
+const FILE_MENTION_PREFIX = String.raw`(?:\/|~[\/\\]|\.{1,2}[\/\\]|[A-Za-z]:[\/\\])`;
 const FILE_MENTION_PATTERN_TEST = new RegExp(
 	String.raw`@(?:"${FILE_MENTION_PREFIX}[^"\r\n]+"|${FILE_MENTION_PREFIX}\S+)`,
 	"i",
@@ -75,7 +75,7 @@ function extractFileMentions(
 }
 
 function resolveMentionPath(filePath: string): string {
-	if (filePath.startsWith("~/")) {
+	if (/^~[\/\\]/.test(filePath)) {
 		return resolve(homedir(), filePath.slice(2));
 	}
 	return resolve(filePath);

@@ -22,6 +22,10 @@ const reactMock = vi.hoisted(() => ({
 	createRoot: vi.fn(() => rootMock),
 }));
 
+const spinnerMock = vi.hoisted(() => ({
+	registerSpinner: vi.fn(),
+}));
+
 vi.mock("@opentui/core", () => ({
 	createCliRenderer: vi.fn(async () => rendererMock),
 }));
@@ -29,6 +33,8 @@ vi.mock("@opentui/core", () => ({
 vi.mock("@opentui/react", () => ({
 	createRoot: reactMock.createRoot,
 }));
+
+vi.mock("opentui-spinner/react", () => spinnerMock);
 
 vi.mock("./root", () => ({
 	Root: () => null,
@@ -51,8 +57,21 @@ describe("renderOpenTui", () => {
 		});
 		rootMock.render.mockReset();
 		rootMock.unmount.mockReset();
+		spinnerMock.registerSpinner.mockReset();
 		reactMock.createRoot.mockReset();
 		reactMock.createRoot.mockReturnValue(rootMock);
+	});
+
+	it("registers the spinner before the first TUI render", async () => {
+		const { renderOpenTui } = await import("./index");
+		await renderOpenTui({} as TuiProps);
+
+		expect(spinnerMock.registerSpinner).toHaveBeenCalledTimes(1);
+		expect(
+			spinnerMock.registerSpinner.mock.invocationCallOrder[0],
+		).toBeLessThan(
+			rootMock.render.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY,
+		);
 	});
 
 	it("destroys the renderer when root creation fails", async () => {

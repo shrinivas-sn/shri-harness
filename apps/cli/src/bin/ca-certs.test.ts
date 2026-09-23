@@ -21,7 +21,12 @@ const caCerts = require("../../bin/ca-certs.cjs") as {
 	countCerts: (pems: string[]) => number;
 	configureNodeExtraCaCerts: (
 		env: Record<string, string>,
-		deps?: { tls?: unknown; fs?: unknown },
+		deps?: {
+			tls?: unknown;
+			fs?: unknown;
+			stateDir?: string;
+			bundleName?: string;
+		},
 	) => {
 		action: string;
 		path: string | null;
@@ -189,6 +194,20 @@ describe("ca-certs", () => {
 	});
 
 	describe("configureNodeExtraCaCerts", () => {
+		it("writes Shri's managed bundle under Shri state, not inherited Cline state", () => {
+			const shriDir = join(dir, "shri state");
+			const env: Record<string, string> = {
+				SHRI_DIR: shriDir,
+				CLINE_DIR: join(dir, "cline state"),
+			};
+			const out = caCerts.configureNodeExtraCaCerts(env, {
+				tls: fakeTls([certSystem]),
+				stateDir: shriDir,
+				bundleName: "shri-node-extra-ca-certs.pem",
+			});
+			expect(out.path).toBe(join(shriDir, "shri-node-extra-ca-certs.pem"));
+			expect(readFileSync(out.path as string, "utf8")).toContain("SYSTEM");
+		});
 		it("writes a managed bundle and points the env var at it", () => {
 			const env: Record<string, string> = { CLINE_DIR: dir };
 			const out = caCerts.configureNodeExtraCaCerts(env, {

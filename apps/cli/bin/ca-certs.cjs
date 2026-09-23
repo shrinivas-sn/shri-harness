@@ -161,7 +161,7 @@ function shouldWarnApiUnavailable(env, deps = {}) {
 	const os = deps.os || require("node:os");
 	const path = deps.path || require("node:path");
 	const version = deps.nodeVersion || process.versions.node;
-	const dir = resolveClineDir(env, os, path);
+	const dir = deps.stateDir?.trim() || resolveClineDir(env, os, path);
 	const stamp = path.join(dir, `.ca-api-warned-${version}`);
 	try {
 		if (fs.existsSync(stamp)) {
@@ -238,8 +238,11 @@ function configureNodeExtraCaCerts(env, deps = {}) {
 		};
 	}
 
-	const managedDir = resolveClineDir(env, os, path);
-	const managedPath = path.join(managedDir, "cli-node-extra-ca-certs.pem");
+	const managedDir = deps.stateDir?.trim() || resolveClineDir(env, os, path);
+	const managedPath = path.join(
+		managedDir,
+		deps.bundleName || "cli-node-extra-ca-certs.pem",
+	);
 	const userValue = (env.NODE_EXTRA_CA_CERTS || "").trim() || null;
 	const userPems = readUserCerts(fs, path, userValue, managedPath);
 	const bundle = buildBundle({ systemCerts, userPems });

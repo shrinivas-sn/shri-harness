@@ -51,11 +51,10 @@ describe("root option help text", () => {
 		expect(configDefault).toBe("~/.cline");
 		expect(dataDirDefault).toBe("~/.cline/data");
 
-		expect(help).toContain(
-			"Configuration directory (default: ~/.shri)",
-		);
+		expect(help).toContain("Configuration directory (default: ~/.shri)");
 		expect(help).toContain(
 			"Use isolated local state at this directory path (default: ~/.shri/data)",
 		);
+		expect(help).not.toContain("~/.cline");
 	});
 });

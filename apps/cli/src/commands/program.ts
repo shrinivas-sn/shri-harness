@@ -71,11 +71,11 @@ export function addRootOptions(cmd: Command): Command {
 			)
 			.option(
 				"--hooks-dir <path>",
-				"Directory path to additional hooks for runtime hook injection (default: ~/.cline/hooks)",
+				"Directory path to additional hooks for runtime hook injection (default: ~/.shri/hooks)",
 			)
 			.option(
 				"--worktree",
-				"Auto-create a detached git worktree under ~/.cline/worktrees/ and run the task there",
+				"Auto-create a detached git worktree under ~/.shri/worktrees/ and run the task there",
 			)
 			.option("--update", "Check for updates and install if available")
 			.option("--kanban", "Run the kanban app")
