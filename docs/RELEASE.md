@@ -1,6 +1,6 @@
 # Windows preview release
 
-The first release is `@shrinivas-sn/shri@0.1.0-next.0` on npm's `next` tag, with one optional platform package: `@shrinivas-sn/shri-windows-x64` at the same version. Only Windows x64 is advertised. Linux x64/glibc and macOS arm64 stay in the build model but require their own native installed tests before publication.
+The first release is `@shrinivas-sn/shri@0.1.0-next.1` on npm's `next` tag (`v0.1.0-next.0` was tagged but superseded before publishing, to include the user-facing README), with one optional platform package: `@shrinivas-sn/shri-windows-x64` at the same version. Only Windows x64 is advertised. Linux x64/glibc and macOS arm64 stay in the build model but require their own native installed tests before publication.
 
 The source package `@cline/cli` is private and must never be published. Build and publish only the generated, inspected tarballs. Never bypass its direct-publish guard or include a real Groq key in build, CI, artifacts, logs, or a command line.
 

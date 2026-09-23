@@ -2,7 +2,7 @@
 	"name": "@cline/cli",
 	"private": true,
 	"displayName": "shri",
-	"version": "0.1.0-next.0",
+	"version": "0.1.0-next.1",
 	"description": "Shri single-agent terminal preview",
 	"type": "module",
 	"publishConfig": {
