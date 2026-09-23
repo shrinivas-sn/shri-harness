@@ -82,7 +82,7 @@ jobs:
         run: |
           Get-CimInstance Win32_Process |
             Where-Object { $_.ProcessId -ne $PID -and ($_.CommandLine -like '*shri-installed-*' -or $_.Name -eq 'shri.exe') } |
-            ForEach-Object { Write-Output "$($_.Name) pid=$($_.ProcessId) parent=$($_.ParentProcessId)" }
+            ForEach-Object { Write-Output "$($_.Name) pid=$($_.ProcessId) parent=$($_.ParentProcessId) hub=$($_.CommandLine -like '*--cline-hub-daemon*') installed=$($_.ExecutablePath -like '*shri-installed-*')" }
 
       - name: Check publish input integrity
         shell: pwsh

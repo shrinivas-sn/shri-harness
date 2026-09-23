@@ -642,6 +642,9 @@ export async function runInstalledSmoke(
 			} catch {
 				// The helper reports booleans only.
 			}
+			console.error(
+				`Installed render before cleanup: ${JSON.stringify({ exitCode: renderResult.status, markdown: renderChecks.markdownCodeRendered === true, syntax: renderChecks.syntaxHighlighted === true, shutdown: renderChecks.shutdown === true, helperError: renderResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150) })}`,
+			);
 			checks.markdownCodeRendered = renderChecks.markdownCodeRendered === true;
 			checks.syntaxHighlighted = renderChecks.syntaxHighlighted === true;
 			checks.renderShutdown = renderChecks.shutdown === true;
