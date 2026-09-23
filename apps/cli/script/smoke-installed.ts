@@ -636,6 +636,7 @@ export async function runInstalledSmoke(
 				markdownCodeRendered?: boolean;
 				syntaxHighlighted?: boolean;
 				shutdown?: boolean;
+				ptyPid?: number;
 			} = {};
 			try {
 				renderChecks = JSON.parse(renderResult.stdout);
@@ -643,7 +644,7 @@ export async function runInstalledSmoke(
 				// The helper reports booleans only.
 			}
 			console.error(
-				`Installed render before cleanup: ${JSON.stringify({ exitCode: renderResult.status, markdown: renderChecks.markdownCodeRendered === true, syntax: renderChecks.syntaxHighlighted === true, shutdown: renderChecks.shutdown === true, helperError: renderResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150) })}`,
+				`Installed render before cleanup: ${JSON.stringify({ exitCode: renderResult.status, markdown: renderChecks.markdownCodeRendered === true, syntax: renderChecks.syntaxHighlighted === true, shutdown: renderChecks.shutdown === true, ptyPid: renderChecks.ptyPid, helperError: renderResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150) })}`,
 			);
 			const renderHubDiscoveryPath = join(
 				env.SHRI_DIR,

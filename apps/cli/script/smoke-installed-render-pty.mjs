@@ -88,7 +88,12 @@ try {
 	await session.press(["ctrl", "c"]);
 	const shutdown = await session.waitForExit(5_000);
 	console.log(
-		JSON.stringify({ markdownCodeRendered, syntaxHighlighted, shutdown }),
+		JSON.stringify({
+			markdownCodeRendered,
+			syntaxHighlighted,
+			shutdown,
+			ptyPid: session.pty.pid,
+		}),
 	);
 	if (!markdownCodeRendered || !syntaxHighlighted || !shutdown)
 		process.exitCode = 1;
