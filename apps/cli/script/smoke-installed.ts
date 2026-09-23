@@ -458,6 +458,8 @@ export async function runInstalledSmoke(
 				startup?: boolean;
 				survivesIdle?: boolean;
 				shutdown?: boolean;
+				ptyPid?: number;
+				exitedAt?: string;
 			} = {};
 			try {
 				ptyChecks = JSON.parse(ptyResult.stdout);
@@ -470,6 +472,8 @@ export async function runInstalledSmoke(
 					startup: ptyChecks.startup === true,
 					idle: ptyChecks.survivesIdle === true,
 					shutdown: ptyChecks.shutdown === true,
+					ptyPid: ptyChecks.ptyPid,
+					exitedAt: ptyChecks.exitedAt,
 					helperError: ptyResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150),
 				})}`,
 			);
@@ -500,7 +504,11 @@ export async function runInstalledSmoke(
 				"hub",
 				"production.json",
 			);
-			if (existsSync(discoveryPath)) {
+			const discoveryPresent = existsSync(discoveryPath);
+			console.error(
+				`Installed PTY isolated hub discovery: ${discoveryPresent ? "present" : "none"}`,
+			);
+			if (discoveryPresent) {
 				const discovery = JSON.parse(readFileSync(discoveryPath, "utf8")) as {
 					pid?: number;
 				};
@@ -637,6 +645,7 @@ export async function runInstalledSmoke(
 				syntaxHighlighted?: boolean;
 				shutdown?: boolean;
 				ptyPid?: number;
+				exitedAt?: string;
 			} = {};
 			try {
 				renderChecks = JSON.parse(renderResult.stdout);
@@ -644,7 +653,7 @@ export async function runInstalledSmoke(
 				// The helper reports booleans only.
 			}
 			console.error(
-				`Installed render before cleanup: ${JSON.stringify({ exitCode: renderResult.status, markdown: renderChecks.markdownCodeRendered === true, syntax: renderChecks.syntaxHighlighted === true, shutdown: renderChecks.shutdown === true, ptyPid: renderChecks.ptyPid, helperError: renderResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150) })}`,
+				`Installed render before cleanup: ${JSON.stringify({ exitCode: renderResult.status, markdown: renderChecks.markdownCodeRendered === true, syntax: renderChecks.syntaxHighlighted === true, shutdown: renderChecks.shutdown === true, ptyPid: renderChecks.ptyPid, exitedAt: renderChecks.exitedAt, helperError: renderResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150) })}`,
 			);
 			const renderHubDiscoveryPath = join(
 				env.SHRI_DIR,

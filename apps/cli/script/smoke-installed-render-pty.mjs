@@ -93,6 +93,7 @@ try {
 			syntaxHighlighted,
 			shutdown,
 			ptyPid: session.pty.pid,
+			exitedAt: new Date().toISOString(),
 		}),
 	);
 	if (!markdownCodeRendered || !syntaxHighlighted || !shutdown)

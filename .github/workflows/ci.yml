@@ -82,7 +82,23 @@ jobs:
         run: |
           Get-CimInstance Win32_Process |
             Where-Object { $_.ProcessId -ne $PID -and ($_.CommandLine -like '*shri-installed-*' -or $_.Name -eq 'shri.exe') } |
-            ForEach-Object { Write-Output "$($_.Name) pid=$($_.ProcessId) parent=$($_.ParentProcessId) hub=$($_.CommandLine -like '*--cline-hub-daemon*') path=$($_.ExecutablePath)" }
+            ForEach-Object {
+              # Windows compiled Bun embeds entries under B:/~BUN/root, so the
+              # hub daemon never receives --cline-hub-daemon here; print the
+              # redacted command line instead of inferring from that marker.
+              $cmd = ($_.CommandLine -replace '(?i)((?:key|token|secret)\S*[= ]+)\S+', '$1<redacted>')
+              $parent = Get-CimInstance Win32_Process -Filter "ProcessId=$($_.ParentProcessId)" -ErrorAction SilentlyContinue
+              $parentInfo = if ($parent) { "$($parent.Name) created=$($parent.CreationDate.ToUniversalTime().ToString('o'))" } else { 'exited' }
+              Write-Output "$($_.Name) pid=$($_.ProcessId) created=$($_.CreationDate.ToUniversalTime().ToString('o')) parent=$($_.ParentProcessId) parentState=$parentInfo path=$($_.ExecutablePath)"
+              Write-Output "  cmd=$cmd"
+            }
+          Get-ChildItem -Path $env:TEMP -Directory -Filter 'shri-installed-*' -ErrorAction SilentlyContinue |
+            ForEach-Object {
+              $root = $_.FullName
+              Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
+                Select-Object -First 40 |
+                ForEach-Object { Write-Output "leftover $($_.FullName.Substring($root.Length))" }
+            }
 
       - name: Check publish input integrity
         shell: pwsh

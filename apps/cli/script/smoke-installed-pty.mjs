@@ -29,7 +29,15 @@ try {
 	}
 	stage = "shutdown";
 	const shutdown = await session.waitForExit(5_000);
-	console.log(JSON.stringify({ startup, survivesIdle, shutdown }));
+	console.log(
+		JSON.stringify({
+			startup,
+			survivesIdle,
+			shutdown,
+			ptyPid: session.pty.pid,
+			exitedAt: new Date().toISOString(),
+		}),
+	);
 	if (!startup || !survivesIdle || !shutdown) process.exitCode = 1;
 } catch (error) {
 	console.error(
