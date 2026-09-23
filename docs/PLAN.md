@@ -538,3 +538,15 @@ Surprises: The broader inherited CLI unit run emitted doctor, kanban, plugin, co
 Next: Commit the audited source, push only with an account-scoped credential route, and run hosted Windows CI. Then obtain a user-entered-key live installed-package Groq interaction, prove the exact tag/release workflow, bootstrap npm packages if required, publish only to `next`, and verify a clean registry install. Do not claim a broad-suite pass or publish Linux/macOS packages.
 
 Commit: Pending scoped checkpoint.
+
+### Hosted Windows installed-cleanup blocker — 23/09/2026
+
+Done: Pushed the audited Windows preview source and ran six hosted CI investigations. Added bounded, test-owned cleanup diagnostics only: PTY outcome booleans, isolated hub discovery PID, surviving process PID/parent and exact executable path. An earlier startup case now stops a discovered isolated hub before cleanup. No production behavior was changed, no broad process kill was added, and nothing was published to npm.
+
+Verified: Runs `35857192559` and `35862211789` established that the startup PTY reached startup, idle and shutdown successfully before `EACCES` cleanup; the latter left installed `shri.exe` PID 2752. After the discovered-hub cleanup, run `35865964120` passed startup but the render PTY became the sole failure and left PID 7340. Run `35867444559` proved render exit 0, markdown rendering, syntax highlighting and shutdown were all true before cleanup, while installed PID 10016 survived. Run `35868766562` printed `Installed render isolated hub pid: none` and left PID 2736. Run `35870390574` shifted back to the startup PTY: startup, eight-second idle and shutdown were all true, but PID 1524 remained at the exact failed root's `@shrinivas-sn\shri-windows-x64\bin\shri.exe`. The hosted focused source suite remains 230 passed / 2 skipped; seven of eight installed tests pass. Local direct render smoke passed and reported PTY PID 9544 with no hub discovery.
+
+Surprises: The failure moves between startup and render PTY cases, so blaming only the render helper is incorrect. “No discovery PID” disproves the simple theory that a fully registered isolated hub is always responsible, but an asynchronous hub prewarm could spawn before discovery appears. `waitForExit()`/shutdown true proves the PTY-observed leader exited; it does not yet prove every native descendant or detached runtime process exited. The current evidence does not distinguish a wrapper child surviving Ctrl+C, a late detached prewarm, or another lifecycle race. The exact root cause is intentionally left unresolved.
+
+Next: Start from hosted run `35870390574` and commit `8e98375`. Add identity evidence that correlates the PTY leader PID, wrapper/native child relationship, daemon sentinel/arguments and spawn time with the one surviving PID. Fix the owning lifecycle boundary, not the symptom: no Windows-only hardcoded PID sweep, no relaxed deletion, and no retry-only green. Rebuild/repack, run focused local installed tests, then require hosted Windows CI to pass repeatedly before live Groq or npm publication.
+
+Commit: Pending save-check checkpoint.
