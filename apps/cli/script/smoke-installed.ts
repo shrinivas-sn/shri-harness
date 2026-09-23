@@ -645,6 +645,24 @@ export async function runInstalledSmoke(
 			console.error(
 				`Installed render before cleanup: ${JSON.stringify({ exitCode: renderResult.status, markdown: renderChecks.markdownCodeRendered === true, syntax: renderChecks.syntaxHighlighted === true, shutdown: renderChecks.shutdown === true, helperError: renderResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150) })}`,
 			);
+			const renderHubDiscoveryPath = join(
+				env.SHRI_DIR,
+				"data",
+				"locks",
+				"hub",
+				"production.json",
+			);
+			let renderHubPid: number | undefined;
+			try {
+				renderHubPid = JSON.parse(
+					readFileSync(renderHubDiscoveryPath, "utf8"),
+				).pid;
+			} catch {
+				// No isolated hub discovery was written.
+			}
+			console.error(
+				`Installed render isolated hub pid: ${Number.isInteger(renderHubPid) ? renderHubPid : "none"}`,
+			);
 			checks.markdownCodeRendered = renderChecks.markdownCodeRendered === true;
 			checks.syntaxHighlighted = renderChecks.syntaxHighlighted === true;
 			checks.renderShutdown = renderChecks.shutdown === true;
