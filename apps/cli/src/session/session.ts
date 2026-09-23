@@ -26,6 +26,29 @@ function toSessionRecordLike(
 	return row;
 }
 
+/**
+ * The Shri preview runs sessions locally unless a hub is explicitly requested.
+ * Core's `auto` mode prewarms a detached hub daemon from the installed
+ * executable; it outlives the CLI, may not be registered yet when the CLI
+ * exits, and on Windows keeps the installed `shri.exe` locked against npm
+ * update/uninstall. Explicit `hub`/`remote` callers and an explicit
+ * `CLINE_SESSION_BACKEND_MODE` (env-managed routing) remain opt-in.
+ */
+function resolvePreviewBackendMode(
+	requested: RuntimeHostMode | undefined,
+): RuntimeHostMode | undefined {
+	if (requested === "hub" || requested === "remote" || requested === "local") {
+		return requested;
+	}
+	if (
+		process.env.CLINE_SESSION_BACKEND_MODE?.trim() ||
+		process.env.CLINE_VCR?.trim()
+	) {
+		return undefined;
+	}
+	return "local";
+}
+
 export async function createCliCore(options?: {
 	capabilities?: RuntimeCapabilities;
 	toolPolicies?: AgentConfig["toolPolicies"];
@@ -37,7 +60,7 @@ export async function createCliCore(options?: {
 }): Promise<ClineCore> {
 	const explicitBackendMode = options?.forceLocalBackend
 		? "local"
-		: options?.backendMode;
+		: resolvePreviewBackendMode(options?.backendMode);
 	const cwd = options?.cwd?.trim() || process.cwd();
 	const workspaceRoot =
 		options?.workspaceRoot?.trim() || resolveWorkspaceRoot(cwd);

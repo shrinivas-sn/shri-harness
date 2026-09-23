@@ -82,7 +82,7 @@ describe.skipIf(process.platform !== "win32")(
 			expect(report.checks.tuiStartup).toBe(true);
 			expect(report.checks.tuiSurvivesIdle).toBe(true);
 			expect(report.checks.tuiShutdown).toBe(true);
-			expect(report.checks.tuiHubStopped).toBe(true);
+			expect(report.checks.tuiNoHub).toBe(true);
 			expect(report.checks.stateIsolation).toBe(true);
 		});
 
@@ -110,6 +110,7 @@ describe.skipIf(process.platform !== "win32")(
 				checks: Record<string, boolean>;
 			};
 			expect(report.checks.markdownCodeRendered).toBe(true);
+			expect(report.checks.renderNoHub).toBe(true);
 			expect(report.checks.syntaxHighlighted).toBe(true);
 		});
 

@@ -100,23 +100,33 @@ describe("createCliCore", () => {
 		);
 	});
 
-	it("lets core choose the backend by default", async () => {
+	it("uses the local backend by default so no detached hub is prewarmed", async () => {
 		await sessionModule.createCliCore();
 
 		expect(createCore).toHaveBeenCalledWith(
-			expect.objectContaining({
-				hub: expect.objectContaining({
-					clientType: "cli",
-					displayName: "Cline CLI",
-				}),
-			}),
+			expect.objectContaining({ backendMode: "local" }),
 		);
+		expect(featureFlagsPoll).toHaveBeenCalledTimes(1);
+	});
+
+	it("maps an auto backend request to local so no detached hub is prewarmed", async () => {
+		await sessionModule.createCliCore({ backendMode: "auto" });
+
+		expect(createCore).toHaveBeenCalledWith(
+			expect.objectContaining({ backendMode: "local" }),
+		);
+	});
+
+	it("passes env-managed routing through to core when hub is requested via env", async () => {
+		process.env.CLINE_SESSION_BACKEND_MODE = "hub";
+
+		await sessionModule.createCliCore({ backendMode: "auto" });
+
 		expect(createCore).toHaveBeenCalledWith(
 			expect.not.objectContaining({
 				backendMode: expect.anything(),
 			}),
 		);
-		expect(featureFlagsPoll).toHaveBeenCalledTimes(1);
 	});
 
 	it("forces the local backend when requested by the caller", async () => {
@@ -218,7 +228,7 @@ describe("createCliCore", () => {
 		expect(logger.log).toHaveBeenCalledWith(
 			"CLI core runtime routing selected",
 			{
-				backendMode: "env-managed",
+				backendMode: "local",
 				rpcAddress: "127.0.0.1:25463",
 				forceLocalBackend: false,
 			},

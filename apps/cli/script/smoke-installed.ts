@@ -97,27 +97,6 @@ async function removeTemporary(path: string): Promise<void> {
 	}
 }
 
-async function waitForProcessExit(
-	pid: number,
-	timeoutMs: number,
-): Promise<boolean> {
-	const deadline = Date.now() + timeoutMs;
-	while (Date.now() < deadline) {
-		try {
-			process.kill(pid, 0);
-		} catch {
-			return true;
-		}
-		await new Promise((resolve) => setTimeout(resolve, 100));
-	}
-	try {
-		process.kill(pid, 0);
-		return false;
-	} catch {
-		return true;
-	}
-}
-
 function resolveTools(): { nodeDir: string; npm: string; npx: string } {
 	const result = run(
 		"node",
@@ -494,9 +473,9 @@ export async function runInstalledSmoke(
 					.join(",");
 				fail(`tui-pty: ${failed}${diagnostic ? `: ${diagnostic}` : ""}`);
 			}
-			// The interactive runtime can prewarm a detached hub. It is intentionally
-			// longer-lived than the TUI, so stop only this isolated test's hub before
-			// deleting the installation that contains its executable.
+			// The Shri preview runs the interactive session locally, so the TUI must
+			// not leave a detached hub behind. One that did would keep the installed
+			// executable locked on Windows; stop it for cleanup, then fail.
 			const discoveryPath = join(
 				env.SHRI_DIR,
 				"data",
@@ -509,32 +488,10 @@ export async function runInstalledSmoke(
 				`Installed PTY isolated hub discovery: ${discoveryPresent ? "present" : "none"}`,
 			);
 			if (discoveryPresent) {
-				const discovery = JSON.parse(readFileSync(discoveryPath, "utf8")) as {
-					pid?: number;
-				};
-				const pid = discovery.pid;
-				if (!Number.isInteger(pid) || !pid || pid <= 0)
-					fail("tui-hub-discovery-pid");
-				const stopped = run(bin, ["hub", "stop"], unrelated, env);
-				let stopResult: { stopped?: boolean } = {};
-				try {
-					stopResult = JSON.parse(stopped.stdout);
-				} catch {
-					// The explicit status check below reports a failed stop.
-				}
-				const exited = await waitForProcessExit(pid, 3_000);
-				checks.tuiHubStopped =
-					stopped.status === 0 &&
-					stopResult.stopped === true &&
-					exited &&
-					!existsSync(discoveryPath);
-				if (!checks.tuiHubStopped)
-					fail(
-						`tui-hub-stop: status=${stopped.status} stopped=${stopResult.stopped === true} exited=${exited} discovery=${existsSync(discoveryPath)}`,
-					);
-			} else {
-				checks.tuiHubStopped = true;
+				run(bin, ["hub", "stop"], unrelated, env);
+				fail("tui-left-hub");
 			}
+			checks.tuiNoHub = true;
 		}
 		if (options.authPty) {
 			const authResult = run(
@@ -673,6 +630,11 @@ export async function runInstalledSmoke(
 			console.error(
 				`Installed render isolated hub pid: ${Number.isInteger(renderHubPid) ? renderHubPid : "none"}`,
 			);
+			if (renderHubPid !== undefined) {
+				run(bin, ["hub", "stop"], unrelated, env);
+				fail("render-left-hub");
+			}
+			checks.renderNoHub = true;
 			checks.markdownCodeRendered = renderChecks.markdownCodeRendered === true;
 			checks.syntaxHighlighted = renderChecks.syntaxHighlighted === true;
 			checks.renderShutdown = renderChecks.shutdown === true;
