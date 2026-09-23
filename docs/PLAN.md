@@ -574,3 +574,15 @@ Surprises: The Groq key is limited to 8,000 tokens/min for gpt-oss-120b (6–8k 
 Next: The user decides on the permanent `next` publish of the CI-artifact tarballs; then trusted publishing and a registry-install smoke check. Follow-ups: rate-limit notice, smaller per-turn prompt, single-word prompt UX.
 
 Commit: `15051e0` (fix), tag `v0.1.0-next.0`; docs in the following commit.
+
+### README, 0.1.0-next.1 and npm publication — 24/09/2026
+
+Done: Rewrote `apps/cli/README.md` for npm users (`aec0fd6`), checking each command it shows against the installed tarball. Bumped to `0.1.0-next.1` (`802da20`) instead of moving the pushed `v0.1.0-next.0` tag (the permission policy blocked deleting the remote tag, and next.0 was never published). Tagged `v0.1.0-next.1`, ran the release dry run, and the user published both CI-artifact tarballs locally with 2FA (platform first). Updated the root README with install instructions.
+
+Verified: Local rebuild `--version` = `0.1.0-next.1`; release tests 44 passed / 2 skipped; local installed E2E 8/8 (211.73s). Release run `35906035200` attempt 1 failed with a render-PTY prompt-stage 20s timeout; attempt 2 succeeded (preflight, verify, publish skipped). `check-publish-inputs.mjs` passed on the downloaded artifact (sha256 platform `7c381ac8c79aaafafbcb64a31d56e366293b8810fd28b55dc23b430b593e8596`, wrapper `31a9066ad28ec8a51c988a12a6503741cae40185cd0cd3a1162ad2dab72b9d1f`). Registry `dist.integrity` equals the local sha512 of both tarballs. `npm access list packages shrinivas-sn` shows both as read-write. A fresh `npm install -g --prefix … --ignore-scripts @shrinivas-sn/shri@next` with no Bun on PATH gave `shri --version` → `0.1.0-next.1`, a live read of `note.txt` → `WORD=marigold` (exit 0), and `npx … --version` → `0.1.0-next.1`. `--auto-approve false` blocked `run_commands` and created no file.
+
+Surprises: Public `npm view` returned E404 for several minutes after a successful publish, while the owner's access list already showed both packages. npm pointed `latest` at the prerelease automatically on the first publish. `-m` rewrites the saved default model. Push CI for the same commit timed out in the 15s pack test on the hosted runner, although it passes locally in 2s.
+
+Next: User sets up trusted publishing for both packages on npmjs.com. Then decide the follow-ups listed in STATUS.md.
+
+Commit: `aec0fd6`, `802da20`, tag `v0.1.0-next.1`; docs in the following commit.
