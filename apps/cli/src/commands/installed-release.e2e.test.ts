@@ -10,12 +10,7 @@ describe.skipIf(process.platform !== "win32")(
 		it("rejects a non-native target without a stack trace", () => {
 			const result = spawnSync(
 				"cmd.exe",
-				[
-					"/d",
-					"/s",
-					"/c",
-					"bun.cmd script/smoke-installed.ts --target linux-x64",
-				],
+				["/d", "/s", "/c", "bun script/smoke-installed.ts --target linux-x64"],
 				{ cwd: cliDir, encoding: "utf8", timeout: 10_000 },
 			);
 			expect(result.status).toBe(1);
@@ -30,7 +25,7 @@ describe.skipIf(process.platform !== "win32")(
 					"/d",
 					"/s",
 					"/c",
-					"bun.cmd script/smoke-installed.ts --target windows-x64",
+					"bun script/smoke-installed.ts --target windows-x64",
 				],
 				{
 					cwd: cliDir,
@@ -70,7 +65,7 @@ describe.skipIf(process.platform !== "win32")(
 					"/d",
 					"/s",
 					"/c",
-					"bun.cmd script/smoke-installed.ts --target windows-x64 --pty",
+					"bun script/smoke-installed.ts --target windows-x64 --pty",
 				],
 				{
 					cwd: cliDir,
@@ -99,7 +94,7 @@ describe.skipIf(process.platform !== "win32")(
 					"/d",
 					"/s",
 					"/c",
-					"bun.cmd script/smoke-installed.ts --target windows-x64 --render-pty",
+					"bun script/smoke-installed.ts --target windows-x64 --render-pty",
 				],
 				{
 					cwd: cliDir,
@@ -126,7 +121,7 @@ describe.skipIf(process.platform !== "win32")(
 					"/d",
 					"/s",
 					"/c",
-					"bun.cmd script/smoke-installed.ts --target windows-x64 --daemon",
+					"bun script/smoke-installed.ts --target windows-x64 --daemon",
 				],
 				{
 					cwd: cliDir,
@@ -154,7 +149,7 @@ describe.skipIf(process.platform !== "win32")(
 					"/d",
 					"/s",
 					"/c",
-					"bun.cmd script/smoke-installed.ts --target windows-x64 --auth-pty",
+					"bun script/smoke-installed.ts --target windows-x64 --auth-pty",
 				],
 				{
 					cwd: cliDir,
@@ -181,7 +176,7 @@ describe.skipIf(process.platform !== "win32")(
 					"/d",
 					"/s",
 					"/c",
-					"bun.cmd script/smoke-installed.ts --target windows-x64 --model-pty",
+					"bun script/smoke-installed.ts --target windows-x64 --model-pty",
 				],
 				{
 					cwd: cliDir,
@@ -213,7 +208,7 @@ describe.skipIf(process.platform !== "win32")(
 					"/d",
 					"/s",
 					"/c",
-					"bun.cmd script/smoke-installed.ts --target windows-x64 --provider-fixture",
+					"bun script/smoke-installed.ts --target windows-x64 --provider-fixture",
 				],
 				{
 					cwd: cliDir,
