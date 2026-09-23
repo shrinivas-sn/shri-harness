@@ -121,7 +121,7 @@ if (typeof runtime.OnboardingView !== "function") throw new Error("missing Onboa
 		const { writeFileSync, unlinkSync, existsSync } = await import("node:fs");
 		const { join } = await import("node:path");
 		const tempScript = join(cliRoot, ".temp-auth-test.ts");
-		const bunBin = process.platform === "win32" ? "bun.cmd" : "bun";
+		const bunBin = "bun";
 		writeFileSync(tempScript, script, "utf8");
 
 		try {
@@ -143,7 +143,9 @@ if (typeof runtime.OnboardingView !== "function") throw new Error("missing Onboa
 				let stderr = "";
 				const timeout = setTimeout(() => {
 					child.kill();
-					reject(new Error(`Timed out loading auth TUI runtime. stderr: ${stderr}`));
+					reject(
+						new Error(`Timed out loading auth TUI runtime. stderr: ${stderr}`),
+					);
 				}, 30_000);
 
 				child.stdout?.on("data", (chunk: Buffer) => {

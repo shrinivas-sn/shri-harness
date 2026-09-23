@@ -33,7 +33,7 @@ describe("CLI distribution package shape", () => {
 		const result = spawnSync(
 			process.platform === "win32" ? "cmd.exe" : "bun",
 			process.platform === "win32"
-				? ["/d", "/s", "/c", "bun.cmd pm pack --dry-run"]
+				? ["/d", "/s", "/c", "bun pm pack --dry-run"]
 				: ["pm", "pack", "--dry-run"],
 			{
 				cwd: cliRoot,
