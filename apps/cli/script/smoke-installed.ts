@@ -66,7 +66,7 @@ function run(
 	};
 }
 
-function removeTemporary(path: string): void {
+async function removeTemporary(path: string): Promise<void> {
 	const parent = resolve(tmpdir());
 	const rel = relative(parent, resolve(path));
 	if (
@@ -78,7 +78,44 @@ function removeTemporary(path: string): void {
 	) {
 		throw new Error("Unsafe installed-smoke cleanup target");
 	}
-	rmSync(path, { recursive: true, force: true });
+	for (let attempt = 0; ; attempt++) {
+		try {
+			rmSync(path, { recursive: true, force: true });
+			return;
+		} catch (error) {
+			const code = (error as NodeJS.ErrnoException).code;
+			if (
+				attempt === 5 ||
+				(code !== "EACCES" &&
+					code !== "EPERM" &&
+					code !== "EBUSY" &&
+					code !== "ENOTEMPTY")
+			)
+				throw error;
+			await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)));
+		}
+	}
+}
+
+async function waitForProcessExit(
+	pid: number,
+	timeoutMs: number,
+): Promise<boolean> {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		try {
+			process.kill(pid, 0);
+		} catch {
+			return true;
+		}
+		await new Promise((resolve) => setTimeout(resolve, 100));
+	}
+	try {
+		process.kill(pid, 0);
+		return false;
+	} catch {
+		return true;
+	}
 }
 
 function resolveTools(): { nodeDir: string; npm: string; npx: string } {
@@ -453,6 +490,43 @@ export async function runInstalledSmoke(
 					.join(",");
 				fail(`tui-pty: ${failed}${diagnostic ? `: ${diagnostic}` : ""}`);
 			}
+			// The interactive runtime can prewarm a detached hub. It is intentionally
+			// longer-lived than the TUI, so stop only this isolated test's hub before
+			// deleting the installation that contains its executable.
+			const discoveryPath = join(
+				env.SHRI_DIR,
+				"data",
+				"locks",
+				"hub",
+				"production.json",
+			);
+			if (existsSync(discoveryPath)) {
+				const discovery = JSON.parse(readFileSync(discoveryPath, "utf8")) as {
+					pid?: number;
+				};
+				const pid = discovery.pid;
+				if (!Number.isInteger(pid) || !pid || pid <= 0)
+					fail("tui-hub-discovery-pid");
+				const stopped = run(bin, ["hub", "stop"], unrelated, env);
+				let stopResult: { stopped?: boolean } = {};
+				try {
+					stopResult = JSON.parse(stopped.stdout);
+				} catch {
+					// The explicit status check below reports a failed stop.
+				}
+				const exited = await waitForProcessExit(pid, 3_000);
+				checks.tuiHubStopped =
+					stopped.status === 0 &&
+					stopResult.stopped === true &&
+					exited &&
+					!existsSync(discoveryPath);
+				if (!checks.tuiHubStopped)
+					fail(
+						`tui-hub-stop: status=${stopped.status} stopped=${stopResult.stopped === true} exited=${exited} discovery=${existsSync(discoveryPath)}`,
+					);
+			} else {
+				checks.tuiHubStopped = true;
+			}
 		}
 		if (options.authPty) {
 			const authResult = run(
@@ -610,6 +684,9 @@ export async function runInstalledSmoke(
 			} catch {
 				// The helper reports boolean outcomes only.
 			}
+			console.error(
+				`Installed daemon before cleanup: ${JSON.stringify({ exitCode: daemonResult.status, started: daemonChecks.daemonStarted === true, isolated: daemonChecks.daemonStateIsolated === true, stopped: daemonChecks.daemonStopped === true, helperError: daemonResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150) })}`,
+			);
 			checks.daemonStarted = daemonChecks.daemonStarted === true;
 			checks.daemonStateIsolated = daemonChecks.daemonStateIsolated === true;
 			checks.daemonStopped = daemonChecks.daemonStopped === true;
@@ -698,7 +775,7 @@ export async function runInstalledSmoke(
 		if (!checks.stateIsolation) fail("state-isolation");
 		return { target, version: wrapper.version, checks };
 	} finally {
-		removeTemporary(root);
+		await removeTemporary(root);
 	}
 }
 

@@ -82,6 +82,7 @@ describe.skipIf(process.platform !== "win32")(
 			expect(report.checks.tuiStartup).toBe(true);
 			expect(report.checks.tuiSurvivesIdle).toBe(true);
 			expect(report.checks.tuiShutdown).toBe(true);
+			expect(report.checks.tuiHubStopped).toBe(true);
 			expect(report.checks.stateIsolation).toBe(true);
 		});
 
