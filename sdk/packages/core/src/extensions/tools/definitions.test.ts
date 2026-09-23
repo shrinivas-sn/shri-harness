@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import type { AgentToolContext, ITelemetryService } from "@cline/shared";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -1483,6 +1484,29 @@ describe("default read_files tool", () => {
 				conversationId: "conv-1",
 				iteration: 1,
 			}),
+		);
+	});
+
+	it("resolves relative paths against the configured cwd", async () => {
+		const cwd = path.resolve("session-workspace");
+		const absolute = path.resolve("elsewhere", "b.ts");
+		const execute = vi.fn(async () => "content");
+		const tool = createReadFilesTool(execute, { cwd });
+
+		await tool.execute(
+			{ files: [{ path: "note.txt" }, { path: absolute }] },
+			{ agentId: "agent-1", conversationId: "conv-1", iteration: 1 },
+		);
+
+		expect(execute).toHaveBeenNthCalledWith(
+			1,
+			{ path: path.join(cwd, "note.txt") },
+			expect.anything(),
+		);
+		expect(execute).toHaveBeenNthCalledWith(
+			2,
+			{ path: absolute },
+			expect.anything(),
 		);
 	});
 

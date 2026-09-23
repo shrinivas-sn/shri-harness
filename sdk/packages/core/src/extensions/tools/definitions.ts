@@ -4,6 +4,7 @@
  * Factory functions for creating the default tools.
  */
 
+import * as path from "node:path";
 import {
 	type AgentTool,
 	type AgentToolContext,
@@ -264,9 +265,10 @@ async function executeShellCommands(
  */
 export function createReadFilesTool(
 	executor: FileReadExecutor,
-	config: Pick<DefaultToolsConfig, "fileReadTimeoutMs"> = {},
+	config: Pick<DefaultToolsConfig, "cwd" | "fileReadTimeoutMs"> = {},
 ): AgentTool<ReadFilesInput, ToolOperationResult[]> {
 	const timeoutMs = config.fileReadTimeoutMs ?? 10000;
+	const cwd = config.cwd ?? process.cwd();
 
 	return createTool<ReadFilesInput, ToolOperationResult[]>({
 		name: "read_files",
@@ -314,6 +316,13 @@ export function createReadFilesTool(
 			} else {
 				requests = [validate];
 			}
+
+			// Relative paths belong to the session workspace, not the host process cwd.
+			requests = requests.map((request) =>
+				path.isAbsolute(request.path)
+					? request
+					: { ...request, path: path.resolve(cwd, request.path) },
+			);
 
 			return Promise.all(
 				requests.map(async (request): Promise<ToolOperationResult> => {
