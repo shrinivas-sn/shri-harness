@@ -75,7 +75,7 @@ describe.skipIf(process.platform !== "win32")(
 				},
 			);
 			expect(result.error).toBeUndefined();
-			expect(result.status).toBe(0);
+			expect(result.status, result.stderr.trim().slice(0, 300)).toBe(0);
 			const report = JSON.parse(result.stdout) as {
 				checks: Record<string, boolean>;
 			};

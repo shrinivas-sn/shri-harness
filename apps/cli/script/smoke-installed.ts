@@ -439,7 +439,10 @@ export async function runInstalledSmoke(
 			) {
 				const diagnostic =
 					ptyResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150) ?? "";
-				fail(`tui-pty${diagnostic ? `: ${diagnostic}` : ""}`);
+				const failed = ["tuiStartup", "tuiSurvivesIdle", "tuiShutdown"]
+					.filter((key) => checks[key] !== true)
+					.join(",");
+				fail(`tui-pty: ${failed}${diagnostic ? `: ${diagnostic}` : ""}`);
 			}
 		}
 		if (options.authPty) {
