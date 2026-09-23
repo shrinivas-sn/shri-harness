@@ -1,15 +1,20 @@
 #!/usr/bin/env bun
 
 import {
+	chmodSync,
+	copyFileSync,
 	cpSync,
 	existsSync,
+	mkdtempSync,
 	mkdirSync,
 	readdirSync,
 	readFileSync,
 	realpathSync,
+	rmSync,
 	statSync,
 } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { $ } from "bun";
 import {
 	parseBuildOptions,
@@ -19,34 +24,6 @@ import {
 
 const cliDir = resolve(import.meta.dir, "..");
 const rootDir = resolve(cliDir, "../..");
-process.chdir(cliDir);
-
-// Telemetry / OTEL environment variables that should be baked into the
-// compiled binary at build time. Mirrors the list of secrets injected by the
-// `cli-publish` GitHub Actions workflow. These are inlined via Bun's `define`
-// so the CLI ships with the production telemetry configuration without
-// requiring the end user to set any env vars.
-const BUILD_TIME_INLINED_ENV_VARS = [
-	"TELEMETRY_SERVICE_API_KEY",
-	"ERROR_SERVICE_API_KEY",
-	"OTEL_TELEMETRY_ENABLED",
-	"OTEL_LOGS_EXPORTER",
-	"OTEL_METRICS_EXPORTER",
-	"OTEL_TRACES_EXPORTER",
-	"CLINE_TRACE_SAMPLE_PERCENT",
-	"CLINE_TRACE_RECORD_CONTENT",
-	"OTEL_EXPORTER_OTLP_PROTOCOL",
-	"OTEL_EXPORTER_OTLP_ENDPOINT",
-	"OTEL_EXPORTER_OTLP_HEADERS",
-] as const;
-
-function buildInlinedEnvDefines(): Record<string, string> {
-	const defines: Record<string, string> = {};
-	for (const name of BUILD_TIME_INLINED_ENV_VARS) {
-		defines[`process.env.${name}`] = JSON.stringify(process.env[name] ?? "");
-	}
-	return defines;
-}
 
 const pkg = JSON.parse(readFileSync(join(cliDir, "package.json"), "utf-8"));
 const version: string = pkg.version;
@@ -85,7 +62,22 @@ if (optionsError) {
 	process.exit(1);
 }
 
-await $`rm -rf dist`;
+function removeScopedDirectory(target: string, parent: string): void {
+	const resolvedParent = resolve(parent);
+	const resolvedTarget = resolve(target);
+	const relativeTarget = relative(resolvedParent, resolvedTarget);
+	if (
+		!relativeTarget ||
+		relativeTarget === ".." ||
+		relativeTarget.startsWith(`..${sep}`) ||
+		isAbsolute(relativeTarget)
+	) {
+		throw new Error(`Refusing recursive cleanup outside ${resolvedParent}`);
+	}
+	rmSync(resolvedTarget, { recursive: true, force: true });
+}
+
+removeScopedDirectory(join(cliDir, "dist"), cliDir);
 
 // Pre-install all platform variants of native packages so cross-compilation
 // can resolve them. Without this, Bun only has the host platform's native
@@ -94,7 +86,7 @@ if (shouldInstallNativeVariants({ options: buildOptions, opentuiVersion })) {
 	console.log(
 		`Installing all platform variants of @opentui/core@${opentuiVersion}...`,
 	);
-	await $`bun install --os="*" --cpu="*" @opentui/core@${opentuiVersion}`;
+	await $`bun install --os="*" --cpu="*" @opentui/core@${opentuiVersion}`.cwd(cliDir);
 }
 
 // Build the SDK first (the CLI bundles workspace packages)
@@ -143,7 +135,7 @@ function shouldBuildHubWebview(): boolean {
 	}
 }
 
-if (shouldBuildHubWebview()) {
+if (buildOptions.withHubWebview && shouldBuildHubWebview()) {
 	console.log("Building Cline Hub webview...");
 	await $`bun -F @cline/cline-hub build:webview`.cwd(rootDir);
 }
@@ -183,46 +175,46 @@ async function buildCompiledBinary(input: {
 		"/",
 	);
 
-	// Build to /tmp first so Bun's temp-file rename stays on one filesystem
-	// layer in containerized environments (virtiofs, overlayfs).
+	// Build in an OS-native temporary directory so output staging works on
+	// Windows as well as containerized Unix filesystems.
 	const entrypoint = join(cliDir, "src/index.ts");
-	const tmpDir = join("/tmp", `cline-build-${input.dirName}`);
+	const tmpDir = mkdtempSync(join(tmpdir(), `shri-build-${input.dirName}-`));
 	const tmpOutfile = join(
 		tmpDir,
 		input.outfile.endsWith(".exe") ? "cline.exe" : "cline",
 	);
-	mkdirSync(tmpDir, { recursive: true });
 
-	process.chdir("/tmp");
-	const result = await Bun.build({
-		entrypoints: [entrypoint, parserWorker],
-		splitting: true,
-		compile: {
-			target: input.bunTarget,
-			outfile: tmpOutfile,
-		},
-		minify: true,
-		external: ["@anthropic-ai/vertex-sdk"],
-		define: {
-			OTUI_TREE_SITTER_WORKER_PATH: bunfsRoot + parserWorkerPath,
-			// Inline telemetry/OTEL env vars at build time so the compiled
-			// binary ships with production telemetry configuration baked in.
-			...buildInlinedEnvDefines(),
-		},
-		throw: false,
-	});
-	process.chdir(cliDir);
+	try {
+		const result = await Bun.build({
+			entrypoints: [entrypoint, parserWorker],
+			splitting: true,
+			compile: {
+				target: input.bunTarget,
+				outfile: tmpOutfile,
+			},
+			minify: true,
+			external: ["@anthropic-ai/vertex-sdk"],
+			define: {
+				OTUI_TREE_SITTER_WORKER_PATH: bunfsRoot + parserWorkerPath,
+			},
+			throw: false,
+		});
 
-	if (!result.success) {
-		console.error(`Build failed for ${input.dirName}:`);
-		for (const log of result.logs) {
-			console.error(log);
+		if (!result.success) {
+			console.error(`Build failed for ${input.dirName}:`);
+			for (const log of result.logs) {
+				console.error(log);
+			}
+			process.exit(1);
 		}
-		process.exit(1);
-	}
 
-	await $`cp ${tmpOutfile} ${input.outfile} && chmod 755 ${input.outfile}`;
-	await $`rm -rf ${tmpDir}`;
+		copyFileSync(tmpOutfile, input.outfile);
+		if (targetOs === "posix") {
+			chmodSync(input.outfile, 0o755);
+		}
+	} finally {
+		removeScopedDirectory(tmpDir, tmpdir());
+	}
 }
 
 for (const item of targets) {
@@ -271,7 +263,7 @@ for (const item of targets) {
 		await Bun.write(join(bootstrapDir, "plugin-sandbox-bootstrap.js"), content);
 	}
 
-	if (existsSync(hubWebviewDist)) {
+	if (buildOptions.withHubWebview && existsSync(hubWebviewDist)) {
 		const hubWebviewDest = join(cliDir, `dist/${dirName}/cline-hub/webview`);
 		mkdirSync(join(cliDir, `dist/${dirName}/cline-hub`), {
 			recursive: true,

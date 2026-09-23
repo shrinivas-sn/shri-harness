@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getCompactToolRegistry, getToolCapabilitySummary } from "./compact-registry";
+import { getCompactToolRegistry } from "./compact-registry";
 import { assignToolsForTask } from "./tool-assignment";
 
 describe("Compact Tool Registry & Dynamic Assignment", () => {

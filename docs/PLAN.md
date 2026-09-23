@@ -113,14 +113,14 @@ The last command is run from the repository root (the root owns the `shri` scrip
 
 **Interface:** Retain internal name `@cline/cli` so workspace filters keep working; mark source package private, set `displayName: "shri"` and preview version. Public identity belongs to generated manifests. Main and child processes must share the resolved Shri configuration directory.
 
-- [ ] Add failing tests for help/version identity, absent automatic update requests, explicit Shri update instructions and child/daemon state isolation. Test `--config` > `SHRI_DIR` > default, using disposable home directories and a fake `.cline` sentinel.
-- [ ] Initialize Shri state before updater, telemetry or daemon state access. Inspect import side effects, then propagate the resolved directory through the existing SDK environment conventions.
-- [ ] Disable inherited telemetry/error export and automatic updates. Ensure explicit update behavior targets `@shrinivas-sn/shri@next` and cannot install `cline`.
-- [ ] Preserve Groq defaults; test missing/invalid credentials without printing raw values. Inspect outgoing requests with synthetic credentials so no non-provider reporting includes them.
-- [ ] Fix explicit auth recovery: `shri auth` must offer masked replacement of a saved Groq key rather than silently returning the existing value. Keep normal startup's reuse behavior. Cover a synthetic saved invalid key, successful replacement and persistence, cancellation preserving saved settings, and non-TTY failure with actionable guidance. Preserve the saved model when replacing only the key. An active environment key must not make explicit reconfiguration silently succeed; explain environment precedence without printing its value. Verify the 401 recovery instruction against the actual command flow; an assertion that the return code is merely defined is insufficient.
-- [ ] Fix startup key precedence end to end: nonblank command-line key > nonblank `GROQ_API_KEY` > saved key > onboarding. `main.ts` currently bypasses `ensureGroqApiKey` whenever a saved key exists, despite `resolveGroqApiKey` prioritizing the environment. Add regressions at the startup/runtime boundary, not just helper tests, using distinct synthetic keys and checking the selected provider configuration. Cover blank overrides and ensure environment/command-line overrides are not persisted implicitly. Carry replacement and precedence cases into Task 5's installed checks.
-- [ ] Correct public copy to single-agent preview; keep upstream credits. Mark the custom pipeline simulated in developer documentation and exclude its entrypoint from public release commands.
-- [ ] Run the focused suite; self-review initialization across normal CLI, daemon and connector modes.
+- [x] Add failing tests for help/version identity, absent automatic update requests, explicit Shri update instructions and child/daemon state isolation. Test `--config` > `SHRI_DIR` > default, using disposable home directories and a fake `.cline` sentinel.
+- [x] Initialize Shri state before updater, telemetry or daemon state access. Inspect import side effects, then propagate the resolved directory through the existing SDK environment conventions.
+- [x] Disable inherited telemetry/error export and automatic updates. Ensure explicit update behavior targets `@shrinivas-sn/shri@next` and cannot install `cline`.
+- [x] Preserve Groq defaults; test missing/invalid credentials without printing raw values. Inspect outgoing requests with synthetic credentials so no non-provider reporting includes them.
+- [x] Fix explicit auth recovery: `shri auth` must offer masked replacement of a saved Groq key rather than silently returning the existing value. Keep normal startup's reuse behavior. Cover a synthetic saved invalid key, successful replacement and persistence, cancellation preserving saved settings, and non-TTY failure with actionable guidance. Preserve the saved model when replacing only the key. An active environment key must not make explicit reconfiguration silently succeed; explain environment precedence without printing its value. Verify the 401 recovery instruction against the actual command flow; an assertion that the return code is merely defined is insufficient.
+- [x] Fix startup key precedence end to end: nonblank command-line key > nonblank `GROQ_API_KEY` > saved key > onboarding. `main.ts` currently bypasses `ensureGroqApiKey` whenever a saved key exists, despite `resolveGroqApiKey` prioritizing the environment. Add regressions at the startup/runtime boundary, not just helper tests, using distinct synthetic keys and checking the selected provider configuration. Cover blank overrides and ensure environment/command-line overrides are not persisted implicitly. Carry replacement and precedence cases into Task 5's installed checks.
+- [x] Correct public copy to single-agent preview; keep upstream credits. Mark the custom pipeline simulated in developer documentation and exclude its entrypoint from public release commands.
+- [x] Run the focused suite; self-review initialization across normal CLI, daemon and connector modes.
 
 ```powershell
 bun -F @cline/cli test:unit src/shri/ src/commands/update.test.ts src/commands/auth.test.ts src/main.test.ts
@@ -134,13 +134,13 @@ bun -F @cline/cli test:unit src/shri/ src/commands/update.test.ts src/commands/a
 
 **Interface:** Existing `build:platforms:single` produces a fresh host artifact without building the dashboard. Add `--with-hub-webview` as an explicit development opt-in; retain daemon services used by terminal sessions.
 
-- [ ] Test default terminal build, explicit webview opt-in, unsupported targets and invalid options before implementation.
-- [ ] Separate webview build/copy in both build paths. Any retained runtime route requiring missing assets must be handled explicitly; do not ship a broken hidden dashboard command.
-- [ ] Replace `/tmp`, shell `rm -rf`, and cross-shell copy/chmod assumptions with native filesystem operations and scoped staging directories. Resolve and validate every recursive cleanup target; restore changed working directories in `finally`.
-- [ ] Remove generic `OTEL_*` and telemetry-secret embedding. Build with an explicit minimal environment; never inline arbitrary environment values, `GROQ_API_KEY`, user homes or settings.
-- [ ] Inventory parser workers, native libraries, plugin bootstrap and dynamic imports. Record required runtime files for Task 4's artifact check. Verify Bun compile support at the pinned version rather than relying on newer docs.
-- [ ] Align Bun to `1.3.14`, retaining locked OpenTUI/React and patched dependencies. Change that pin only after recording a concrete blocker and validating the replacement.
-- [ ] Check build success explicitly and reject missing outputs. Run the SDK and host builds from their correct directories.
+- [x] Test default terminal build, explicit webview opt-in, unsupported targets and invalid options before implementation.
+- [x] Separate webview build/copy in both build paths. Any retained runtime route requiring missing assets must be handled explicitly; do not ship a broken hidden dashboard command.
+- [x] Replace `/tmp`, shell `rm -rf`, and cross-shell copy/chmod assumptions with native filesystem operations and scoped staging directories. Resolve and validate every recursive cleanup target; restore changed working directories in `finally`.
+- [x] Remove generic `OTEL_*` and telemetry-secret embedding. Build with an explicit minimal environment; never inline arbitrary environment values, `GROQ_API_KEY`, user homes or settings.
+- [x] Inventory parser workers, native libraries, plugin bootstrap and dynamic imports. Record required runtime files for Task 4's artifact check. Verify Bun compile support at the pinned version rather than relying on newer docs.
+- [x] Align Bun to `1.3.14`, retaining locked OpenTUI/React and patched dependencies. Change that pin only after recording a concrete blocker and validating the replacement.
+- [x] Check build success explicitly and reject missing outputs. Run the SDK and host builds from their correct directories.
 
 ```powershell
 bun run build:sdk

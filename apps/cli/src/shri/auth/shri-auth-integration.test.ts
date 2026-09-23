@@ -1,13 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { runAuthCommand } from "../../commands/auth";
-import { parseAuthCommandArgs } from "../../commands/auth";
 
 import { ProviderSettingsManager } from "@cline/core";
 
 describe("Shri Auth Command Integration", () => {
 	it("defaults provider to groq and model to openai/gpt-oss-120b when bare --apikey is provided", async () => {
 		const manager = new ProviderSettingsManager();
-		const saveSpy = vi.spyOn(manager, "saveProviderSettings").mockImplementation(() => {});
+		const saveSpy = vi
+			.spyOn(manager, "saveProviderSettings")
+			.mockImplementation(() => manager.read());
 		const writeln = vi.fn();
 		const writeErr = vi.fn();
 

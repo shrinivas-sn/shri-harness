@@ -1,9 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { realpathSync } from "node:fs";
 import {
-	isAutoUpdateEnabledGlobally,
-	NodeHubClient,
-	readHubDiscovery,
 	resolveProductionHubOwnerContext,
 	resolveSharedHubOwnerContext,
 } from "@cline/core";
@@ -273,102 +270,11 @@ export function resolveCliHubOwnerContext() {
 		: resolveSharedHubOwnerContext();
 }
 
-let pendingAutoUpdate: ManualUpdateCommand | undefined;
-let pendingAutoUpdateCheck: Promise<void> | undefined;
-
-const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-
-// How long the exit sequence will wait for a still-in-flight startup version
-// check before giving up on it. Long enough for a typical registry response,
-// short enough that one-shot commands do not feel it.
-const UPDATE_CHECK_EXIT_GRACE_MS = 250;
-
-// Hard cap on the exit-time hub query. The hub client's default connect and
-// command timeouts add up to tens of seconds against a wedged hub, and this
-// runs while the user is waiting for their shell prompt back.
-const CLIENT_COUNT_EXIT_TIMEOUT_MS = 3_000;
-
 /**
- * Non-blocking auto-update check for CLI startup.
- *
- * Deliberately does NOT install right away: replacing the npm package while
- * cline processes are running swaps the binary under them — their respawn
- * paths break on the new build fingerprint — and historically also restarted
- * the hub daemon out from under live sessions. The check only records that an
- * update is available; the CLI entrypoint calls applyDeferredUpdate() from
- * its exit sequence (an explicit process.exit() follows, so a beforeExit hook
- * would never fire), and the install runs only when no other CLI is attached
- * to the hub — at that point nothing is running that the swap could hurt.
- * The next launch picks up the new binary and a fresh hub.
- *
- * Skipped for npx, dev, unknown installs. Disable with CLINE_NO_AUTO_UPDATE=1.
+ * Preview updates are explicit only. Startup must not make registry requests
+ * or replace the executable under a live terminal session.
  */
 export function autoUpdateOnStartup(): void {
-	// Preview updates are explicit only. In particular, startup must not make
-	// a registry request or replace the executable under a live session.
-}
-
-/**
- * True when a hub is reachable and another cli* client is attached to it.
- * Only cli* clients run the npm-installed binary — desktop sidecars and
- * connectors ship their own — so only they make the swap unsafe. This runs
- * after the entrypoint's disposeAll(), so this process's own registrations
- * are closed and any cli client still listed belongs to another process. Errors count as attached:
- * never install unless the hub positively confirms nothing would be hurt.
- */
-async function otherCliClientsAttached(): Promise<boolean> {
-	const owner = resolveCliHubOwnerContext();
-	const discovery = await readHubDiscovery(owner.discoveryPath).catch(
-		() => undefined,
-	);
-	if (!discovery?.url) {
-		return false;
-	}
-	const client = new NodeHubClient({
-		url: discovery.url,
-		authToken: discovery.authToken,
-		clientType: "cli-update-check",
-		displayName: "cline update check",
-	});
-	try {
-		const reply = await client.command("client.list", {}, undefined, {
-			timeoutMs: CLIENT_COUNT_EXIT_TIMEOUT_MS,
-		});
-		const clients =
-			(reply.payload as { clients?: Array<{ clientType?: unknown }> })
-				.clients ?? [];
-		if (
-			clients.some(
-				(entry) =>
-					typeof entry?.clientType === "string" &&
-					entry.clientType.startsWith("cli") &&
-					entry.clientType !== "cli-update-check",
-			)
-		) {
-			return true;
-		}
-		// A TUI's registration can be lost in transport churn while its session
-		// connection survives (observed in review), so an empty client list is
-		// not proof of safety. Cross-check for sessions somebody is attached to.
-		// Participants, not session status: finished sessions can linger idle
-		// forever and must not pin updates, and participant-less scheduled runs
-		// live in the hub process, which a binary swap does not touch.
-		const sessions = await client.command(
-			"session.list",
-			{ limit: 500 },
-			undefined,
-			{ timeoutMs: CLIENT_COUNT_EXIT_TIMEOUT_MS },
-		);
-		const sessionRecords =
-			(sessions.payload as { sessions?: Array<{ participants?: unknown }> })
-				.sessions ?? [];
-		return sessionRecords.some(
-			(session) =>
-				Array.isArray(session?.participants) && session.participants.length > 0,
-		);
-	} finally {
-		await client.dispose().catch(() => undefined);
-	}
 }
 
 /**

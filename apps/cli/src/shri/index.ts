@@ -4,7 +4,7 @@ import { BudgetManager } from "./scheduler/budget";
 import { ExecutionScheduler } from "./scheduler/scheduler";
 import { assignToolsForTask } from "./tools/tool-assignment";
 import { type Plan, type PlannedTask, type SubAgentEnvelope } from "./types";
-import { type RunRecord, formatRunRecord, serializeRunRecord } from "./persistence/run-history";
+import { type RunRecord } from "./persistence/run-history";
 export { resolveShriHomeDir, initShriEnvironment } from "./auth/shri-dir";
 export {
 	validateGroqKeyFormat,

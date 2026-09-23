@@ -10,7 +10,6 @@ import {
 	saveProviderOAuthCredentials,
 } from "@cline/core";
 import { Command } from "commander";
-import React from "react";
 import type { EnsureGroqApiKeyOptions } from "../shri/auth/groq-auth";
 import { disableOpenTuiGraphicsProbe } from "../tui/opentui-env";
 import open from "../utils/open";
@@ -325,71 +324,6 @@ export async function loadAuthTuiRuntime() {
 	const { createRoot } = await import("@opentui/react");
 	const { OnboardingView } = await import("../tui/views/onboarding");
 	return { createCliRenderer, createRoot, OnboardingView };
-}
-
-async function runInteractiveAuthTui(input: AuthCommandInput): Promise<number> {
-	if (!process.stdin.isTTY || !process.stdout.isTTY) {
-		input.io.writeErr(
-			"interactive auth setup requires a TTY (use --provider/--apikey/--modelid for non-interactive setup)",
-		);
-		return 1;
-	}
-	const { createCliRenderer, createRoot, OnboardingView } =
-		await loadAuthTuiRuntime();
-	const renderer = await createCliRenderer({
-		exitOnCtrlC: false,
-		autoFocus: false,
-		enableMouseMovement: true,
-	});
-
-	return await new Promise<number>((resolve, reject) => {
-		let root: ReturnType<typeof createRoot>;
-		try {
-			root = createRoot(renderer);
-		} catch (error) {
-			renderer.destroy();
-			reject(error);
-			return;
-		}
-		let settled = false;
-		let unmounted = false;
-		const unmountRoot = () => {
-			if (unmounted) {
-				return;
-			}
-			unmounted = true;
-			root.unmount();
-		};
-		const settle = (code: number) => {
-			if (settled) {
-				return;
-			}
-			settled = true;
-			unmountRoot();
-			renderer.destroy();
-			resolve(code);
-		};
-		renderer.on("destroy", () => {
-			unmountRoot();
-			if (!settled) {
-				settled = true;
-				resolve(1);
-			}
-		});
-		try {
-			root.render(
-				React.createElement(OnboardingView, {
-					providerSettingsManager: input.providerSettingsManager,
-					onComplete: () => settle(0),
-					onExit: () => settle(1),
-				}),
-			);
-		} catch (error) {
-			unmountRoot();
-			renderer.destroy();
-			reject(error);
-		}
-	});
 }
 
 export async function runAuthCommand(input: AuthCommandInput): Promise<number> {

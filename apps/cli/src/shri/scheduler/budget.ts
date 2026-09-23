@@ -9,11 +9,9 @@ export interface BudgetLimits {
 export class BudgetManager {
 	private consumedTokensToday = 0;
 	private dailyTokenCeiling: number;
-	private tokensPerMinute: number;
 
 	constructor(limits?: BudgetLimits) {
 		this.dailyTokenCeiling = limits?.dailyTokenCeiling ?? 200000;
-		this.tokensPerMinute = limits?.tokensPerMinute ?? 8000;
 	}
 
 	public canAfford(estimatedTokens: number): boolean {

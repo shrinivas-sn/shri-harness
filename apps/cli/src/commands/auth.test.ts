@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import type { ProviderSettingsManager } from "@cline/core";
 import { describe, expect, it, vi } from "vitest";
@@ -121,23 +121,49 @@ if (typeof runtime.OnboardingView !== "function") throw new Error("missing Onboa
 		const { writeFileSync, unlinkSync, existsSync } = await import("node:fs");
 		const { join } = await import("node:path");
 		const tempScript = join(cliRoot, ".temp-auth-test.ts");
+		const bunBin = process.platform === "win32" ? "bun.cmd" : "bun";
 		writeFileSync(tempScript, script, "utf8");
 
 		try {
-			const bunBin = process.platform === "win32" ? "bun.cmd" : "bun";
-			const result = spawnSync(
-				bunBin,
-				["--conditions=development", "run", tempScript],
-				{
-					cwd: cliRoot,
-					encoding: "utf8",
-					shell: process.platform === "win32",
-				},
-			);
+			const result = await new Promise<{
+				code: number | null;
+				stderr: string;
+				stdout: string;
+			}>((resolve, reject) => {
+				const child = spawn(
+					bunBin,
+					["--conditions=development", "run", tempScript],
+					{
+						cwd: cliRoot,
+						shell: process.platform === "win32",
+						windowsHide: true,
+					},
+				);
+				let stdout = "";
+				let stderr = "";
+				const timeout = setTimeout(() => {
+					child.kill();
+					reject(new Error(`Timed out loading auth TUI runtime. stderr: ${stderr}`));
+				}, 30_000);
 
-			expect(result.error).toBeUndefined();
+				child.stdout?.on("data", (chunk: Buffer) => {
+					stdout += chunk.toString();
+				});
+				child.stderr?.on("data", (chunk: Buffer) => {
+					stderr += chunk.toString();
+				});
+				child.once("error", (error) => {
+					clearTimeout(timeout);
+					reject(error);
+				});
+				child.once("close", (code) => {
+					clearTimeout(timeout);
+					resolve({ code, stdout, stderr });
+				});
+			});
+
 			expect(result.stderr).toBe("");
-			expect(result.status).toBe(0);
+			expect(result.code).toBe(0);
 		} finally {
 			if (existsSync(tempScript)) {
 				unlinkSync(tempScript);

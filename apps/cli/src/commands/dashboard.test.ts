@@ -39,6 +39,20 @@ afterEach(() => {
 });
 
 describe("runDashboardCommand", () => {
+	it("rejects the dashboard command when a terminal-only build has no webview", async () => {
+		const writeErr = vi.fn();
+
+		const exitCode = await runDashboardCommand({
+			io: { writeln: () => {}, writeErr },
+			webviewAvailable: () => false,
+		});
+
+		expect(exitCode).toBe(1);
+		expect(writeErr).toHaveBeenCalledWith(
+			expect.stringContaining("--with-hub-webview"),
+		);
+	});
+
 	it("starts the dashboard server, opens the invite URL, and waits for shutdown", async () => {
 		const output: string[] = [];
 		const errors: string[] = [];

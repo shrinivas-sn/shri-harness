@@ -107,3 +107,41 @@ Final Windows evidence (user-run in the rebuilt checkout): `/model` selected a c
 ## Task 1 in progress — explicit Groq auth and startup precedence — 23/09/2026
 
 Added synthetic red/green coverage for saved-key replacement, cancellation, masked environment precedence guidance, and startup key precedence. `ensureGroqApiKey` now accepts explicit reconfiguration, keeps ordinary startup reuse intact, handles Ctrl+C as cancellation, preserves saved model/settings when only replacing a key, and no longer claims inference is local or multi-agent. Bare `shri auth` passes reconfiguration intent and reports cancellation. Startup now selects command-line key, then nonblank `GROQ_API_KEY`, then saved key; command-line/environment values are not written to provider settings. Focused final source result: 3 files / 20 tests passed, 85 intentionally excluded by name filter. The full initial `main.test.ts` attempt is not verification: an incomplete mock accidentally opened two task-owned hidden prompts, which were terminated without touching the user's CLI. Task 1 is still open for identity/state/updater/telemetry work and its unfiltered focused suite.
+
+## Task 1 completion — 23/09/2026
+
+Done: Completed Task 1's source-level verification and corrected its inherited test harnesses for Shri's intentional Groq default, isolated `~/.shri` storage, and Windows path/process behavior. No production credential, release, package, or publication action occurred.
+
+Verified: `bun -F @cline/cli test:unit src/shri/ src/commands/update.test.ts src/commands/auth.test.ts src/main.test.ts` passed 15 files / 153 tests, exit 0. CLI typecheck remains red on inherited unused-symbol diagnostics and is not counted as a Task 1 pass. `git diff --check` emitted only the repository's CRLF conversion warnings. Reviewed initialization: `main.ts` initializes Shri state before updater/telemetry/runtime access; `index.ts` initializes the hub-daemon path before importing its daemon entry; `acp/index.ts` initializes before ACP SDK work; supervised connectors reach `main.ts` before their runtime.
+
+Surprises: The prior all-in-one runner exposed three test-only failures: a POSIX-only updater-path assertion, a synchronous nested Bun test that could outlive Vitest, and fixtures that assumed Cline's historical default/storage location. Each correction was first observed failing, then passed with synthetic keys only.
+
+Next: Start Task 2's terminal-only deterministic build. Installed-artifact acceptance still belongs to Task 5.
+
+Commit: Not committed.
+
+## Task 2 started — 23/09/2026
+
+Done: Added an explicit `--with-hub-webview` build option; terminal builds now skip Hub webview build/copy by default in both source and platform paths. Replaced the platform builder's `/tmp`, `rm`, `cp`, and `chmod` shell path with scoped Node filesystem operations. Removed telemetry/OTEL build-time environment injection. Aligned the root Bun runtime pin to installed Bun 1.3.14.
+
+Verified: The new build-option test first failed because `withHubWebview` was absent, then passed. `bun -F @cline/cli test:unit src/main.test.ts src/commands/build-options.test.ts` passed 2 files / 91 tests. `bun run build:sdk` passed. `bun -F @cline/cli build` passed. `bun run build:platforms:single` compiled `dist/cli-windows-x64/bin/cline.exe` but returned no final wrapper result after beginning its smoke stage; direct `cline.exe --version` returned `0.1.0-next.0`.
+
+Surprises: CLI typecheck currently reports inherited unused-symbol diagnostics, plus the Task 1 mock's initially narrow inferred return type. The mock type was corrected; the remaining diagnostics are not claimed as fixed. The platform build itself produced the expected Windows executable despite its incomplete wrapper result.
+
+Next: Finish Task 2's build validation, runtime inventory, and typecheck diagnosis before marking its checklist complete.
+
+Commit: Not committed.
+
+## Task 2 completion — 23/09/2026
+
+Done: Completed the deterministic terminal-build gate. `--with-hub-webview` is now explicit; default source and platform builds omit webview build/copy. Unsupported flags and unsupported host targets are rejected. Build staging and cleanup use scoped Node filesystem APIs, and the platform script no longer changes its process working directory. The default artifact rejects `dashboard` with an actionable `--with-hub-webview` instruction instead of attempting to start without assets. The root Bun pin is `1.3.14` (matching `bun --version`); OpenTUI/React locks and existing patches were retained.
+
+Verified: `bun -F @cline/cli test:unit src/commands/build-options.test.ts src/commands/dashboard.test.ts` passed 2 files / 11 tests; `bun -F @cline/cli typecheck` exited 0; `bun run build:sdk` passed all SDK packages; `bun run build:platforms:single` built the fresh Windows host artifact and its built-in smoke reached `cline.exe --version`. Independent `dist/cli-windows-x64/bin/cline.exe --version` returned `0.1.0-next.0` with exit 0. Its file inventory is `bin/cline.exe`, `package.json`, and `extensions/plugin-sandbox-bootstrap.js`; it has no `cline-hub/webview`. A controlled rebuild with synthetic Groq and OTEL values confirmed neither value was embedded in the executable. `bun -F @cline/cli test:unit src/shri/ src/commands/update.test.ts src/commands/auth.test.ts src/main.test.ts` passed 15 files / 153 tests.
+
+Runtime inventory for Task 4: Bun compiles the OpenTUI parser worker supplied as an additional `Bun.build` entrypoint and the OpenTUI native runtime into the executable; neither is a loose artifact file. The plugin sandbox requires the copied `extensions/plugin-sandbox-bootstrap.js`. Dynamic CLI imports—including interactive runtime, connectors, ACP, plugins and the optional dashboard—are bundled in `cline.exe`; the dashboard route is unavailable unless webview assets were explicitly built. Bun 1.3.14 compile behavior was validated against the fresh host executable; Bun's executable documentation confirms worker entrypoints must be explicitly included.
+
+Surprises: A generic OTEL variable-name string remains in bundled third-party runtime code, but build-time `OTEL_*` defines and arbitrary environment inlining were removed. The synthetic-value scan is the relevant secret-exposure proof. The harness intermittently returned before the platform script printed its final smoke line; direct fresh-artifact execution supplied the final observable result.
+
+Next: Execute Task 3's local-only Shri package generator and Node launcher. Do not publish or configure a remote without explicit approval.
+
+Commit: Not committed.

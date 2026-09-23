@@ -1,4 +1,3 @@
-import type { ChildProcess } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -230,14 +229,14 @@ describe("hub restart owner selection", () => {
 
 	it("uses the shared hub owner outside production builds", () => {
 		process.env.CLINE_BUILD_ENV = "development";
-		process.env.CLINE_DATA_DIR = "/tmp/cline-update-test-data";
+		process.env.CLINE_DATA_DIR = join(tmpdir(), "cline-update-test-data");
 		delete process.env.CLINE_HUB_DISCOVERY_PATH;
 
 		const owner = resolveCliHubOwnerContext();
 
-		expect(owner.discoveryPath).toContain("/locks/hub/owners/");
+		expect(owner.discoveryPath).toContain(join("locks", "hub", "owners"));
 		expect(owner.discoveryPath).not.toBe(
-			"/tmp/cline-update-test-data/locks/hub/production.json",
+			join("/tmp/cline-update-test-data", "locks", "hub", "production.json"),
 		);
 	});
 });

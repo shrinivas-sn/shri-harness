@@ -32,10 +32,13 @@ export interface RunDashboardCommandOptions {
 	startServer?: () => Promise<DashboardServerHandle>;
 	openUrl?: (url: string) => Promise<void>;
 	waitForShutdown?: (server: DashboardServerHandle) => Promise<void>;
+	webviewAvailable?: () => boolean;
 }
 
 const DASHBOARD_PORT_ENV = "CLINE_HUB_DASHBOARD_PORT";
 const WEBVIEW_DIST_ENV = "CLINE_HUB_WEBVIEW_DIST_DIR";
+const DASHBOARD_OMITTED_MESSAGE =
+	"Dashboard assets are not included in this terminal build. Rebuild with --with-hub-webview to enable the dashboard command.";
 
 function setEnvValue(name: string, value: string | undefined): () => void {
 	const previous = process.env[name];
@@ -184,6 +187,15 @@ export function waitForProcessShutdown(
 export async function runDashboardCommand(
 	options: RunDashboardCommandOptions,
 ): Promise<number> {
+	if (
+		!options.startServer &&
+		!(options.webviewAvailable ?? (() => Boolean(
+			process.env[WEBVIEW_DIST_ENV]?.trim() || resolveDefaultWebviewDistDir(),
+		)))()
+	) {
+		options.io.writeErr(DASHBOARD_OMITTED_MESSAGE);
+		return 1;
+	}
 	try {
 		const server = await withDashboardEnvironment(options, () =>
 			(options.startServer ?? startDefaultDashboardServer)(),

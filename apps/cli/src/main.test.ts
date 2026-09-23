@@ -1,6 +1,6 @@
-import { fstatSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { fstatSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
 	CliMigrationNotice,
@@ -31,7 +31,9 @@ const mockState = vi.hoisted(() => ({
 }));
 const authMocks = vi.hoisted(() => ({
 	ensureOAuthProviderApiKey: vi.fn(),
-	getPersistedProviderApiKey: vi.fn(() => undefined),
+	getPersistedProviderApiKey: vi.fn<(providerId?: string) => string | undefined>(
+		() => undefined,
+	),
 	isOAuthProvider: vi.fn(() => false),
 	normalizeProviderId: vi.fn((providerId?: string) => providerId ?? "cline"),
 	parseAuthCommandArgs: vi.fn(),
@@ -296,7 +298,10 @@ describe("runCli lightweight command dispatch", () => {
 		llmMocks.resolveProviderConfig.mockResolvedValue(undefined);
 		authMocks.ensureOAuthProviderApiKey.mockReset();
 		authMocks.getPersistedProviderApiKey.mockReset();
-		authMocks.getPersistedProviderApiKey.mockReturnValue(undefined);
+		authMocks.getPersistedProviderApiKey.mockImplementation(
+			(providerId?: string) =>
+				providerId === "groq" ? "gsk_test_default_groq_key" : undefined,
+		);
 		authMocks.isOAuthProvider.mockReset();
 		authMocks.isOAuthProvider.mockReturnValue(false);
 		authMocks.normalizeProviderId.mockReset();
@@ -627,7 +632,15 @@ describe("runCli lightweight command dispatch", () => {
 
 	it("does not load interactive runtime for single-prompt mode", async () => {
 		forcePromptModeInput();
-		process.argv = ["bun", "src/index.ts", "say hello"];
+		process.argv = [
+			"bun",
+			"src/index.ts",
+			"--provider",
+			"groq",
+			"--key",
+			"gsk_test_single_prompt_key",
+			"say hello",
+		];
 
 		const { runCli } = await import("./main");
 
@@ -684,7 +697,15 @@ describe("runCli lightweight command dispatch", () => {
 
 	it("runs quoted positional prompt text", async () => {
 		forcePromptModeInput();
-		process.argv = ["bun", "src/index.ts", "hello world"];
+		process.argv = [
+			"bun",
+			"src/index.ts",
+			"--provider",
+			"groq",
+			"--key",
+			"gsk_test_quoted_prompt_key",
+			"hello world",
+		];
 
 		const { runCli } = await import("./main");
 
@@ -718,7 +739,16 @@ describe("runCli lightweight command dispatch", () => {
 
 	it("creates a worktree and runs prompt sessions from it", async () => {
 		forcePromptModeInput();
-		process.argv = ["bun", "src/index.ts", "--worktree", "say hello"];
+		process.argv = [
+			"bun",
+			"src/index.ts",
+			"--provider",
+			"groq",
+			"--key",
+			"gsk_test_worktree_prompt_key",
+			"--worktree",
+			"say hello",
+		];
 
 		const { runCli } = await import("./main");
 
@@ -942,7 +972,7 @@ describe("runCli lightweight command dispatch", () => {
 
 		await expect(runCli()).resolves.toBeUndefined();
 		expect(llmMocks.resolveProviderConfig).toHaveBeenCalledWith(
-			"cline",
+			"groq",
 			{
 				loadLatestOnInit: true,
 				loadPrivateOnAuth: true,
@@ -971,7 +1001,7 @@ describe("runCli lightweight command dispatch", () => {
 
 		await expect(runCli()).resolves.toBeUndefined();
 		expect(llmMocks.resolveProviderConfig).toHaveBeenCalledWith(
-			"cline",
+			"groq",
 			{
 				loadLatestOnInit: true,
 				loadPrivateOnAuth: true,
@@ -993,13 +1023,21 @@ describe("runCli lightweight command dispatch", () => {
 
 	it("uses the bundled catalog path for single-prompt runs", async () => {
 		forcePromptModeInput();
-		process.argv = ["bun", "src/index.ts", "say hello"];
+		process.argv = [
+			"bun",
+			"src/index.ts",
+			"--provider",
+			"groq",
+			"--key",
+			"gsk_test_bundled_catalog_key",
+			"say hello",
+		];
 
 		const { runCli } = await import("./main");
 
 		await expect(runCli()).resolves.toBeUndefined();
 		expect(llmMocks.resolveProviderConfig).toHaveBeenCalledWith(
-			"cline",
+			"groq",
 			undefined,
 			undefined,
 		);
@@ -1012,6 +1050,10 @@ describe("runCli lightweight command dispatch", () => {
 		process.argv = [
 			"bun",
 			"src/index.ts",
+			"--provider",
+			"groq",
+			"--key",
+			"gsk_test_dash_prompt_key",
 			"--",
 			"- You are given a PyTorch state dictionary.",
 		];
@@ -1050,10 +1092,12 @@ describe("runCli lightweight command dispatch", () => {
 
 	describe("persisted general settings at startup", () => {
 		function writePersistedSettings(settings: Record<string, unknown>) {
-			const path = process.env.CLINE_GLOBAL_SETTINGS_PATH;
-			if (!path) {
-				throw new Error("CLINE_GLOBAL_SETTINGS_PATH is not set");
+			const shriDir = process.env.SHRI_DIR;
+			if (!shriDir) {
+				throw new Error("SHRI_DIR is not set");
 			}
+			const path = join(shriDir, "data", "settings", "global-settings.json");
+			mkdirSync(dirname(path), { recursive: true });
 			writeFileSync(path, JSON.stringify(settings));
 		}
 
@@ -1198,7 +1242,15 @@ describe("runCli lightweight command dispatch", () => {
 				planActMode: "plan",
 			});
 			forcePromptModeInput();
-			process.argv = ["bun", "src/index.ts", "say hello"];
+			process.argv = [
+				"bun",
+				"src/index.ts",
+				"--provider",
+				"groq",
+				"--key",
+				"gsk_test_persisted_settings_key",
+				"say hello",
+			];
 
 			const { runCli } = await import("./main");
 
