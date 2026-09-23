@@ -72,8 +72,17 @@ jobs:
         run: bun run verify:release --target windows-x64
 
       - name: Test clean installed tarballs
+        id: installed_smoke
         working-directory: apps/cli
         run: bun run test:e2e src/commands/installed-release.e2e.test.ts
+
+      - name: Diagnose failed installed smoke processes
+        if: failure() && steps.installed_smoke.outcome == 'failure'
+        shell: pwsh
+        run: |
+          Get-CimInstance Win32_Process |
+            Where-Object { $_.ProcessId -ne $PID -and ($_.CommandLine -like '*shri-installed-*' -or $_.Name -eq 'shri.exe') } |
+            ForEach-Object { Write-Output "$($_.Name) pid=$($_.ProcessId) parent=$($_.ParentProcessId)" }
 
       - name: Check publish input integrity
         shell: pwsh

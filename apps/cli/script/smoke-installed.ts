@@ -427,6 +427,15 @@ export async function runInstalledSmoke(
 			} catch {
 				// The helper reports only booleans, never terminal contents.
 			}
+			console.error(
+				`Installed PTY before cleanup: ${JSON.stringify({
+					exitCode: ptyResult.status,
+					startup: ptyChecks.startup === true,
+					idle: ptyChecks.survivesIdle === true,
+					shutdown: ptyChecks.shutdown === true,
+					helperError: ptyResult.stderr.trim().split(/\r?\n/)[0]?.slice(0, 150),
+				})}`,
+			);
 			checks.tuiStartup = ptyResult.status === 0 && ptyChecks.startup === true;
 			checks.tuiSurvivesIdle =
 				ptyResult.status === 0 && ptyChecks.survivesIdle === true;
