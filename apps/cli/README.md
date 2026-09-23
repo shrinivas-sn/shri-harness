@@ -1,49 +1,99 @@
-# Shri CLI preview
+# Shri
 
-Shri is a terminal-first, single-agent preview that uses your configured Groq Cloud API key. It is not a custom multi-agent product: the upstream team/orchestration paths are deferred and are not part of this preview.
+Shri is a coding agent that runs in your terminal. It reads files, runs commands and edits code in your project, using a Groq model (default: `openai/gpt-oss-120b`) with your own Groq API key.
 
-The source is derived from Cline and retains its upstream Apache-2.0 attribution and notices.
+This is an early preview. Shri is built from the Apache-2.0 [Cline](https://github.com/cline/cline) codebase and is not affiliated with Cline.
 
-## Preview status
+## Requirements
 
-This repository is source-only until generated Shri packages have passed the release and installed-artifact checks. Do not install or publish `@cline/cli`; the planned public preview package is `@shrinivas-sn/shri` on the `next` tag.
+- Windows x64. Linux and macOS packages are not available yet.
+- Node.js 22.15 or newer.
+- A Groq API key. Create one at [console.groq.com/keys](https://console.groq.com/keys).
 
-For a local Windows package after `bun run build:platforms:single`, run `bun run package:release --target windows-x64` from `apps/cli`. This writes `dist/npm/shri` and `dist/npm/shri-windows-x64` without publishing. The generator also accepts `linux-x64` and `darwin-arm64` when their compiled artifacts are present. Public publication remains gated on tarball and installed-platform verification.
-
-## Local development
-
-Run the checked-out CLI with Bun:
+## Install
 
 ```sh
-bun run shri
+npm install -g @shrinivas-sn/shri@next
 ```
 
-Use `shri auth` to set or replace a saved Groq key. Normal startup uses the following order without persisting temporary overrides:
+The preview is published on the `next` tag, so `@next` is required. npm also installs `@shrinivas-sn/shri-windows-x64`, which contains the Shri program itself. Bun is not needed.
+
+To try Shri without installing it globally:
+
+```sh
+npx @shrinivas-sn/shri@next
+```
+
+## First run
+
+```sh
+shri
+```
+
+The first time you run it, Shri asks for your Groq API key and saves it. To replace a saved key later, run:
+
+```sh
+shri auth
+```
+
+For one run only, you can supply a key with `--key` or the `GROQ_API_KEY` environment variable. When more than one is set, Shri uses the first of these:
 
 1. `--key`
-2. nonblank `GROQ_API_KEY`
-3. saved Shri setting
-4. interactive onboarding
+2. `GROQ_API_KEY`
+3. The saved key
 
-State defaults to `~/.shri`. Use `--config <path>` for an explicit directory, or set `SHRI_DIR`; `--config` takes precedence. Your selected provider/model, settings, logs, sessions, and hub discovery are intended to remain in that Shri directory rather than `~/.cline`.
+A key given with `--key` or `GROQ_API_KEY` is not saved.
 
 ## Usage
 
 ```sh
-shri                         # interactive terminal UI
-shri "Explain this project" # single prompt
-shri --help                  # flags and commands
-shri --update                # explicit Shri preview update check
+shri                              # open the interactive terminal UI
+shri "explain this project"       # run a single prompt, then exit
+shri -c path/to/project "fix the failing test"   # work in another folder
+shri -m openai/gpt-oss-20b "..."  # use a different Groq model
+shri history                      # list past sessions
+shri --help                       # all flags and commands
 ```
 
-Provider requests are sent to the provider you configure. This preview disables inherited upstream telemetry/error export and automatic updates. Never put a real API key in a command history, source file, artifact, or log.
+In the interactive UI, type `/model` to search and switch Groq models. A model chosen with `-m` also becomes your saved default for future runs, not only the current one.
 
-## Development note
+**The agent acts on your files.** A prompt passed on the command line runs with tool auto-approval on by default, so Shri can edit files and run shell commands without asking. Run it in a folder under version control, or pass `--auto-approve false`.
 
-The repository still contains upstream connector, dashboard, and orchestration code while packaging work is in progress. Those entrypoints are not public Shri release commands, and custom multi-agent execution remains deferred.
+Quote a prompt that is a single word (`shri "hi"`). Otherwise Shri reads the word as a command name.
 
-Third-party plugin loading is not advertised for this preview. Its sandbox bootstrap still has host SDK module imports that require installed-package verification and packaging work before support can be claimed.
+## Groq rate limits
 
-## License and attribution
+Groq's free tier currently allows 6,000–8,000 tokens per minute per model. Every Shri step sends about 4,500 tokens, so a task with several steps quickly uses up the minute's allowance. Shri then waits until Groq accepts the request, often 30 seconds or more per step, and the screen does not show that it is waiting. Short questions stay fast. For longer tasks, a paid Groq plan raises the limit.
 
-Shri source modifications are distributed under Apache-2.0. See the repository license and upstream notices for Cline attribution.
+## Data and privacy
+
+- Your prompts, plus the file contents and command output the agent reads, are sent to Groq for inference.
+- Settings, your saved key, session history and logs are stored in `~/.shri`. To use another folder, pass `--config <path>` or set `SHRI_DIR`; `--config` wins when both are set.
+- Cline's telemetry and error reporting are turned off in Shri, and so are automatic updates.
+
+Do not paste API keys into prompts, source files or shell history.
+
+## Updating and uninstalling
+
+```sh
+npm install -g @shrinivas-sn/shri@next   # update to the latest preview
+npm uninstall -g @shrinivas-sn/shri      # remove Shri
+```
+
+To remove your saved settings and history as well, delete `~/.shri`.
+
+## What this preview does not cover
+
+`shri --help` also lists commands inherited from Cline, such as `kanban`, `dashboard`, `connect`, `plugin`, `schedule` and `mcp`. None of them have been tested in this preview. Loading third-party plugins is not supported yet, and the multi-agent pipeline in the source repository is unfinished.
+
+## Reporting problems
+
+Open an issue at [github.com/shrinivas-sn/shri-harness/issues](https://github.com/shrinivas-sn/shri-harness/issues). Include your `shri --version` output and the command you ran. Never include your API key.
+
+## Developing Shri
+
+Source code, build instructions and release checks are in [the repository](https://github.com/shrinivas-sn/shri-harness). With the repository checked out and Bun 1.3.14 installed, run the CLI from source with `bun run shri`.
+
+## License
+
+Apache-2.0. Shri is derived from Cline; the package's `NOTICE` file contains the upstream attribution.
