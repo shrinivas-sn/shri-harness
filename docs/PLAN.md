@@ -1,14 +1,18 @@
-# PLAN — Shri npm preview release
+# PLAN — Shri npm preview release and chat/model reliability
 
 **Written 22/09/2026.** Temporary live plan. Archive durable reasoning and verification before closing it.
 
-> **Executor:** Use `superpowers:executing-plans` and work sequentially in the existing `E:\shri-harness` workspace. No subagents, delegation, or subagent reviews: the user explicitly prohibited them. Self-review each task. The user selected GPT-5.6 Terra with high reasoning for the next implementation session; select `gpt-5.6-terra` / `high` in the session controls. This document does not switch models. Resume Task 0, then Tasks 1–7; do not restart planning or execute an archived plan. The 22/09/2026 “Final static review and Terra handoff” entry in `WORK/2026-09-22/WORK.md` records the reviewed findings and evidence limits.
+**Current resume — 24/09/2026:** The owner authorized extending this existing plan with the chat/model repair. Publication and registry installation of `0.1.0-next.1` are already recorded below; do not restart Tasks 0–7 from their older unchecked boxes. Start **Task 8**, then Tasks 9–12. Trusted publishing remains unproved. The current request authorizes diagnosis and this detailed plan, not implementation or a release during this planning turn. The historical executor/model preference below is retained as history; it does not select the model for a future session.
+
+> **Executor:** Use `superpowers:executing-plans` and work sequentially in the existing `E:\shri-harness` workspace. Start Task 8, then Tasks 9–12. No subagents, delegation, or subagent reviews; self-review each task. Use the model selected by the user in the new session; the older Terra preference does not constrain this handoff. Tasks 0–7 and their historical logs are reference evidence, not the current work queue. Read the current resume block and `RESEARCH/chat-model-errors.md` before editing.
 
 **What this changes:** CLI identity and initialization, build/package scripts, npm launcher, release tests, CI/release workflows, and documentation. SDK changes only where packaged execution or state isolation requires them; read `sdk/AGENTS.md` before editing that subtree.
 
 **Goal:** Distribute the working Groq-backed Shri CLI as `@shrinivas-sn/shri`, exposing `shri`, without requiring users to install Bun or clone the repository.
 
 **Done means:** An approved preview is published under `next`, and clean consumers on every advertised platform install it from npm and pass the acceptance checks. Before registry installation is verified, report “release-ready” or “publication pending,” not “published and verified.”
+
+**Repair completion condition:** The Windows preview supports three-turn conversations, tool continuations, saved-history resume and supported Groq model switching without invalid reasoning fields; model discovery uses effective credentials and has explicit failure behavior. New regressions and installed-package checks pass. A repaired publication remains separately identified as pending until its actual registry artifact and installed version have been verified.
 
 **Architecture:** A small Node CommonJS launcher selects a platform npm package containing a compiled executable with Bun embedded, plus required assets. Build `apps/cli/src/index.ts`, which uses the existing Cline execution engine and Shri Groq onboarding. Keep internal workspace names if useful; never substitute upstream published SDK code for this checkout's modified code accidentally.
 
@@ -263,6 +267,205 @@ bun run smoke:installed
 
 **Gate:** Existing explicit Windows-preview publication authorization, all release blockers cleared, and actual Windows registry-installation proof. No stable/latest or Linux/macOS release is authorized here.
 
+## Repair extension — 24/09/2026
+
+### Read this first
+
+- Read this resume block, [diagnosis](RESEARCH/chat-model-errors.md), the current task, and the last Progress Log entry. Read large source files by the anchors below, not wholesale.
+- [ROADMAP.md](CONTEXT/ROADMAP.md) holds proposed later features; it is not an instruction to implement them during the repair.
+- Use sequential execution and self-review. No subagents. Executor is otherwise unknown, so the tasks below carry detailed step cards.
+- Before edits, run `git status --short`, `Get-Acl` on the actual workspace root, `node --version`, `bun --version`, and inspect the installed dependency manifests. Required root owner remains `SSN-INSPIRON-35\Dell`. Follow the user ownership rule if it differs.
+- Read `sdk/AGENTS.md` and `sdk/packages/llms/AGENTS.md` before SDK changes. Preserve the existing separation of capability facts, provider routing policy, and wire encoding.
+- Reference versions observed while planning: Bun pin `1.3.14`; adapter installed `@ai-sdk/openai-compatible@3.0.37` versus declared `^3.0.27`. Do not upgrade dependencies as a speculative fix.
+- No real keys in regression fixtures, request captures, logs, builds or CI. Use disposable Shri configuration; never run model-selection tests against the user's active `~/.shri` settings.
+- Preserve transcript data and tool-call/result IDs. Filter outgoing incompatible history at the request boundary; do not erase stored reasoning or globally disable it for all providers.
+- A fix in source does not update the globally installed compiled executable. Installed-artifact verification is mandatory before reporting the user's installed problem resolved.
+
+### Reconciled release state
+
+| Earlier work | Current evidence | Treatment |
+|---|---|---|
+| Tasks 0–4 | Checked source/build/package work and recorded regressions | Preserve; repeat only relevant regressions |
+| Task 5 Windows installed acceptance | Later log records installed E2E 8/8 and live Groq file/tool checks | Do not rebuild the original implementation; extend acceptance for multiple turns |
+| Task 6 release workflow | `.github/workflows/release.yml` exists; dry run passed | Actual trusted publication remains unverified |
+| Task 7 first publication | Both next.1 packages published; registry integrity and fresh install recorded | First publication is complete; next repair version is new work |
+| Broad inherited CLI tests | Recorded failures/hang, not a broad pass | Keep that limitation explicit; identify any repair-related regression separately |
+
+The old checklist/log is retained for traceability. This table supersedes older resume instructions and statements that no package is published; it does not manufacture missing test evidence.
+
+### Repair requirements
+
+| ID | Required behavior | Owning task |
+|---|---|---|
+| R10 | Groq outgoing assistant history excludes unsupported reasoning fields while preserving useful conversation/tool content | 8 |
+| R11 | Groq model discovery uses the current effective endpoint/key, excludes unsuitable choices, and reports failure honestly | 9 |
+| R12 | Reasoning options match the selected model, including after switching | 10 |
+| R13 | Three turns, tools, resume and model changes work in the installed Windows TUI | 11 |
+| R14 | Hosted checks cover the fix; update/publication claims refer to the exact tested artifact | 12 |
+
+### Task 8 — Regress and repair Groq reasoning-history replay
+
+**Why:** The installed generic adapter serializes retained reasoning as `reasoning_content`; the recorded Groq error rejects it on a later turn. Existing `shouldIncludeReasoningHistory` excludes only Cerebras.
+
+**Files / anchors:**
+- Modify `sdk/packages/llms/src/providers/ai-sdk.ts`: `shouldIncludeReasoningHistory`, `buildAiSdkRequestMessages`, `emptiedByDroppedReasoning`.
+- Test `sdk/packages/llms/src/providers/gateway.test.ts`: `strips reasoning history before sending Cerebras follow-up requests`.
+- Test `sdk/packages/llms/src/providers/vendors/openai-compatible.test.ts`; inspect `vendors/openai-compatible.ts` at `createOpenAICompatible`.
+- If needed for typed policy, modify the existing provider routing metadata contract and Groq builtin entry; locate its declaration with `rg -n GatewayProviderMetadata sdk/packages/shared/src`. Do not create a general parallel capability registry.
+
+**Interface:** Existing `GatewayStreamRequest` history enters the gateway; provider-compatible messages leave it. Stored `AgentMessage` objects remain unchanged.
+
+- [ ] Add Groq cases to the existing gateway test pattern for both `openai/gpt-oss-120b` and `openai/gpt-oss-20b`. Feed user → assistant(reasoning + text) → user and capture the actual SDK request. Assert the assistant text remains, reasoning is absent from outgoing history, and the input history remains equal to a pre-call clone. Run before implementation and record the failure.
+- [ ] Cover reasoning-only assistant history, reasoning plus a tool call/result, and saved-history-shaped input. Preserve paired tool messages; omit a reasoning-only message rather than sending an empty invalid assistant entry.
+- [ ] Add or extend a request-body capture using the real installed adapter, not only a mocked `streamText` call. Its strict fixture must reject any assistant `reasoning_content`, emit reasoning on a first response and accept the later turn after the repair.
+- [ ] Extend the existing history policy to represent Groq's no-replay behavior, scoped to the intended provider/route. Follow typed routing conventions where a shared rule is needed. Keep unrelated providers and Cerebras behavior unchanged. The outgoing filtering seam already exists; avoid patching `node_modules` or adding a broad JSON scrubber.
+- [ ] Confirm incoming reasoning still reaches local display/storage, and a provider that needs reasoning/signatures still receives them. Do not infer success from hiding reasoning in the UI.
+
+The actual-wire assertion must cover this shape (fixture values only):
+
+```ts
+const assistant = capturedBody.messages.find(m => m.role === "assistant");
+expect(assistant.content).toBe("first answer");
+expect(assistant).not.toHaveProperty("reasoning_content");
+expect(originalMessages).toEqual(beforeRequest);
+```
+
+**Existing assertions allowed to change:** None by default. Extend the Cerebras test scaffolding with Groq cases; retain its expectations and all other provider signature assertions.
+
+**Don't touch:** Local history schema, credentials, global reasoning storage, tool executors, dependency versions, custom orchestration.
+
+**Verify:** From `sdk/`, run `bun -F @cline/llms test src/providers/gateway.test.ts src/providers/vendors/openai-compatible.test.ts` and `bun -F @cline/llms typecheck`. Passing means exit 0 with new Groq cases executed and unchanged cross-provider cases passing. If compiled sibling exports are missing, build the relevant SDK packages before repeating. Record actual counts, not expected invented counts.
+
+**Commit:** `fix(llms): normalize Groq reasoning history for follow-up requests`.
+
+**Gate:** A failing-before/passing-after request capture establishes R10, including non-mutating history and tool preservation. Log commands/results; a new session can resume at Task 9.
+
+### Task 9 — Discover usable Groq models with effective configuration
+
+**Why:** Groq currently gets catalog choices; authenticated `/models` lookup is gated to the `openai-compatible` picker path. The existing helper reads saved settings and must not silently ignore temporary credentials.
+
+**Files / anchors:**
+- Modify `apps/cli/src/tui/hooks/use-model-selector.tsx`: `usesModelIdInput`, `fetchOpenAiCompatibleModelIds`, `refreshProviderContext`.
+- Create `apps/cli/src/utils/groq-model-discovery.ts` and `groq-model-discovery.test.ts` for a small independently testable discovery boundary.
+- Inspect `apps/cli/src/utils/chat-models.ts` and its tests; retain the zero-token/audio filtering behavior.
+- Extend `apps/cli/script/smoke-installed-model-pty.mjs` for the user-visible selection path during Task 11.
+
+**Proposed interface:** A discovery helper receives the resolved endpoint, effective key and explicit headers from the active session, plus optional `fetch` for tests. It returns a discriminated result; callers must not confuse failure with an empty catalog.
+
+```ts
+type GroqModelDiscoveryResult =
+  | { status: "ok"; ids: string[] }
+  | { status: "error"; kind: "auth" | "timeout" | "network" | "response"; message: string };
+```
+
+- [ ] Write tests for deduplicated nonempty IDs, empty success, malformed JSON/schema, timeout, 401/403, 429 and 5xx. Assert bounded completion and no credential values in returned error messages.
+- [ ] Test a saved key different from an effective override and a nondefault base URL. Assert the effective configuration reaches only its configured endpoint; do not fall back to Groq production when a custom fixture endpoint fails.
+- [ ] Implement authenticated `/models` retrieval with a bounded timeout, injected fetch support, and explicit result states. Reuse existing effective provider resolution rather than re-reading only saved settings.
+- [ ] Reconcile returned IDs with catalog capability metadata. Known unavailable IDs leave the selectable list. Keep known audio/moderation-only or explicitly non-tool-capable models out of the coding picker. Unknown metadata must remain identifiable as unverified; offer a warning/manual choice rather than inventing capabilities or silently claiming verified coding support.
+- [ ] On discovery error, preserve the currently selected model and label any cached choices as unverified; display the error without leaking secrets. On an empty successful response, show no discovered candidates rather than repopulating stale catalog entries as if verified.
+- [ ] Preserve search, Escape/cancel, reopen, prompt focus, and models with missing numeric metadata. Changing models must not change the provider key or endpoint.
+
+**Existing assertions allowed to change:** Only Groq picker expectations that currently treat every catalog entry as selectable. Retain custom-provider manual entry, numeric-child guards, transcription exclusion and cancellation expectations.
+
+**Don't touch:** Provider account credentials, non-Groq discovery semantics, plugin loading, global persisted model policy (`-m` persistence remains a separate roadmap item).
+
+**Verify:** From the workspace root, `bun -F @cline/cli test:unit src/utils/groq-model-discovery.test.ts src/utils/chat-models.test.ts`, then `bun -F @cline/cli typecheck`. Pass requires the explicit failure and override cases, not just a successful fetch.
+
+**Commit:** `fix(cli): reconcile Groq model choices with endpoint discovery`.
+
+**Gate:** R11 source behavior passes and the installed PTY scenarios are specified for Task 11. Log actual results; resume Task 10.
+
+### Task 10 — Normalize reasoning controls for each selected model
+
+**Why:** Undefined reasoning metadata currently permits a broadly normalized effort; it does not prove the model supports that parameter. Switching models can carry an old effort into an incompatible request.
+
+**Files / anchors:**
+- `sdk/packages/llms/src/providers/routing/reasoning-options.ts`: `options === undefined`.
+- `sdk/packages/llms/src/providers/routing/portable-reasoning.ts`: `resolvePortableReasoning`.
+- `sdk/packages/llms/src/providers/routing/reasoning-options.test.ts`, `sdk/packages/llms/src/providers/ai-sdk-reasoning.test.ts` and the gateway/body-capture tests from Task 8.
+- `apps/cli/src/tui/hooks/use-model-selector.tsx`: model selection and `onModelChange`; inspect the existing reasoning-control UI rather than introducing a duplicate setting.
+
+- [ ] Read the installed adapter behavior and current official Groq reasoning documentation before choosing wire values. Distinguish reasoning effort, response visibility and historical replay. Verify GPT-OSS and other selected families separately.
+- [ ] Add request-capture tests: GPT-OSS accepts its supported effort values; non-reasoning and unknown-capability Groq models do not inherit unsupported effort. Test Off, no explicit preference, low/medium/high, and an old xhigh preference.
+- [ ] For unknown Groq capability, conservatively omit unsupported/unproved optional reasoning controls and explain unavailable controls in the UI. Do not extend this conservative Groq policy globally to custom providers.
+- [ ] Normalize against existing capability metadata and narrow documented model facts. For a UI selection, prevent impossible choices; for incompatible CLI input, give a clear validation result or documented normalization rather than forwarding an invalid parameter silently.
+- [ ] Exercise reasoning-model → non-reasoning-model → reasoning-model switches. Verify the request uses the new model and its controls, without clearing conversation content or saving temporary secrets.
+- [ ] Test response visibility separately: GPT-OSS Off must retain its existing omit-unsupported-`none` behavior, while another family's supported Off semantics come from that family's verified contract.
+
+**Existing assertions allowed to change:** Groq expectations proven to encode unsupported optional fields. Retain Cerebras, Anthropic, OpenAI, custom-provider and GPT-OSS Off regression assertions unless a separately documented root cause requires a scoped update.
+
+**Don't touch:** Broader model catalog generation, account limits, unrelated providers, token-budget optimization or auto-fallback behavior.
+
+**Verify:** From `sdk/`, `bun -F @cline/llms test src/providers/routing/reasoning-options.test.ts src/providers/ai-sdk-reasoning.test.ts src/providers/gateway.test.ts` and `bun -F @cline/llms typecheck`. From root, run CLI typecheck and the relevant model-picker tests located by `rg --files apps/cli/src/tui`.
+
+**Commit:** `fix(llms): respect Groq model reasoning capabilities`.
+
+**Gate:** R12 is demonstrated by actual outgoing options for each fixture family and by preserved non-Groq behavior. Log results; resume Task 11.
+
+### Task 11 — Prove the repair through installed conversations
+
+**Why:** Existing single-prompt and renderer tests did not cover the failing second-user-turn journey.
+
+**Files / anchors:**
+- Extend `apps/cli/script/smoke-installed-render-pty.mjs`: `createServer`, prompt submission and streamed response.
+- Extend `apps/cli/script/smoke-installed-model-pty.mjs`: model search/select/reopen.
+- Extend `apps/cli/script/smoke-installed.ts`: PTY report parsing and required checks.
+- Extend `apps/cli/src/commands/installed-release.e2e.test.ts`: assertions on installed checks.
+
+- [ ] Make the loopback fixture collect request bodies in memory, emit synthetic reasoning on the first reply, and return 400 for unsupported replay fields. Add unique response markers per turn so stale screen text cannot satisfy later-turn assertions.
+- [ ] Drive three real user messages in one installed TUI. Validate request count/content and the matching visible completion for every turn. Use condition-based waits with bounded deadlines, not fixed sleeps as success evidence.
+- [ ] Add a tool continuation and verify tool IDs/results survive. Restart/resume a synthetic saved session containing reasoning and verify another reply.
+- [ ] Select a second reasoning model and a non-reasoning fixture through `/model`, then send another message. Assert both the outgoing model ID and valid option set. A successful picker selection alone does not pass.
+- [ ] Exercise model-list failure/cancel/reopen and a catalog-only unavailable model. Preserve prompt usability and temporary credential precedence.
+- [ ] Retain no-Bun runtime, lifecycle-disabled install, Unicode/space paths, Ctrl+C shutdown, no detached hub and cleanup checks. No fixture may read the user's real settings.
+
+**Existing assertions allowed to change:** Add stronger multi-turn checks; retain all existing installed acceptance checks. Increase a timeout only with measured phase timing and bounded failure diagnostics; do not hide failures by dropping assertions.
+
+**Don't touch:** The global npm installation or live user sessions during fixture tests.
+
+**Verify:** Build from root with `bun run build:sdk`. From `apps/cli`, run `bun run build:platforms:single`, `bun run package:release --target windows-x64`, `bun run verify:release --target windows-x64`, then `bun run test:e2e src/commands/installed-release.e2e.test.ts`. Every command must exit 0; the test report must include the new journeys, not only the former 8/8 count.
+
+**Commit:** `test(cli): cover installed Groq conversations and model switches`.
+
+**Gate:** R13 passes on the actual installed artifact. Record fixture limitations; live-provider proof belongs to Task 12. Resume there from a fresh session if needed.
+
+### Task 12 — Verify live behavior and deliver the repaired preview
+
+**Why:** Source and synthetic tests cannot prove current provider acceptance or update the user's installed executable.
+
+**Files:** `.github/workflows/ci.yml`, `apps/cli/package.json`, `DOCS/RELEASE.md`, `DOCS/STATUS.md`, this plan and release-facing README where behavior changed.
+
+- [ ] Add the focused LLM gateway/adapter/reasoning regressions and new CLI discovery tests to the hosted Windows checks. The existing CI source filter does not automatically run all SDK tests. Preserve packaging and installed checks.
+- [ ] Run a bounded live acceptance session in isolated Shri configuration: three turns with GPT-OSS, one tool interaction, a model switch and resume. The owner can run it manually; if an executor uses a saved key, obtain explicit scope first because the existing release constraint forbids reading it into tests. Never change the active user's default model as a side effect.
+- [ ] Record which live models were available at execution time and each actual outcome. Do not hardcode the historical account list, purchase a paid plan, or treat 429 waits as this serialization bug.
+- [ ] Choose the next unused prerelease (expected `0.1.0-next.2`, verify registry first), rebuild and verify the exact versioned artifacts. Run hosted CI/release dry-run on that exact commit and tag.
+- [ ] Present version, hashes, supported platform, passing evidence and remaining limitations before any public action requiring approval. Existing authorization must be evaluated from the active session; this planning turn does not perform publication or install changes.
+- [ ] Publish verified generated platform/wrapper artifacts through the existing release workflow when authorized. Prove trusted publishing by the real result; configuration alone is not proof. On partial publish, reconcile existing versions/integrities before retrying; never overwrite or blindly rerun both publications.
+- [ ] Install the registry release into a fresh disposable prefix and check the actual package/runtime version plus multi-turn smoke. Then update the user's global install when authorized and verify which `shri` command resolves on PATH.
+- [ ] Move durable diagnosis, decisions and verification into visible documentation before closing this plan. Leave the roadmap proposals unimplemented unless selected separately.
+
+**Existing assertions allowed to change:** None merely to obtain a green release. Preserve credential exclusion, integrity, storage and installed-runtime assertions.
+
+**Verify:** Reuse `DOCS/RELEASE.md` gates with new chat/model acceptance. Report local, hosted, fixture, live and registry results separately. A failed/missing live or publication check leaves only that stage pending; continue independent local work.
+
+**Commit:** `chore(release): prepare verified Groq conversation repair` (version/publication commits follow the existing release convention).
+
+**Gate:** R14 passes; no “published,” “trusted publishing proven,” or “installed fix” claim without its matching evidence.
+
+### Failure handling and review focus
+
+| Condition | Required action |
+|---|---|
+| Anchor moved or source changed | Re-find the owning function, compare behavior, update the task/log before editing |
+| Missing workspace compiled exports | Build dependencies with existing workspace scripts; do not install unrelated published SDK packages |
+| Type/lint failure | Fix the scoped change; retain contracts and test assertions |
+| Unexpected repeated failure | Investigate up to three distinct hypotheses, record real output, leave the dependent gate blocked and continue independent tasks; retry once at phase end |
+| PTY timing failure | Capture phase/process timing without keys; preserve bounded cleanup and assertions |
+| Live auth/payment/account action needed | Leave that external step pending; do not borrow another account or alter credentials |
+| Existing broad unrelated failure | Record it explicitly; do not call the whole suite green or rewrite tests to conceal it |
+
+Review explicitly: reasoning-only messages (Task 8), tool-call pairs and signatures (Task 8), temporary-key/endpoint changes and failed discovery (Task 9), unknown capabilities and cross-model settings (Task 10), restored transcripts and real second-turn terminal input (Task 11). Each phase ends with actual verification, an append-only Progress Log entry and a task commit during execution. Never fabricate a commit in a planning session.
+
 ## Decisions
 
 - 22/09/2026: User explicitly authorized revising the existing unfinished plan. Preserve its original reference in `WORK/2026-09-22/npm-packaging-reference-superseded.md`; do not create a competing live plan.
@@ -278,7 +481,15 @@ bun run smoke:installed
 - 23/09/2026: User narrowed the first production-grade preview to Windows x64, authorized a public GitHub repository/push and npm publication, and required the code to remain extensible to Linux/macOS. Defer those native gates and platform packages until separately proven. Existing security, CI, live-provider and registry-install gates remain in force; this is not permission to publish an unverified artifact.
 - 23/09/2026: User selected `shrinivas-sn/shri-harness`; the empty public repository exists. For the first preview, exact source prerelease version plus matching Git tag drives all generated package versions. Defer Changesets to avoid a second version source; this means the next prerelease increment remains a deliberate manual step.
 
+- 24/09/2026: User selected extending this live plan for chat/model repair. Preserve the original release evidence; use Tasks 8–12 as the current sequence.
+- 24/09/2026: Future features are proposals in `CONTEXT/ROADMAP.md`; current priority is reliable chat and Groq model selection.
+- 24/09/2026 *(assumed)*: Keep Windows x64 and the current engine/dependencies; implement sequentially. Use detailed task cards for an unspecified future executor.
+- 24/09/2026: This turn is diagnosis/planning only. Live API-key use, public release and changing the global installation require their existing authorization boundaries to be checked when executing.
+
 ## Sources
+
+- [Chat/model diagnosis](RESEARCH/chat-model-errors.md): installed adapter reproduction and source trace, 24/09/2026.
+- [Groq reasoning](https://console.groq.com/docs/reasoning) and [model documentation](https://console.groq.com/docs/models), read 24/09/2026; recheck model-specific controls during execution.
 
 - Local source paths and measured baseline results above; installed versions take precedence over newer unpinned docs for version-specific behavior.
 - [Bun standalone executables](https://bun.sh/docs/bundler/executables): embedded runtime and targets; current docs may describe a newer Bun than this project's pin.
@@ -586,3 +797,29 @@ Surprises: Public `npm view` returned E404 for several minutes after a successfu
 Next: User sets up trusted publishing for both packages on npmjs.com. Then decide the follow-ups listed in STATUS.md.
 
 Commit: `aec0fd6`, `802da20`, tag `v0.1.0-next.1`; docs in the following commit.
+
+### Chat/model diagnosis and repair planning — 24/09/2026
+
+Done: Traced Groq reasoning replay through `compat.ts`, `shouldIncludeReasoningHistory`, `toAiSdkMessages`, and installed `@ai-sdk/openai-compatible@3.0.37`. Reproduced the second-turn serialization error using the installed adapter with an in-memory strict synthetic fetch. Identified independent catalog-discovery and reasoning-option concerns. Saved `RESEARCH/chat-model-errors.md` and `CONTEXT/ROADMAP.md`. The user explicitly selected extending this existing plan; added detailed Tasks 8–12, reconciled the earlier release resume state, and preserved previous log entries. No application fix or live API request was made.
+
+Verified: `Get-Acl E:\shri-harness | Select-Object Owner` returned `SSN-INSPIRON-35\Dell`. A here-string piped to `node --input-type=module` exited 0 and printed `second_turn_error=property 'reasoning_content' is unsupported`; captured assistant message keys were absent on turn one and `["role","content","reasoning_content"]` on turn two. This is fixture reproduction of actual adapter serialization, not fresh live Groq/TUI proof. Initial `git diff --check` produced no whitespace errors (only CRLF notices). Python local-link validation printed `Documentation links: 2 files checked, all local targets exist` for the diagnosis and roadmap. Final documentation validation is recorded in the following completion note when run.
+
+Surprises: The source manifest permits adapter `^3.0.27`, but the installed version is `3.0.37`. `portable-reasoning.ts` governs effort; the second-turn replay defect instead has an existing history-filter seam currently limited to Cerebras. Groq's picker does not use the authenticated `/models` helper, and that helper currently reads saved rather than effective session credentials. Earlier release checklist boxes lag later publication evidence.
+
+Next: Execute Task 8 only after the user starts implementation. Add a failing gateway/actual-body regression, then apply the narrow Groq history policy and preserve stored reasoning/tool relationships. Future features remain proposals in the roadmap.
+
+Commit: not committed.
+
+Completion note (same planning session): Final Python validation printed 'Documentation checks: 3 files; local links valid; Tasks 8-12 present; previous Progress Log preserved'. Its first attempt hit Windows cp1252 decoding of Git output; explicitly selecting UTF-8 resolved the checker issue. No product test or implementation result is implied. Plan-location reconciliation is resolved by the user's choice to extend this file.
+
+### Save-check and executor handoff - 24/09/2026
+
+Done: Saved the detailed diagnosis, future roadmap and Tasks 8-12 as project-specific documentation. Replaced the conflicting old executor header with Task 8 as the starting point and left model selection to the next session. Archived the previous STATUS.md verbatim in WORK/archive.md, then reduced current status to 34 lines. No application code changed; no fix, live retest or publication occurred.
+
+Verified: Documentation validator printed `Checkpoint checks passed: local links, prior Progress Log, status length`. `git diff --check` found no whitespace errors (CRLF notices only). An isolated Dell-owned Git fixture verified `git commit --only` includes selected existing/new paths and preserves an unrelated staged file; the fixture was removed after path validation. The workspace owner is `SSN-INSPIRON-35\Dell`.
+
+Surprises: The old executor header still directed a reader to Task 0 despite the new resume block; corrected before handoff. Model execution quality is not proved by a detailed plan: Task 9 capability policy and Task 11 installed terminal testing still require evidence-based implementation judgment.
+
+Next: In a new execution session, read STATUS.md, the diagnosis and the current plan; implement Task 8, then Tasks 9-12 sequentially with their gates. Preserve credential/publication boundaries and leave roadmap expansion deferred.
+
+Commit: checkpoint commit follows this log entry; see Git history for the actual hash. No remote push is part of save-check.

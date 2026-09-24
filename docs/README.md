@@ -3,6 +3,12 @@
 
 The Windows preview publication gates and operator steps are in [RELEASE.md](RELEASE.md).
 
+Current reliability investigation: [chat and model-selection diagnosis](RESEARCH/chat-model-errors.md).
+Proposed future features and customization: [product roadmap](CONTEXT/ROADMAP.md).
+The roadmap is a proposal inventory, not a second live execution plan.
+
+Earlier verbose status is preserved in [WORK/archive.md](WORK/archive.md); use [STATUS.md](STATUS.md) for current resume instructions.
+
 One row per `WORK/<date>/` folder. Keep this updated in place — don't let it drift from what's actually in `WORK/`. Add a row the same session a new day-folder is created.
 
 Dates in this table are written **DD/MM/YYYY** (user is India-based). This is display text only — the `WORK/<date>/` folder name underneath stays YYYY-MM-DD, since that's the only format that sorts correctly on disk and in `git log`.
