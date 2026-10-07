@@ -489,3 +489,9 @@ Original planning-only record: [WORK/2026-09-26/WORK.md](WORK/2026-09-26/WORK.md
 - **Verified hosted:** [CI run 37671691809](https://github.com/shrinivas-sn/shri-harness/actions/runs/37671691809) on `9cead12` succeeded; each new step and the installed E2E passed.
 - **Next:** Task 12.2 — needs owner approval for live Groq calls with the key in `.env` and for a candidate tag.
 - **Commits:** `fix(cli): roll back the saved model when a model switch fails`; `ci: gate Groq repairs on wire and installed tests`.
+
+### 08/10/2026 — 0.1.0-next.2 published
+
+- **Done:** `0.1.0-next.2` built, installed E2E 9/9, live Groq acceptance passed, tagged `v0.1.0-next.2`, hosted dry run green. `release.yml` publish failed with npm E404 (twice), so the owner published both packages manually from the local verified tarballs (npm `PUT 202`, exit 0). Owner's global `shri` updated to next.2 from the same tarballs. Evidence: [release evidence](RESEARCH/groq-repair-release-evidence.md).
+- **Open:** fresh-prefix registry install check; trusted-publishing fix before the next release; owner decision on moving `latest`; plan issue 6.
+

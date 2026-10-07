@@ -7,7 +7,7 @@ Current reliability investigation: [chat and model-selection diagnosis](RESEARCH
 Proposed future features and customization: [product roadmap](CONTEXT/ROADMAP.md).
 The roadmap is a proposal inventory, not a second live execution plan.
 
-Current execution handoff: [Groq repair plan](PLAN.md), restructured 26/09/2026; Phases 1–3 committed, Phase 4 done 08/10; next Task 12.1.
+Current execution handoff: [Groq repair plan](PLAN.md), restructured 26/09/2026; Phases 1–3 committed, 0.1.0-next.2 published 08/10; next: post-publish registry check and trusted-publishing fix.
 
 Earlier verbose status is preserved in [WORK/archive.md](WORK/archive.md); use [STATUS.md](STATUS.md) for current resume instructions.
 
@@ -21,7 +21,7 @@ Dates in this table are written **DD/MM/YYYY** (user is India-based). This is di
 | 22/09/2026 | Groq onboarding/live inference, npm preview plan, `/model` investigation, final static review and Terra handoff | done | yes | `apps/cli/**`, `package.json`, `DOCS/**` | `WORK/2026-09-21/WORK.md` |
 | 26/09/2026 | Restructured Groq repair plan; preserved prior plan verbatim; then implemented Phase 1 / Task 8 (committed `8b16b5a` on 07/10) | active | yes | `sdk/packages/llms/**`, `sdk/packages/shared/**`, `apps/cli/**`, `.github/workflows/**`, `DOCS/**` | `WORK/2026-09-22/WORK.md` |
 | 07/10/2026 | Committed Phase 1; Phases 2–3 done; Task 11.1 matrix done; Plan issue 7 prompt-focus fix; Task 11.2 (22/25 matrix rows proven, pushed 08/10) | active | yes | `apps/cli/src/utils/**`, `apps/cli/src/tui/hooks/**`, `apps/cli/src/tui/components/model-selector/**`, `apps/cli/script/smoke-installed*`, `apps/cli/src/commands/installed-release.e2e.test.ts`, `sdk/packages/llms/src/providers/**`, `sdk/packages/shared/src/llms/**`, `DOCS/**` | `WORK/2026-09-26/WORK.md` |
-| 08/10/2026 | Plan issue 4 fix (saved model rolls back on a failed apply); Task 12.1 hosted gates | active | yes | `apps/cli/src/runtime/run-interactive*`, `.github/workflows/ci.yml`, `DOCS/**` | `WORK/2026-10-07/WORK.md` |
+| 08/10/2026 | Plan issue 4 fix; Task 12.1 hosted gates; next.2 built, live-accepted, tagged and published (manual npm publish) | active | yes | `apps/cli/src/runtime/run-interactive*`, `.github/workflows/ci.yml`, `DOCS/**` | `WORK/2026-10-07/WORK.md` |
 
 **Status** — `active` (in progress), `done` (finished, not touched again), `superseded` (a later entry replaced this approach), `abandoned` (started, dropped, note why in the WORK.md itself).
 
