@@ -52,6 +52,7 @@ describe.skipIf(process.platform !== "win32")(
 				missingPlatform: true,
 				hubStatusIsolated: true,
 				stateIsolation: true,
+				globalInstallUnchanged: true,
 				noBunPath: true,
 			});
 		});
@@ -210,9 +211,15 @@ describe.skipIf(process.platform !== "win32")(
 				"modelSelected",
 				"discoveryFailureNotice",
 				"discoveryEmptyManual",
+				"turnAfterFailure",
+				"discoveryMalformedNotice",
+				"discoveryStallBounded",
+				"manualEntryTurn",
 				"noUnknownRequests",
+				"keyAbsentFromTerminal",
 				"modelReopened",
 				"stateIsolation",
+				"globalInstallUnchanged",
 			]) {
 				expect(report.checks[check], check).toBe(true);
 			}
@@ -243,6 +250,13 @@ describe.skipIf(process.platform !== "win32")(
 			};
 			for (const check of [
 				"calibrated",
+				"legacyEffortNormalized",
+				"transientTurnRecovered",
+				"resumeSeeded",
+				"storedHistoryKept",
+				"keyAbsentFromStore",
+				"interruptCleanup",
+				"keyAbsentFromLogs",
 				"conversationThreeTurns",
 				"toolPairing",
 				"resumeRestart",
@@ -252,6 +266,7 @@ describe.skipIf(process.platform !== "win32")(
 				"noUnknownRequests",
 				"cleanupComplete",
 				"stateIsolation",
+				"globalInstallUnchanged",
 			]) {
 				expect(report.checks[check], check).toBe(true);
 			}

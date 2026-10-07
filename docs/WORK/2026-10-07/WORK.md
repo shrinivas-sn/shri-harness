@@ -64,6 +64,10 @@ Matrix [groq-repair-test-matrix.md](../../RESEARCH/groq-repair-test-matrix.md), 
 - Fix: `use-focus-after-remount.ts` and its render test (calibration plus fix, render-time and layout-time steals). A first layout-effect version failed the installed runs 4/5; the passive-effect version passed 5/5.
 - Harness typing made strict again; E2E asserts every check; matrix updated (12 proven). Evidence: `task-11.2-*` logs in this folder.
 
+## Gap rows (08/10/2026, same thread)
+
+- Pushed and hosted CI passed. Added the remaining installed checks; matrix 22/25 proven; installed E2E 9/9. Evidence: `task-11.2-gaps-*` logs. Details in the PLAN Progress Log.
+
 ## Resume
 
 Continue Task 11.2 per DOCS/STATUS.md "Next up".

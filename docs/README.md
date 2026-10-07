@@ -7,7 +7,7 @@ Current reliability investigation: [chat and model-selection diagnosis](RESEARCH
 Proposed future features and customization: [product roadmap](CONTEXT/ROADMAP.md).
 The roadmap is a proposal inventory, not a second live execution plan.
 
-Current execution handoff: [Groq repair plan](PLAN.md), restructured 26/09/2026; Phases 1–3 committed, Phase 4 Task 11.2 checkpoint committed with gaps open.
+Current execution handoff: [Groq repair plan](PLAN.md), restructured 26/09/2026; Phases 1–3 committed, Phase 4 Task 11.2 nearly done (22/25 rows proven).
 
 Earlier verbose status is preserved in [WORK/archive.md](WORK/archive.md); use [STATUS.md](STATUS.md) for current resume instructions.
 
@@ -20,7 +20,7 @@ Dates in this table are written **DD/MM/YYYY** (user is India-based). This is di
 | 21/09/2026 | Extracted lean harness and built Shri orchestration scaffolding; completion claim corrected on 22/09 | done | yes | `apps/cli/src/shri/**`, `DOCS/**` | — |
 | 22/09/2026 | Groq onboarding/live inference, npm preview plan, `/model` investigation, final static review and Terra handoff | done | yes | `apps/cli/**`, `package.json`, `DOCS/**` | `WORK/2026-09-21/WORK.md` |
 | 26/09/2026 | Restructured Groq repair plan; preserved prior plan verbatim; then implemented Phase 1 / Task 8 (committed `8b16b5a` on 07/10) | active | yes | `sdk/packages/llms/**`, `sdk/packages/shared/**`, `apps/cli/**`, `.github/workflows/**`, `DOCS/**` | `WORK/2026-09-22/WORK.md` |
-| 07/10/2026 | Committed Phase 1; Phases 2–3 done; Task 11.1 matrix done; Plan issue 7 prompt-focus fix; Task 11.2 checkpoint (12 matrix rows proven, gaps open) | active | yes | `apps/cli/src/utils/**`, `apps/cli/src/tui/hooks/**`, `apps/cli/src/tui/components/model-selector/**`, `apps/cli/script/smoke-installed*`, `apps/cli/src/commands/installed-release.e2e.test.ts`, `sdk/packages/llms/src/providers/**`, `sdk/packages/shared/src/llms/**`, `DOCS/**` | `WORK/2026-09-26/WORK.md` |
+| 07/10/2026 | Committed Phase 1; Phases 2–3 done; Task 11.1 matrix done; Plan issue 7 prompt-focus fix; Task 11.2 (22/25 matrix rows proven, pushed 08/10) | active | yes | `apps/cli/src/utils/**`, `apps/cli/src/tui/hooks/**`, `apps/cli/src/tui/components/model-selector/**`, `apps/cli/script/smoke-installed*`, `apps/cli/src/commands/installed-release.e2e.test.ts`, `sdk/packages/llms/src/providers/**`, `sdk/packages/shared/src/llms/**`, `DOCS/**` | `WORK/2026-09-26/WORK.md` |
 
 **Status** — `active` (in progress), `done` (finished, not touched again), `superseded` (a later entry replaced this approach), `abandoned` (started, dropped, note why in the WORK.md itself).
 

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { launchTerminal } from "tuistory";
@@ -73,10 +73,20 @@ function lastUserToken(messages) {
 	return undefined;
 }
 
+let transientServed = 0;
+// GR-20: MARK5 streams reasoning and never finishes, so Ctrl+C lands mid-stream.
+const heldStreams = [];
+
 function handleChat(body, authorization, response) {
 	const violation = strictViolation(body);
 	const messages = Array.isArray(body?.messages) ? body.messages : [];
 	const token = lastUserToken(messages);
+	if (token === "MARK2" && transientServed === 0) {
+		transientServed += 1;
+		response.writeHead(503, { "content-type": "application/json" });
+		response.end(JSON.stringify({ error: { message: "fixture overloaded" } }));
+		return;
+	}
 	chat.push({ body, authorization, rejected: Boolean(violation), token });
 	if (violation) {
 		response.writeHead(400, { "content-type": "application/json" });
@@ -92,6 +102,14 @@ function handleChat(body, authorization, response) {
 		token === "MARK3" &&
 		last?.role === "user" &&
 		textOf(last.content).includes("READFILE");
+	if (token === "MARK5") {
+		response.writeHead(200, { "content-type": "text/event-stream" });
+		response.write(
+			`data: ${JSON.stringify(chunk({ role: "assistant", reasoning: "fixture reasoning MARK5" }))}\n\n`,
+		);
+		heldStreams.push(response);
+		return;
+	}
 	if (wantsTool) {
 		sendStream(response, [
 			chunk({ role: "assistant", reasoning: `fixture reasoning ${token}` }),
@@ -182,6 +200,85 @@ function historySessionIds() {
 	}
 }
 
+/** The session store path the installed CLI reports for one session. */
+function storedMessagesPath(sessionId) {
+	const outcome = spawnSync(binaryPath, ["history", "--json"], {
+		cwd: workingDirectory,
+		env: process.env,
+		encoding: "utf8",
+		maxBuffer: 4 * 1024 * 1024,
+		timeout: 20_000,
+	});
+	try {
+		const row = JSON.parse(outcome.stdout).find(
+			(item) => item.sessionId === sessionId,
+		);
+		return typeof row?.messagesPath === "string" ? row.messagesPath : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function readStored(path) {
+	if (!path || !existsSync(path)) return undefined;
+	try {
+		const stored = JSON.parse(readFileSync(path, "utf8"));
+		return Array.isArray(stored?.messages) ? stored : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function storedHasThinking(stored, text) {
+	return (stored?.messages ?? []).some(
+		(message) =>
+			Array.isArray(message.content) &&
+			message.content.some(
+				(part) => part?.type === "thinking" && part.thinking === text,
+			),
+	);
+}
+
+/** Every process below `rootPid`, from one Windows process snapshot. */
+function descendantsOf(rootPid) {
+	const outcome = spawnSync(
+		"powershell.exe",
+		[
+			"-NoProfile",
+			"-Command",
+			"Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId | ConvertTo-Json -Compress",
+		],
+		{ encoding: "utf8", timeout: 30_000, maxBuffer: 8 * 1024 * 1024 },
+	);
+	let rows = [];
+	try {
+		rows = JSON.parse(outcome.stdout);
+	} catch {
+		return [];
+	}
+	const found = [];
+	const queue = [rootPid];
+	while (queue.length > 0) {
+		const parent = queue.shift();
+		for (const row of rows) {
+			if (row.ParentProcessId === parent && !found.includes(row.ProcessId)) {
+				found.push(row.ProcessId);
+				queue.push(row.ProcessId);
+			}
+		}
+	}
+	return found;
+}
+
+/** Searches the raw CLI log files, before any redaction, for `secret`. */
+function logsFreeOf(secret) {
+	const logsDir = join(process.env.SHRI_DIR ?? "", "data", "logs");
+	if (!process.env.SHRI_DIR || !existsSync(logsDir)) return true;
+	return readdirSync(logsDir).every(
+		(name) => !readFileSync(join(logsDir, name), "utf8").includes(secret),
+	);
+}
+
 function processAlive(pid) {
 	try {
 		process.kill(pid, 0);
@@ -253,6 +350,10 @@ try {
 	const settings = JSON.parse(readFileSync(settingsPath, "utf8"));
 	settings.providers.groq.settings.baseUrl = `http://127.0.0.1:${address.port}/openai/v1`;
 	settings.providers.groq.settings.model = modelId;
+	settings.providers.groq.settings.reasoning = {
+		enabled: true,
+		effort: "xhigh",
+	};
 	writeFileSync(settingsPath, JSON.stringify(settings));
 	writeFileSync(filePath, `${fileMarker}\n`);
 	const historyBefore = historySessionIds();
@@ -298,17 +399,62 @@ try {
 	stage = "history";
 	const historyAfter = historySessionIds();
 	const newSessionId = historyAfter.find((id) => !historyBefore.includes(id));
+	const messagesPath = newSessionId
+		? storedMessagesPath(newSessionId)
+		: undefined;
+	const storedBefore = readStored(messagesPath);
+	const storedReasoningKept = storedHasThinking(
+		storedBefore,
+		"fixture reasoning MARK1",
+	);
+	if (storedBefore) {
+		const ts = Date.now();
+		storedBefore.messages.push(
+			{
+				id: "msg_seed_1",
+				role: "user",
+				content: [{ type: "text", text: "SEED1 question" }],
+				ts,
+			},
+			// Reasoning-only reply, as older builds could store.
+			{
+				id: "msg_seed_2",
+				role: "assistant",
+				content: [{ type: "thinking", thinking: "seed reasoning only SEED1" }],
+				ts: ts + 1,
+			},
+			{
+				id: "msg_seed_3",
+				role: "user",
+				content: [{ type: "text", text: "SEED2 question" }],
+				ts: ts + 2,
+			},
+			{
+				id: "msg_seed_4",
+				role: "assistant",
+				content: [
+					{ type: "thinking", thinking: "seed reasoning SEED2" },
+					{ type: "text", text: "SEED2-OK" },
+				],
+				ts: ts + 3,
+			},
+		);
+		writeFileSync(messagesPath, JSON.stringify(storedBefore));
+	}
 
 	stage = "resume";
 	let resumeRestart = false;
 	let resumeHistory = false;
+	let resumeSeeded = false;
 	let secondExited = false;
 	let secondPid;
+	let interruptedMidStream = false;
+	let descendantPids = [];
 	if (newSessionId) {
 		const second = await launch(["--id", newSessionId]);
 		sessions.push(second);
 		secondPid = second.pty.pid;
-		await second.waitForText("MARK2-OK", { timeout: 20_000 });
+		await second.waitForText("SEED2-OK", { timeout: 20_000 });
 		stage = "turn 4 after resume";
 		resumeRestart = await turn(second, "Reply with MARK4", "MARK4");
 		frames.push(await second.text());
@@ -320,12 +466,39 @@ try {
 			["MARK1-OK", "MARK2-OK", "MARK3"].every((marker) =>
 				resumedHistory.includes(marker),
 			) && resumedHistory.includes("conversation_tool");
+		resumeSeeded =
+			["SEED1 question", "SEED2 question", "SEED2-OK"].every((marker) =>
+				resumedHistory.includes(marker),
+			) && !resumedHistory.includes("seed reasoning");
+		stage = "interrupt mid-stream";
+		await typeEchoed(second, "Reply with MARK5");
+		await second.press("enter");
+		const heldDeadline = Date.now() + 15_000;
+		while (heldStreams.length === 0 && Date.now() < heldDeadline)
+			await new Promise((resolve) => setTimeout(resolve, 100));
+		interruptedMidStream = heldStreams.length === 1;
+		descendantPids = descendantsOf(secondPid);
+		frames.push(await second.text());
 		stage = "quit after resume";
 		secondExited = await quit(second);
 	}
 
+	const storedAfter = readStored(messagesPath);
+	const storedAfterText = JSON.stringify(storedAfter ?? {});
 	const report = {
 		calibrated,
+		legacyEffortNormalized:
+			chat.length > 0 &&
+			chat.every((item) => item.body.reasoning_effort === "high"),
+		transientTurnRecovered: transientServed === 1 && turn2,
+		resumeSeeded,
+		storedHistoryKept:
+			storedReasoningKept &&
+			storedHasThinking(storedAfter, "fixture reasoning MARK1") &&
+			storedHasThinking(storedAfter, "seed reasoning only SEED1") &&
+			storedAfterText.includes("MARK4-OK"),
+		keyAbsentFromStore:
+			Boolean(storedAfter) && !storedAfterText.includes(savedKey),
 		conversationThreeTurns:
 			turn1 &&
 			turn2 &&
@@ -345,12 +518,19 @@ try {
 			secondExited &&
 			!processAlive(firstPid) &&
 			(secondPid === undefined || !processAlive(secondPid)),
+		interruptCleanup:
+			interruptedMidStream &&
+			secondExited &&
+			descendantPids.every((pid) => !processAlive(pid)),
+		keyAbsentFromLogs: logsFreeOf(savedKey),
 		requestCount: chat.length,
+		descendantCount: descendantPids.length,
 	};
 	console.log(JSON.stringify(report));
 	if (
 		Object.entries(report).some(
-			([key, value]) => key !== "requestCount" && value !== true,
+			([key, value]) =>
+				!["requestCount", "descendantCount"].includes(key) && value !== true,
 		)
 	)
 		process.exitCode = 1;
@@ -380,6 +560,7 @@ try {
 		}
 		session.close();
 	}
+	for (const held of heldStreams) held.destroy();
 	server.closeAllConnections();
 	await new Promise((resolve) => server.close(resolve));
 }

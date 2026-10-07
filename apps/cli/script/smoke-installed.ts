@@ -39,6 +39,33 @@ function fail(id: string): never {
 	throw new Error(`Installed release check failed: ${id}`);
 }
 
+/**
+ * Fingerprints the user's real global Shri: every `shri` on the real PATH
+ * and the globally installed wrapper manifest. The smoke must not change it.
+ */
+function globalShriSnapshot(): string {
+	const shell = (command: string) =>
+		Bun.spawnSync(["cmd.exe", "/d", "/s", "/c", command], {
+			timeout: 30_000,
+		}).stdout.toString();
+	const paths = shell("where shri")
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+	const manifest = join(
+		shell("npm root -g").trim(),
+		"@shrinivas-sn",
+		"shri",
+		"package.json",
+	);
+	return JSON.stringify(
+		[...paths, manifest].map((path) => [
+			path,
+			existsSync(path) ? sha256(path) : "missing",
+		]),
+	);
+}
+
 function sha256(path: string): string {
 	return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
@@ -193,12 +220,24 @@ const MODEL_PTY_CHECKS = [
 	"modelSelected",
 	"discoveryFailureNotice",
 	"discoveryEmptyManual",
+	"turnAfterFailure",
+	"discoveryMalformedNotice",
+	"discoveryStallBounded",
+	"manualEntryTurn",
 	"noUnknownRequests",
+	"keyAbsentFromTerminal",
 	"modelReopened",
 ] as const;
 
 const CONVERSATION_PTY_CHECKS = [
 	"calibrated",
+	"legacyEffortNormalized",
+	"transientTurnRecovered",
+	"resumeSeeded",
+	"storedHistoryKept",
+	"keyAbsentFromStore",
+	"interruptCleanup",
+	"keyAbsentFromLogs",
 	"conversationThreeTurns",
 	"toolPairing",
 	"resumeRestart",
@@ -245,6 +284,7 @@ export async function runInstalledSmoke(
 	const wrapperTar = verifyTarball(reportDir, wrapper);
 	const platformTar = verifyTarball(reportDir, platform);
 	const tools = resolveTools();
+	const globalBefore = globalShriSnapshot();
 	const root = mkdtempSync(join(tmpdir(), "shri-installed-"));
 	try {
 		const consumer = join(root, "consumer path ü");
@@ -818,6 +858,8 @@ export async function runInstalledSmoke(
 			readdirSync(env.CLINE_DIR).sort().join(",") === "data,sentinel.txt" &&
 			existsSync(env.SHRI_DIR);
 		if (!checks.stateIsolation) fail("state-isolation");
+		checks.globalInstallUnchanged = globalShriSnapshot() === globalBefore;
+		if (!checks.globalInstallUnchanged) fail("global-install-changed");
 		return { target, version: wrapper.version, checks };
 	} finally {
 		await removeTemporary(root);

@@ -16,6 +16,8 @@ if (!binaryPath || !workingDirectory || !settingsPath) {
 const savedKey = "gsk_SHRI_INSTALLED_SAVED_TEST_ONLY";
 const temporaryKey = "gsk_SHRI_INSTALLED_MODEL_TEMP_TEST_ONLY";
 const READY = "What can I do for you?";
+// Not listed by /models and not in the catalog: reachable only manually.
+const MANUAL_MODEL = "shri-fixture-manual-entry";
 const listedModels = [
 	"openai/gpt-oss-120b",
 	"openai/gpt-oss-20b",
@@ -119,6 +121,13 @@ const server = createServer((request, response) => {
 		}
 		if (path === "/openai/v1/models") {
 			modelsRequests.push(request.headers.authorization ?? "");
+			if (modelsMode === "malformed") {
+				response.writeHead(200, { "content-type": "application/json" });
+				response.end("{not json");
+				return;
+			}
+			// Never answers; the client's 5 s discovery deadline must fire.
+			if (modelsMode === "stall") return;
 			if (modelsMode === "auth") {
 				response.writeHead(401, { "content-type": "application/json" });
 				response.end(JSON.stringify({ error: { message: "fixture 401" } }));
@@ -391,6 +400,29 @@ try {
 	await session.waitForText("Availability not verified", { timeout: 10_000 });
 	await backToPrompt();
 	const discoveryFailureNotice = savedGroq().model === "qwen/qwen3.8-27b";
+	const afterFailure = await send("SWITCH5");
+	const turnAfterFailure =
+		afterFailure?.model === "qwen/qwen3.8-27b" &&
+		afterFailure.reasoning_effort === "low";
+
+	stage = "malformed listing";
+	modelsMode = "malformed";
+	await openModelPicker();
+	await session.waitForText("returned an unusable", {
+		timeout: 10_000,
+	});
+	await backToPrompt();
+	const discoveryMalformedNotice = savedGroq().model === "qwen/qwen3.8-27b";
+
+	stage = "stalled listing";
+	modelsMode = "stall";
+	const stallStarted = Date.now();
+	await openModelPicker();
+	await session.waitForText("did not return its", {
+		timeout: 10_000,
+	});
+	const discoveryStallBounded = Date.now() - stallStarted <= 12_000;
+	await backToPrompt();
 
 	stage = "empty listing";
 	modelsMode = "empty";
@@ -400,14 +432,44 @@ try {
 	const discoveryEmptyManual =
 		emptyScreen.includes("Create custom model ID") &&
 		!emptyScreen.includes("GPT OSS 120B");
-	await backToPrompt();
+
+	stage = "manual entry";
+	await session.press("enter");
+	await session.waitForText("Model ID", { timeout: 10_000 });
+	// The warning wraps in the dialog, so match its first words only.
+	const manualWarningShown = await session
+		.waitForText("Tool and reasoning support", { timeout: 5_000 })
+		.then(() => true)
+		.catch(() => false);
+	await session.type(MANUAL_MODEL);
+	await session.waitForText(MANUAL_MODEL, { timeout: 5_000 });
+	await session.press("enter");
+	await waitForPrompt();
 	modelsMode = "list";
+	const manual = await send("SWITCH6");
+	const manualEntryTurn =
+		manualWarningShown &&
+		savedGroq().model === MANUAL_MODEL &&
+		manual?.model === MANUAL_MODEL &&
+		manual.reasoning_effort === undefined &&
+		manual.include_reasoning === undefined;
+	if (!manualEntryTurn) {
+		const { authorization, ...body } = manual ?? {};
+		console.error(
+			`manual entry: warning=${manualWarningShown} saved=${savedGroq().model} request=${JSON.stringify(body)}`,
+		);
+	}
 
 	stage = "reopen";
 	await openModelPicker();
 	await backToPrompt();
 	const modelReopened = Boolean(await waitForPrompt(5_000));
 
+	// Raw screen, before any redaction: neither key may ever be rendered.
+	const finalScreen = await session.text();
+	const keyAbsentFromTerminal = [finalScreen, lastFrame].every(
+		(screen) => !screen.includes(temporaryKey) && !screen.includes(savedKey),
+	);
 	await session.press(["ctrl", "c"]);
 	await session.press(["ctrl", "c"]);
 	const shutdown = await session.waitForExit(5_000);
@@ -431,7 +493,12 @@ try {
 		modelSelected,
 		discoveryFailureNotice,
 		discoveryEmptyManual,
+		turnAfterFailure,
+		discoveryMalformedNotice,
+		discoveryStallBounded,
+		manualEntryTurn,
 		noUnknownRequests: unknownPaths === 0,
+		keyAbsentFromTerminal,
 		modelReopened: modelReopened && shutdown,
 	};
 	console.log(JSON.stringify(report));

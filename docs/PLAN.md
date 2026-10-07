@@ -259,8 +259,8 @@ A new session may start here.
 **Do:**
 - [x] Extend loopback fixture with in-memory bodies, synthetic reasoning, strict replay/option rejection, and separate /models/chat/catalog routes; no production fallback.
 - [x] Drive three user turns with distinct markers; verify continuity and matching visible completion for every turn.
-- [ ] Exercise tool call/result pairing, restart/resume synthetic saved reasoning history, and another reply with stored content preserved. *(07/10: tool pairing and `--id` resume of an app-created session done; seeded synthetic history (GR-07) and stored-content read-back (GR-09) open.)*
-- [ ] Switch through a second reasoning model and non-reasoning fixture via /model, send requests, and assert model IDs/options. Cover failure/empty/cancel/reopen, unverified manual entry, catalog-only exclusion, and temporary credentials. *(07/10: switches, failure, empty, cancel, reopen, catalog-only and temporary key done; a manual unverified ID used for a turn (GR-13) and malformed/stalled `/models` (GR-12) open.)*
+- [x] Exercise tool call/result pairing, restart/resume synthetic saved reasoning history, and another reply with stored content preserved. *(08/10: synthetic turns written into the stored `messages.json`, resumed with `--id`, stored history read back.)*
+- [x] Switch through a second reasoning model and non-reasoning fixture via /model, send requests, and assert model IDs/options. Cover failure/empty/cancel/reopen, unverified manual entry, catalog-only exclusion, and temporary credentials. *(08/10: all covered, plus malformed and stalled `/models`. Provider away-and-back (GR-14) is not covered.)*
 - [x] Add required smoke-report fields and E2E assertions so omitted journeys fail. Preserve old install, syntax-color, no-Bun, lifecycle-disabled, Unicode/space-path, daemon-isolation, Ctrl+C, and cleanup checks.
 - [x] Calibrate rejection with a synthetic invalid body before relying on green. A disposable baseline binary run can additionally demonstrate the original failure; do not touch global installation.
 - [x] Rebuild/package/verify/install using disposable state; record actual version/hashes/counts and matrix evidence, separate from live acceptance.
@@ -460,3 +460,12 @@ Original planning-only record: [WORK/2026-09-26/WORK.md](WORK/2026-09-26/WORK.md
 - **Owner inputs:** owner put a Groq key in the git-ignored root `.env` (`GROQ_API_KEY`, presence and `gsk_` shape checked; value not read). Reserved for Task 12.2 live acceptance.
 - **Next:** close the open Task 11.2 rows above, then the Phase 4 checkpoint.
 - **Commits:** `fix(tui): refocus prompt after dialog focus restore`; `test(cli): cover installed Groq conversations and model switches` (hashes in STATUS).
+
+### 08/10/2026 — Task 11.2 gap rows
+
+- **Done:** pushed `91b4253..3b9dc63` (owner authorized); hosted [CI run 37664552770](https://github.com/shrinivas-sn/shri-harness/actions/runs/37664552770) passed, including the installed E2E. Model PTY gained a turn after the 401, malformed and stalled `/models`, a manual unverified ID used for a turn, and a raw terminal key scan. Conversation PTY gained one 503 on turn 2, a saved legacy `xhigh`, synthetic turns seeded into the stored `messages.json` before `--id`, stored-history read-back, store and raw log key scans, and Ctrl+C mid-stream with descendant-PID cleanup. The outer smoke fingerprints the real global `shri` before and after.
+- **Verified:** [installed E2E](WORK/2026-10-07/task-11.2-gaps-e2e.log) 9/9 (285 s); [model case rerun](WORK/2026-10-07/task-11.2-gaps-e2e-model.log) after its last added check; standalone model and conversation runs exit 0; Biome clean. Probe code used to read the store format was removed.
+- **Matrix:** 22 of 25 proven. Open: GR-14 (provider away and back: needs a second configured provider), GR-19 (requests to non-loopback hosts are not observable by this harness), GR-25 (optional baseline).
+- **Surprises:** none in product behaviour; long notices wrap in dialogs, so waits match short fragments.
+- **Next:** owner decision on GR-14/GR-19, then the Phase 4 checkpoint.
+- **Commit:** `test(cli): cover remaining installed Groq repair journeys`.
