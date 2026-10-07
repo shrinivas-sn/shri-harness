@@ -1,60 +1,34 @@
 # Project status
 
-## Current state - 07/10/2026, Phase 4 in progress
+## Current state - 07/10/2026, Phase 4 Task 11.2 in progress
 
-- **Task 11.1 done:** installed acceptance matrix [groq-repair-test-matrix.md](RESEARCH/groq-repair-test-matrix.md) — 25 rows, all `unproven`, checker valid. **Finding F1:** the existing installed model smoke now calls the real Groq `/models` with a synthetic key (no `baseUrl` override); fix in Task 11.2.
-- **Next: Task 11.2 — extend installed smoke and verify fresh artifacts.**
+- **Project:** `E:\shri-harness`, branch `main`. Live plan [PLAN.md](PLAN.md) (Groq conversation and model reliability).
+- **Done and committed:** Phase 1 Task 8 (`8b16b5a`), Phase 2 Tasks 9.1 (`4e107a2`) and 9.2 (`75db91c`), Phase 3 Task 10 (`ab3fa24`), Phase 4 Task 11.1 matrix (`d687d61`). Older checkpoint detail: [archive](WORK/archive.md), 07/10/2026 entry.
+- **Task 11.2 (uncommitted harness work):**
+  - Fresh artifacts built, packaged, verified (all exit 0): [build log](WORK/2026-10-07/task-11.2-build.log). Pre-rebuild next.1 release evidence copied byte-identical to `tmp/preserved/release-next.1` (gitignored) because `script/build.ts` wipes `apps/cli/dist`.
+  - `apps/cli/script/smoke-installed-model-pty.mjs` rewritten: loopback `/models` + chat + catalog fixture (fixes Finding F1), `--key` temporary key, strict option rejection, cancel-in-thinking-dialog, four switches, failure/empty notices.
+  - **Run 5 result:** in the installed binary all four switches sent exactly the expected bodies (GPT-OSS 120B `high`; Llama none; GPT-OSS 20B `include_reasoning:false`; Qwen 3.8 `low`) and the picker listed only `/models` entries. Run then failed at the next harness step (`slash suggestion` before the 401 notice check) — harness timing, not yet diagnosed: [run 5 log](WORK/2026-10-07/task-11.2-model-run5.log). Runs 1–4 fixed harness waits (welcome text gone after first message; loading overlay; dropped keystrokes during session restart).
+  - `apps/cli/script/smoke-installed-conversation-pty.mjs` written (3 turns with reasoning, tool pairing, `--id` resume, calibration, key-leak, cleanup) — **never run yet**.
+  - `apps/cli/script/smoke-installed.ts` wired: `MODEL_PTY_CHECKS`, `CONVERSATION_PTY_CHECKS`, `--conversation-pty`. `src/commands/installed-release.e2e.test.ts` **not yet updated** for the new checks.
+- **Matrix:** [groq-repair-test-matrix.md](RESEARCH/groq-repair-test-matrix.md) rows GR-01–GR-25 all still `unproven` (no row updated until a full passing run).
 
-## Phase 3 checkpoint - 07/10/2026
+## Open owner questions
 
-- **Task 10 / R12 done (`ab3fa24`):** Groq gets only reasoning fields the selected model's catalog controls advertise (official docs re-checked 07/10/2026). GPT-OSS keeps low/medium/high (legacy `xhigh`→`high`, `minimal`→`low`) and Off hides its trace; Qwen 3.8/Safeguard get efforts but no visibility field; Llama, Qwen 3.6 and unknown IDs get no reasoning fields. The thinking dialog offers only supported levels.
-- **Verification:** SDK 399/399 (5 files incl. R10 history), LLM/shared typechecks, CLI 50/50 unit + 8/8 render + typecheck, neighbor suites 71 + 36 passing.
-- **Plan issues 5–6:** defect was wider than planned (portable path skipped normalization for all Groq models). **Open for live check (issue 6):** does Groq accept effort for `gpt-oss-safeguard-20b`? Docs and catalog disagree.
-- **Still open (issue 4):** roll back saved model after a failed apply?
-- Next was Task 11.1 (done above).
-
-## Phase 2 checkpoint - 07/10/2026
-
-- **Phase 1 committed:** fix `8b16b5a`, docs `efd82f7`. Bounded gate re-run first: 182/182, both typechecks exit 0.
-- **Task 9.1 committed `4e107a2`:** bounded `discoverGroqModels` and pure `reconcileGroqModels`.
-- **Task 9.2 / R11 source+picker done (`75db91c`):** `/model` on Groq lists only models the effective key's endpoint returns and the catalog proves tool-capable. Failure keeps the catalog with an `Availability not verified` notice; an empty list offers manual entry with a capability warning. Selection is staged until every dialog succeeds; failed apply restores the in-memory model and effort.
-- **Verification:** 49/49 Vitest (discovery + controller), CLI typecheck exit 0, 5/5 Bun native renderer; red evidence recorded for both test files.
-- **Plan issues 3–4:** Vitest cannot load the picker `.tsx`, so wiring is proved through an extracted controller (hook glue: typecheck/review only). **Owner decision open (issue 4):** should a failed apply also roll back the saved model? `applyInteractiveModelChange` saves before restarting.
-- **Evidence:** [07/10/2026 work](WORK/2026-10-07/WORK.md), [PLAN Progress Log](PLAN.md#progress-log).
-- **Limits:** installed TUI, live Groq `/models`, hosted CI, registry remain pending; installed model smoke may now take the notice path if its fixture lacks `/models` (Phase 4).
-- Next was Phase 3, Task 10 (done above).
-
-## Phase 1 checkpoint - 26/09/2026
-
-- **Task 8 / R10 completed locally with the verification adjustment in Plan issue 2.** Builtin Groq now omits outgoing reasoning history while preserving input/stored reasoning, incoming events, text, and tool relationships. Both GPT-OSS IDs have gateway and real-adapter regression coverage.
-- **Verification:** 182/182 focused tests passed with `--maxWorkers 1 --testTimeout 120000`; LLM and shared typechecks passed; diff check passed. The original 5-second invocation still recorded 8 existing failures after repair, so it is not claimed as passing.
-- **Plan issues 1–2:** sandbox Bun launcher required approved host execution; measured existing-test delays required a bounded sequential verification run. That run retained all assertions, including Cerebras aliases and Vertex signed history. The root cause of slow initialization remains unproved.
-- **Evidence:** [Task 8 record and logs](WORK/2026-09-26/TASK-8.md), [PLAN Progress Log](PLAN.md#progress-log). Fourteen new cases; 12 Groq cases were observed failing before the repair.
-- **Limits:** source/wire fixtures only; installed TUI, persisted-session disk acceptance, live provider, hosted CI, and registry gates remain pending. Generic-compatible provider-options deprecation warning retained. No broad-suite pass claimed.
-- **Commit:** `8b16b5a` on 07/10/2026 at the owner's request, after re-running the bounded gate (182/182 again, both typechecks exit 0). Ownership verified before writes, no subagents, previous planning/unrelated work preserved. No live credentials, publication, global install, version changes, or dependency updates.
-- **Stopped at Phase 1. Next: Phase 2, Task 9.1.**
-
-## Planning state before Task 8 - 26/09/2026
-
-- Planning only: the owner requested a proper plan and explicitly said not to execute it. No application code, tests, builds, credentials, installations, or releases were changed/run.
-- [PLAN.md](PLAN.md) now contains five sequential repair phases with full task cards, test-first requirements, checkpoints, failure handling, owner inputs, and a Plan issues log.
-- The previous plan and full historical Progress Log are preserved byte-for-byte in [the planning snapshot](WORK/2026-09-26/PLAN-before-restructure.md). Completed Tasks 0–7 must not be restarted; all open Tasks 8–12 remain carried forward.
-- The last recorded published Windows x64 preview is @shrinivas-sn/shri@0.1.0-next.1. Registry and global installation were not rechecked this session.
-- At planning time, the main defect was later TUI requests replaying unsupported reasoning_content. The historical reproduction remains in [the diagnosis](RESEARCH/chat-model-errors.md); Task 8 now adds source/wire repair evidence, while fixed installed-build and live evidence remain pending.
-- Planning also confirmed effective-configuration discovery gaps, missing-capability effort handling, a visibility rule broader than its GPT-OSS description, and model mutation before selection finishes.
-- Custom multi-agent orchestration remains simulated/deferred. Linux/macOS, rate-limit UX, global -m persistence, and broader integrations remain outside this repair.
+- **Plan issue 4:** after a failed model apply, should the saved model also roll back? (`applyInteractiveModelChange` saves before restarting.)
+- **Plan issue 6:** does Groq accept `reasoning_effort` for `openai/gpt-oss-safeguard-20b`? Docs and catalog disagree; live check in Task 12.2.
+- Phase 5 needs owner authorization: push/hosted CI (12.1), live key + candidate tag (12.2), publish/global update (12.3).
 
 ## Execution constraints and pending evidence
 
-- Work sequentially, self-review, no subagents. Verify required workspace ownership before writes and follow SDK AGENTS.md files.
-- Preserve stored reasoning, tool relationships, unrelated work, active credentials, and the user's saved model. Fixture tests use isolated synthetic state.
+- Work sequentially, self-review, no subagents. Verify workspace owner `SSN-INSPIRON-35\Dell` before writes; follow SDK AGENTS.md files.
+- Preserve stored reasoning, tool relationships, unrelated work, active credentials, and the user's saved model. Fixtures use isolated synthetic state and loopback only.
+- Git tracks `docs/` while disk shows `DOCS/`: stage tracked doc files with the lowercase path.
 - Source changes do not update the global executable. Installed, live-provider, hosted, and registry evidence are separate gates.
-- Broad inherited CLI suite failures/hangs remain recorded limitations; do not claim a full-suite pass.
-- Trusted publishing is configured according to prior records but remains unproved. Select the next unused prerelease at execution time; next.2 is not reserved.
-- Live credential use, remote operations, publication, and active global update retain their authorization boundaries. The plan itself authorizes none.
-- Use the recorded command-scoped GitHub HTTPS helper for future remote work; default SSH was recorded as using another account.
-- Task 8 reached the local checkpoint with Plan issues 1–2 documented above. Planning record: [26/09/2026](WORK/2026-09-26/WORK.md).
+- Broad inherited CLI suite failures/hangs remain recorded limitations; Phase 1's original 5-second focused command still fails (bounded `--maxWorkers 1 --testTimeout 120000` passes). No full-suite pass claimed.
+- Trusted publishing remains unproved; choose the next unused prerelease at execution time (next.2 not reserved).
+- Use the recorded command-scoped GitHub HTTPS helper for remote work; default SSH uses another account.
+- `E:\dev-recipes`: Groq brief `_knowledge/cache/groq-reasoning-controls.md` and `groq-api` entry in `_knowledge/sources.yaml` added this session.
 
 ## Next up (start here)
 
-On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 4, Task 11.2 — Extend installed smoke and verify fresh artifacts**, driven by [the matrix](RESEARCH/groq-repair-test-matrix.md) rows GR-01–GR-25 and Finding F1. Do not restart Tasks 0–11.1. Surface open Plan issues 4 and 6 to the owner. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.
+1. Continue **Task 11.2**: from `apps/cli`, run `bun script/smoke-installed.ts --target windows-x64 --model-pty`; diagnose the `slash suggestion` timeout after the switch block (likely typing `/model` before the post-reply UI settles — reuse `waitForPrompt`/stable-screen before `openModelPicker`). Then run `--conversation-pty`, fix harness-only issues (product defects go back to their owning task via Plan issues), update `installed-release.e2e.test.ts` to assert every new check, run the full Task 11.2 verify set, update matrix rows with real evidence, and commit `test(cli): cover installed Groq conversations and model switches`.

@@ -38,6 +38,18 @@ Committed as `75db91c`.
 - Green: [SDK 399/399](task-10-green.log), [LLM typecheck](task-10-llms-typecheck.log), [shared typecheck](task-10-shared-typecheck.log), [CLI unit 50/50](task-10-cli-unit.log), [CLI typecheck](task-10-cli-typecheck.log), [render 8/8](task-10-cli-render.log).
 - Open: Plan issues 4 (saved-model rollback) and 6 (Safeguard effort, live check).
 
+Committed as `ab3fa24`.
+
+## Task 11.1
+
+Matrix [groq-repair-test-matrix.md](../../RESEARCH/groq-repair-test-matrix.md), committed `d687d61`.
+
+## Task 11.2 (in progress, harness uncommitted)
+
+- Fresh build/package/verify: [task-11.2-build.log](task-11.2-build.log), all exit 0. Next.1 evidence preserved at `tmp/preserved/release-next.1` before `build.ts` wiped `apps/cli/dist`.
+- Model PTY runs 1–5: [1](task-11.2-model-run1.log) [2](task-11.2-model-run2.log) [3](task-11.2-model-run3.log) [4](task-11.2-model-run4.log) [5](task-11.2-model-run5.log). Run 5: all four installed switches sent the expected bodies; failed later at a harness wait.
+- Conversation PTY script written, not run. E2E assertions not updated.
+
 ## Resume
 
-Phase 4, Task 11.1 is next. Details in the PLAN Progress Log.
+Continue Task 11.2 per DOCS/STATUS.md "Next up".
