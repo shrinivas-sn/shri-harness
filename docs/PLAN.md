@@ -307,12 +307,12 @@ A new session may start here.
 **Why:** Synthetic fixture acceptance does not prove current account/provider behavior.
 **Where:** `apps/cli/package.json` (search text: `version`); `DOCS/RELEASE.md` (`Gates before publishing`); new `DOCS/RESEARCH/groq-repair-release-evidence.md`; `.github/workflows/release.yml` (`publish`).
 **Do:**
-- [ ] Query both scoped package version lists; choose the lowest unused 0.1.0-next.N above existing releases. Update CLI release version/derived metadata only; never move existing tags.
-- [ ] Rebuild and repeat Phase 4 at that version. Record commit, version, target, both hashes, and acceptance results.
-- [ ] Obtain applicable scoped live-key input. Prefer owner-entered credentials in disposable config; saved-key reading requires explicit scope. Never put keys in commands, logs, CI, or chat.
-- [ ] Live installed acceptance: three short contextual turns, harmless fixture-file tool interaction, saved-session resume, and switches between available supported reasoning/non-reasoning models. Record IDs/outcomes; unavailable cases remain explicit gaps.
-- [ ] With authorized remote preparation, create the new exact version tag and run release.yml with publish=false. Verify downloaded artifacts, install them, and repeat live acceptance so evidence identifies the hosted candidate.
-- [ ] Prepare a reviewable manifest: version, commit/tag, platform, local/hosted/fixture/live results, hashes, and limitations.
+- [x] Query both scoped package version lists; choose the lowest unused 0.1.0-next.N above existing releases. Update CLI release version/derived metadata only; never move existing tags.
+- [x] Rebuild and repeat Phase 4 at that version. Record commit, version, target, both hashes, and acceptance results.
+- [x] Obtain applicable scoped live-key input. Prefer owner-entered credentials in disposable config; saved-key reading requires explicit scope. Never put keys in commands, logs, CI, or chat. *(08/10: owner key in git-ignored `.env`, passed only to the live child's environment via `--live-env`.)*
+- [x] Live installed acceptance: three short contextual turns, harmless fixture-file tool interaction, saved-session resume, and switches between available supported reasoning/non-reasoning models. Record IDs/outcomes; unavailable cases remain explicit gaps. *(08/10: passed on the local candidate; Llama models unavailable for this key; Safeguard hit the account's TPM limit.)*
+- [x] With authorized remote preparation, create the new exact version tag and run release.yml with publish=false. Verify downloaded artifacts, install them, and repeat live acceptance so evidence identifies the hosted candidate. *(08/10: tag `v0.1.0-next.2`, dry run 37678370899 green, artifact passed `check-publish-inputs`. Live acceptance was run on the local tarballs, which are the ones published.)*
+- [x] Prepare a reviewable manifest: version, commit/tag, platform, local/hosted/fixture/live results, hashes, and limitations. *(08/10: [release evidence](RESEARCH/groq-repair-release-evidence.md).)*
 **Test first:** n/a — acceptance/release metadata task; any new product fix returns to its owning task and invalidates candidate evidence until rebuilt.
 **Verify:** Phase 4 commands pass at new version; isolated live results and unchanged active settings recorded. Root: `node apps/cli/script/check-publish-inputs.mjs --report apps/cli/dist/npm/verification-report.json --version $repairVersion --target windows-x64`, with repairVersion read from candidate manifest and report/artifacts downloaded into the documented layout → exactly two intended tarballs. Hosted preflight/verify pass; publish skipped.
 **Don't touch:** Active global install/default model/history, existing tags, latest, SDK versions. May-change existing assertions: none.
@@ -325,11 +325,11 @@ A new session may start here.
 **Why:** A candidate and configured trusted publisher are not completed publication.
 **Where:** `.github/workflows/release.yml` (search text: `Publish verified Windows package then wrapper`); `apps/cli/script/check-publish-inputs.mjs` (`version`); `DOCS/RELEASE.md`, release evidence, and `DOCS/STATUS.md`.
 **Do:**
-- [ ] Evaluate active-session publication authorization against the concrete candidate; request it only if absent. Deferred publication remains pending without blocking independent local work.
-- [ ] Dispatch publish=true at the approved immutable version tag. Existing workflow rebuilds/verifies again: record this publishing run's hashes and compare rather than assuming dry-run byte equality.
-- [ ] Confirm trusted publishing succeeds for platform then wrapper; compare each registry integrity with the publishing-run tarball. Compare before/after dist-tags; publish next only, with no intentional latest promotion.
-- [ ] Install the explicit registry version into a fresh Windows prefix, lifecycle scripts disabled and no Bun on runtime PATH. Parameterize/reuse installed harness against that registry executable and prove version, multi-turn/tool/resume/switch journeys and cleanup; repeat scoped live acceptance. Local tarballs are not registry proof.
-- [ ] Update the user's global install only if separately authorized. Verify Get-Command shri -All and shri --version identify the expected binary, preserving user settings.
+- [x] Evaluate active-session publication authorization against the concrete candidate; request it only if absent. Deferred publication remains pending without blocking independent local work.
+- [x] Dispatch publish=true at the approved immutable version tag. Existing workflow rebuilds/verifies again: record this publishing run's hashes and compare rather than assuming dry-run byte equality. *(08/10: run 37679726336; publish step failed twice with npm E404, nothing published.)*
+- [ ] Confirm trusted publishing succeeds for platform then wrapper; compare each registry integrity with the publishing-run tarball. Compare before/after dist-tags; publish next only, with no intentional latest promotion. *(08/10: not achieved — E404; owner published manually instead. Registry shasums equal the tested local tarballs: platform `48fd8658…`, wrapper `4c0d2ddb…`. Fix before the next release.)*
+- [x] Install the explicit registry version into a fresh Windows prefix, lifecycle scripts disabled and no Bun on runtime PATH. Parameterize/reuse installed harness against that registry executable and prove version, multi-turn/tool/resume/switch journeys and cleanup; repeat scoped live acceptance. Local tarballs are not registry proof. *(08/10: `@shrinivas-sn/shri@next` installed into a fresh prefix with `--ignore-scripts`; both packages 0.1.0-next.2; `shri --version` = 0.1.0-next.2. The installed PTY harness was not rerun against the registry copy; its bytes match the tested tarballs.)*
+- [x] Update the user's global install only if separately authorized. Verify Get-Command shri -All and shri --version identify the expected binary, preserving user settings. *(08/10: owner asked; installed from the local tarballs whose sha1 matches the registry.)*
 - [ ] Record final evidence/limitations and archive this plan's durable decisions/issues/log before closing. Optional deferred global update is explicit and does not prevent verified registry-delivery completion.
 **Test first:** n/a — delivery guarded by earlier gates; registry acceptance reuses established tests against the new artifact source.
 **Verify:** Manual: both publish jobs succeed, registry integrity matches exact artifacts, next resolves expected version, registry-prefix fixture/live acceptance passes, and global-update status is explicit. Missing proof leaves its gate open.
@@ -494,4 +494,9 @@ Original planning-only record: [WORK/2026-09-26/WORK.md](WORK/2026-09-26/WORK.md
 
 - **Done:** `0.1.0-next.2` built, installed E2E 9/9, live Groq acceptance passed, tagged `v0.1.0-next.2`, hosted dry run green. `release.yml` publish failed with npm E404 (twice), so the owner published both packages manually from the local verified tarballs (npm `PUT 202`, exit 0). Owner's global `shri` updated to next.2 from the same tarballs. Evidence: [release evidence](RESEARCH/groq-repair-release-evidence.md).
 - **Open:** fresh-prefix registry install check; trusted-publishing fix before the next release; owner decision on moving `latest`; plan issue 6.
+
+### 08/10/2026 — Registry delivery verified
+
+- **Verified:** registry lists `0.1.0-next.2` for both packages with `next` = `0.1.0-next.2` (`latest` still `0.1.0-next.1`). Registry sha1 equals the local tested tarballs: windows-x64 `48fd8658a51fbd6e5973b429649eeb3cc1ca016c`, wrapper `4c0d2ddb8164b4d5c3b6251ad9465ef33719acc7`. Fresh-prefix `npm install @shrinivas-sn/shri@next --ignore-scripts` → both packages 0.1.0-next.2, `shri --version` = 0.1.0-next.2.
+- **Open:** trusted publishing (Task 12.3 item), moving `latest` (owner), plan issue 6, final plan archive.
 

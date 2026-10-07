@@ -1,10 +1,10 @@
 # Project status
 
-## Current state - 08/10/2026, 0.1.0-next.2 published to npm
+## Current state - 08/10/2026, 0.1.0-next.2 published and verified on npm
 
 - **Project:** `E:shri-harness`, branch `main`, pushed to `shrinivas-sn/shri-harness`. Live plan [PLAN.md](PLAN.md) (Groq conversation and model reliability). Older status: [archive](WORK/archive.md).
 - **Phases 1–4 done;** Phase 5 Tasks 12.1 (hosted gates) and 12.2 (candidate) done. Fixes: Groq `reasoning_content` replay, model discovery/selection, per-model reasoning options, prompt focus after dialogs (issue 7), saved-model rollback on a failed switch (issue 4).
-- **Published 08/10/2026:** `@shrinivas-sn/shri-windows-x64@0.1.0-next.2` then `@shrinivas-sn/shri@0.1.0-next.2`, by the owner with `npm publish <tgz> --tag next --access public --ignore-scripts` from the local verified tarballs (`apps/cli/dist/npm/tarballs`; sha256 `7634255…` and `fb201dd…`). Owner's npm logs: `PUT 202`, exit 0 for both. Registry shows wrapper `next` = `0.1.0-next.2`; `latest` still `0.1.0-next.1`. Manual publish, so no provenance.
+- **Published 08/10/2026:** `@shrinivas-sn/shri-windows-x64@0.1.0-next.2` then `@shrinivas-sn/shri@0.1.0-next.2`, by the owner with `npm publish <tgz> --tag next --access public --ignore-scripts` from the local verified tarballs (`apps/cli/dist/npm/tarballs`; sha256 `7634255…` and `fb201dd…`). Owner's npm logs: `PUT 202`, exit 0 for both. Registry: both packages list `0.1.0-next.2`, `next` = `0.1.0-next.2`, `latest` still `0.1.0-next.1`; registry sha1 equals the tested tarballs (`48fd8658…`, `4c0d2ddb…`). Fresh-prefix install of `@shrinivas-sn/shri@next` runs `shri --version` = `0.1.0-next.2`. Manual publish, so no provenance.
 - **Evidence:** [release evidence](RESEARCH/groq-repair-release-evidence.md) (installed E2E 9/9, live Groq acceptance passed, tag `v0.1.0-next.2` on `aaf7067`, hosted dry run green). [Matrix](RESEARCH/groq-repair-test-matrix.md): 22 proven, 3 `n/a` (Groq-only scope).
 - **Owner's machine:** global `shri` is `0.1.0-next.2`, installed from the same local tarballs. Roll back: `npm install -g @shrinivas-sn/shri@0.1.0-next.1`.
 - **Trusted publishing broken:** `release.yml` publish failed with npm E404 twice (run 37679726336), even after the owner re-enabled the trusted publisher. Nothing was published by it.
@@ -25,6 +25,6 @@
 
 ## Next up (start here)
 
-1. **Post-publish check (RELEASE.md, after publishing):** once `npm view @shrinivas-sn/shri-windows-x64 versions` lists `0.1.0-next.2`, install `@shrinivas-sn/shri@next` into a fresh disposable prefix with `--ignore-scripts`, confirm `shri --version` and the registry integrity against the local tarball hashes, and record it in the release evidence and PLAN Task 12.3.
-2. **Before the next release:** fix GitHub trusted publishing. Retrieve current npm trusted-publishing docs (`/context-brief`), compare with `release.yml` (setup-node `registry-url` token handling, npm version, provenance) and both packages' npm settings, then release with one `publish=true` run.
-3. Owner decision above on `latest`.
+1. **Before the next release:** fix GitHub trusted publishing (Task 12.3 open item). Retrieve current npm trusted-publishing docs (`/context-brief`), compare with `release.yml` (setup-node `registry-url` token handling, npm version, provenance) and both packages' npm settings, then release with one `publish=true` run.
+2. Owner decision above on moving `latest` to `0.1.0-next.2`.
+3. Close the plan: record final evidence and archive PLAN.md's durable decisions, issues and log (Task 12.3 last item) once 1 is resolved or explicitly deferred.

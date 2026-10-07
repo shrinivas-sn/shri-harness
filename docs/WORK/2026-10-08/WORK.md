@@ -21,6 +21,10 @@ Continues: [07/10/2026 work](../2026-10-07/WORK.md) and [the live plan](../../PL
 
 - Release workflow publish failed (npm E404, twice). Owner published both next.2 packages manually from the local verified tarballs (npm `PUT 202`, exit 0). Global `shri` on the owner's machine is next.2.
 
+## Registry check
+
+- Both packages visible on npm at 0.1.0-next.2 (`next`); sha1 matches the tested tarballs; fresh-prefix `@next` install prints 0.1.0-next.2.
+
 ## Resume
 
 Continue per DOCS/STATUS.md "Next up".
