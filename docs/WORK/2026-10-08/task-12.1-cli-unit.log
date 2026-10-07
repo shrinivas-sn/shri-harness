@@ -1,0 +1,16 @@
+@cline/cli test:unit: 
+@cline/cli test:unit:  RUN  v4.1.11 E:/shri-harness/apps/cli
+@cline/cli test:unit: 
+@cline/cli test:unit: Created worktree at /tmp/cline-worktree
+@cline/cli test:unit: Created worktree at /tmp/cline-worktree
+@cline/cli test:unit: Created worktree at /tmp/cline-worktree
+@cline/cli test:unit: warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+@cline/cli test:unit: [36mChecking for Shri updates…[0m
+@cline/cli test:unit: [32m✓[0m Already on the latest version [1m0.1.0-next.1[0m
+@cline/cli test:unit: 
+@cline/cli test:unit:  Test Files  28 passed (28)
+@cline/cli test:unit:       Tests  293 passed | 2 skipped (295)
+@cline/cli test:unit:    Start at  00:32:31
+@cline/cli test:unit:    Duration  47.84s (transform 9.03s, setup 272ms, import 26.30s, tests 15.98s, environment 3ms)
+@cline/cli test:unit: 
+@cline/cli test:unit: Exited with code 0

@@ -42,6 +42,28 @@ jobs:
         working-directory: apps/cli
         run: bun run typecheck
 
+      - name: Typecheck LLM package
+        working-directory: sdk
+        run: bun -F @cline/llms typecheck
+
+      - name: Typecheck shared package
+        working-directory: sdk
+        run: bun -F @cline/shared typecheck
+
+      # Groq history and reasoning-option repairs (PLAN Tasks 8 and 10). Bounded
+      # workers and timeout: the default 5 s limit times out existing cases
+      # (PLAN issue 2).
+      - name: Test Groq SDK routing repairs
+        working-directory: sdk
+        run: >-
+          bun -F @cline/llms test
+          src/providers/routing/reasoning-options.test.ts
+          src/providers/routing/provider-options.test.ts
+          src/providers/ai-sdk-reasoning.test.ts
+          src/providers/gateway.test.ts
+          src/providers/vendors/openai-compatible.test.ts
+          --maxWorkers 1 --testTimeout 120000
+
       - name: Test Windows preview source surface
         run: >-
           bun -F @cline/cli test:unit
@@ -57,7 +79,19 @@ jobs:
           src/commands/publish-inputs.test.ts
           src/runtime/prompt.test.ts
           src/runtime/run-agent.test.ts
+          src/runtime/run-interactive.test.ts
           src/tui/index.test.ts
+          src/utils/groq-model-discovery.test.ts
+          src/utils/chat-models.test.ts
+          src/tui/hooks/groq-model-selection.test.ts
+
+      # Native OpenTUI renderer tests run under Bun, not Vitest.
+      - name: Test native TUI renderer
+        working-directory: apps/cli
+        run: >-
+          bun test
+          ./src/tui/components/model-selector/model-selector.render.test.tsx
+          ./src/tui/hooks/use-focus-after-remount.render.test.tsx
 
       - name: Build native Windows CLI
         working-directory: apps/cli
