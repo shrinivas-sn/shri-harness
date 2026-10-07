@@ -1,34 +1,36 @@
 # Project status
 
-## Current state - 24/09/2026
-- Workspace: `E:\shri-harness`; branch: `main`. This checkpoint changes documentation only.
-- Published and globally installed Windows x64 preview: `@shrinivas-sn/shri@0.1.0-next.1`, with matching platform package; `next` and `latest` pointed there in the live registry check.
-- The CLI uses the Cline-derived execution engine, Groq onboarding and isolated `~/.shri` state. Custom multi-agent orchestration remains simulated/deferred.
-- First publication, registry integrity, installed E2E and live file/tool evidence are recorded in the plan's historical Progress Log. Do not restart release Tasks 0-7.
-- The owner chose to extend the existing `PLAN.md`: current repair sequence is Tasks 8-12. Application implementation has not started.
+## Current state - 26/09/2026, Phase 1 checkpoint
 
-## Diagnosis and verification limits
-- Recorded bug: later TUI messages fail because Groq rejects assistant `reasoning_content`.
-- Source tracing found `shouldIncludeReasoningHistory` excludes only Cerebras; installed adapter `@ai-sdk/openai-compatible@3.0.37` serializes Groq history reasoning into that field.
-- In-memory actual-adapter reproduction: first request accepted; second request rejected by a strict synthetic fixture. No live key or saved settings were used.
-- Separate model issues: Groq picker uses catalog choices rather than its authenticated `/models` path; missing reasoning metadata can permit incompatible effort settings.
-- No fresh live Groq/TUI reproduction or fixed-build evidence exists for this repair. Documentation/link/history-preservation checks passed.
-- Broad inherited CLI suite previously failed/hung in doctor, kanban, plugin and connector areas; do not claim a full-suite pass. Earlier prompt/path and detached-hub fixes have their own recorded evidence.
+- **Task 8 / R10 completed locally with the verification adjustment in Plan issue 2.** Builtin Groq now omits outgoing reasoning history while preserving input/stored reasoning, incoming events, text, and tool relationships. Both GPT-OSS IDs have gateway and real-adapter regression coverage.
+- **Verification:** 182/182 focused tests passed with `--maxWorkers 1 --testTimeout 120000`; LLM and shared typechecks passed; diff check passed. The original 5-second invocation still recorded 8 existing failures after repair, so it is not claimed as passing.
+- **Plan issues 1–2:** sandbox Bun launcher required approved host execution; measured existing-test delays required a bounded sequential verification run. That run retained all assertions, including Cerebras aliases and Vertex signed history. The root cause of slow initialization remains unproved.
+- **Evidence:** [Task 8 record and logs](WORK/2026-09-26/TASK-8.md), [PLAN Progress Log](PLAN.md#progress-log). Fourteen new cases; 12 Groq cases were observed failing before the repair.
+- **Limits:** source/wire fixtures only; installed TUI, persisted-session disk acceptance, live provider, hosted CI, and registry gates remain pending. Generic-compatible provider-options deprecation warning retained. No broad-suite pass claimed.
+- **Commit:** `8b16b5a` on 07/10/2026 at the owner's request, after re-running the bounded gate (182/182 again, both typechecks exit 0). Ownership verified before writes, no subagents, previous planning/unrelated work preserved. No live credentials, publication, global install, version changes, or dependency updates.
+- **Stopped at Phase 1. Next: Phase 2, Task 9.1.**
 
-## Constraints and pending external proof
-- Execute sequentially, self-review, no subagents; preserve unrelated work and append real verification to the plan.
-- Verify workspace owner `SSN-INSPIRON-35\Dell` before writes; follow SDK AGENTS.md files and existing provider-routing conventions.
-- Keep keys out of fixtures, logs, builds and CI. Use isolated config; do not change the active user's saved model or credentials.
-- No blocker to starting Task 8. Live key use and publishing retain the plan's authorization boundaries; this save-check does not perform either.
-- Trusted publishing is reportedly configured but remains unproved until a successful real publish. Next unused repair version is expected to be `0.1.0-next.2`; check before release.
-- Linux/macOS, real orchestration, rate-limit UX, `-m` persistence and wider integrations remain later work. Checkout edits do not update the global executable.
-- For future remote operations use this repo's command-scoped GitHub CLI HTTPS helper; default SSH was recorded as authenticating to a different account.
+## Planning state before Task 8 - 26/09/2026
 
-## References
-- [Live plan](PLAN.md): detailed Tasks 8-12, tests, gates and failure handling.
-- [Diagnosis](RESEARCH/chat-model-errors.md): request trace, controlled reproduction and evidence limits.
-- [Roadmap](CONTEXT/ROADMAP.md): proposed future features/customization, not current execution scope.
-- [Release gates](RELEASE.md); [verbatim older status](WORK/archive.md); [prior work](WORK/2026-09-22/WORK.md).
+- Planning only: the owner requested a proper plan and explicitly said not to execute it. No application code, tests, builds, credentials, installations, or releases were changed/run.
+- [PLAN.md](PLAN.md) now contains five sequential repair phases with full task cards, test-first requirements, checkpoints, failure handling, owner inputs, and a Plan issues log.
+- The previous plan and full historical Progress Log are preserved byte-for-byte in [the planning snapshot](WORK/2026-09-26/PLAN-before-restructure.md). Completed Tasks 0–7 must not be restarted; all open Tasks 8–12 remain carried forward.
+- The last recorded published Windows x64 preview is @shrinivas-sn/shri@0.1.0-next.1. Registry and global installation were not rechecked this session.
+- At planning time, the main defect was later TUI requests replaying unsupported reasoning_content. The historical reproduction remains in [the diagnosis](RESEARCH/chat-model-errors.md); Task 8 now adds source/wire repair evidence, while fixed installed-build and live evidence remain pending.
+- Planning also confirmed effective-configuration discovery gaps, missing-capability effort handling, a visibility rule broader than its GPT-OSS description, and model mutation before selection finishes.
+- Custom multi-agent orchestration remains simulated/deferred. Linux/macOS, rate-limit UX, global -m persistence, and broader integrations remain outside this repair.
+
+## Execution constraints and pending evidence
+
+- Work sequentially, self-review, no subagents. Verify required workspace ownership before writes and follow SDK AGENTS.md files.
+- Preserve stored reasoning, tool relationships, unrelated work, active credentials, and the user's saved model. Fixture tests use isolated synthetic state.
+- Source changes do not update the global executable. Installed, live-provider, hosted, and registry evidence are separate gates.
+- Broad inherited CLI suite failures/hangs remain recorded limitations; do not claim a full-suite pass.
+- Trusted publishing is configured according to prior records but remains unproved. Select the next unused prerelease at execution time; next.2 is not reserved.
+- Live credential use, remote operations, publication, and active global update retain their authorization boundaries. The plan itself authorizes none.
+- Use the recorded command-scoped GitHub HTTPS helper for future remote work; default SSH was recorded as using another account.
+- Task 8 reached the local checkpoint with Plan issues 1–2 documented above. Planning record: [26/09/2026](WORK/2026-09-26/WORK.md).
 
 ## Next up (start here)
-1. Start **Task 8**: add failing gateway/actual-request regressions, repair Groq outgoing history without deleting stored reasoning, and verify tool/signature preservation. Continue Tasks 9-12 in order after each gate; never restart Tasks 0-7.
+
+On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 2, Task 9.1 — Implement bounded discovery and pure reconciliation**. Do not restart Tasks 0–8. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.
