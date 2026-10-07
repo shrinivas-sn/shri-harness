@@ -2,7 +2,7 @@
 
 ## Current state - 07/10/2026, Phase 3 checkpoint
 
-- **Task 10 / R12 done:** Groq gets only reasoning fields the selected model's catalog controls advertise (official docs re-checked 07/10/2026). GPT-OSS keeps low/medium/high (legacy `xhigh`→`high`, `minimal`→`low`) and Off hides its trace; Qwen 3.8/Safeguard get efforts but no visibility field; Llama, Qwen 3.6 and unknown IDs get no reasoning fields. The thinking dialog offers only supported levels.
+- **Task 10 / R12 done (`ab3fa24`):** Groq gets only reasoning fields the selected model's catalog controls advertise (official docs re-checked 07/10/2026). GPT-OSS keeps low/medium/high (legacy `xhigh`→`high`, `minimal`→`low`) and Off hides its trace; Qwen 3.8/Safeguard get efforts but no visibility field; Llama, Qwen 3.6 and unknown IDs get no reasoning fields. The thinking dialog offers only supported levels.
 - **Verification:** SDK 399/399 (5 files incl. R10 history), LLM/shared typechecks, CLI 50/50 unit + 8/8 render + typecheck, neighbor suites 71 + 36 passing.
 - **Plan issues 5–6:** defect was wider than planned (portable path skipped normalization for all Groq models). **Open for live check (issue 6):** does Groq accept effort for `gpt-oss-safeguard-20b`? Docs and catalog disagree.
 - **Still open (issue 4):** roll back saved model after a failed apply?
