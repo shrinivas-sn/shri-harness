@@ -137,6 +137,10 @@ export function ModelSelectorContent(
 		currentProviderName: string;
 		models: ModelOption[];
 		showCustomModelId?: boolean;
+		/** Status line about where the list came from (e.g. discovery failure). */
+		notice?: string;
+		/** Shown while entering a custom model ID. */
+		customModelWarning?: string;
 	},
 ) {
 	const {
@@ -147,6 +151,8 @@ export function ModelSelectorContent(
 		currentProviderName,
 		models,
 		showCustomModelId = true,
+		notice,
+		customModelWarning,
 	} = props;
 	const [search, setSearch] = useState("");
 	const [selected, setSelected] = useState(() => {
@@ -262,6 +268,8 @@ export function ModelSelectorContent(
 					{customModelError && <text fg="red">{customModelError}</text>}
 				</box>
 
+				{customModelWarning && <text fg="yellow">{customModelWarning}</text>}
+
 				<text fg="gray">
 					Enter to create, Esc to go back to model selection
 				</text>
@@ -274,6 +282,8 @@ export function ModelSelectorContent(
 			<text>Select Model</text>
 
 			<ProviderRow providerName={currentProviderName} focused={onProvider} />
+
+			{notice && <text fg="yellow">{notice}</text>}
 
 			<box border borderStyle="rounded" borderColor="gray" paddingX={1}>
 				<input

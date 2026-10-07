@@ -1,12 +1,15 @@
 # Project status
 
-## Current state - 07/10/2026, Phase 2 in progress
+## Current state - 07/10/2026, Phase 2 checkpoint
 
 - **Phase 1 committed:** fix `8b16b5a`, docs `efd82f7`. Bounded gate re-run first: 182/182, both typechecks exit 0.
-- **Task 9.1 / R11 (part) done:** `apps/cli/src/utils/groq-model-discovery.ts` adds bounded `discoverGroqModels` (typed errors, fixed safe messages, no retries/redirects, 5 s deadline) and pure `reconcileGroqModels`. 37/37 focused tests, CLI typecheck and Biome clean; mutation check caught naive variants. Not wired into the picker yet.
+- **Task 9.1 committed `4e107a2`:** bounded `discoverGroqModels` and pure `reconcileGroqModels`.
+- **Task 9.2 / R11 source+picker done:** `/model` on Groq lists only models the effective key's endpoint returns and the catalog proves tool-capable. Failure keeps the catalog with an `Availability not verified` notice; an empty list offers manual entry with a capability warning. Selection is staged until every dialog succeeds; failed apply restores the in-memory model and effort.
+- **Verification:** 49/49 Vitest (discovery + controller), CLI typecheck exit 0, 5/5 Bun native renderer; red evidence recorded for both test files.
+- **Plan issues 3–4:** Vitest cannot load the picker `.tsx`, so wiring is proved through an extracted controller (hook glue: typecheck/review only). **Owner decision open (issue 4):** should a failed apply also roll back the saved model? `applyInteractiveModelChange` saves before restarting.
 - **Evidence:** [07/10/2026 work](WORK/2026-10-07/WORK.md), [PLAN Progress Log](PLAN.md#progress-log).
-- **Limits:** pure helper only; picker behavior, installed TUI, live Groq, hosted CI, registry remain pending.
-- **Next: Task 9.2 — integrate discovery and transactional selection.**
+- **Limits:** installed TUI, live Groq `/models`, hosted CI, registry remain pending; installed model smoke may now take the notice path if its fixture lacks `/models` (Phase 4).
+- **Next: Phase 3, Task 10 — normalize effort and scope response visibility.**
 
 ## Phase 1 checkpoint - 26/09/2026
 
@@ -41,4 +44,4 @@
 
 ## Next up (start here)
 
-On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 2, Task 9.2 — Integrate discovery and transactional selection**, using `discoverGroqModels`/`reconcileGroqModels` from Task 9.1. Do not restart Tasks 0–9.1. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.
+On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 3, Task 10 — Normalize effort and scope response visibility** (re-check the official Groq reasoning docs first, per the phase's re-check rule). Do not restart Tasks 0–9.2. Surface open Plan issue 4 to the owner. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.

@@ -167,16 +167,18 @@ A new session may start here.
 
 ### Task 9.2 — Integrate discovery and transactional selection
 
+**Execution notes (amended, see issues 3–4):** Hook wiring is proved through an extracted controller plus the native renderer, because Vitest cannot load the picker `.tsx`; restoring after a failed apply covers in-memory state only.
+
 **Goal:** Inspect/select/cancel models without partial configuration changes.
 **Why:** Groq currently skips discovery and modelId changes before reasoning selection finishes.
 **Where:** `apps/cli/src/tui/hooks/use-model-selector.tsx` (search text: `refreshProviderContext`, `config.modelId = selectedKey`, `onModelChange`); `apps/cli/src/tui/components/model-selector/model-selector.tsx` (`ModelOption`, `ModelSelectorContent`, `ThinkingLevelContent`); its `model-selector.render.test.tsx`; new `apps/cli/src/tui/hooks/groq-model-selection.test.ts` (new anchor: `Groq model selection`).
 **Do:**
-- [ ] Feed discovery the same effective key/URL/headers as inference, using active overrides and matching provider config/defaults; never replace temporary credentials with stored ones. Test the hook-to-helper wiring.
-- [ ] Successful discovery shows reconciled eligible choices. Unverified IDs use the existing manual-ID path with an explicit capability warning. Empty success stays empty, with manual entry; no stale verified choices.
-- [ ] Failure preserves current selection and labels cached choices `Availability not verified`. Keep search, Escape, reopen, provider change, manual IDs, and prompt focus usable.
-- [ ] Stage candidate model/reasoning locally until dialogs succeed. Cancel restores original model/effort; failed apply restores in-memory state and reports failure. Use existing successful onModelChange persistence path without changing key/endpoint.
-- [ ] Abort/ignore stale discovery after close/provider change; late results cannot overwrite current options.
-- [ ] Extend native renderer coverage for status/warnings/sparse metadata, keeping the finite-positive token guard. Add hook/controller tests for config wiring and cancellation, not only pure helpers.
+- [x] Feed discovery the same effective key/URL/headers as inference, using active overrides and matching provider config/defaults; never replace temporary credentials with stored ones. Test the hook-to-helper wiring.
+- [x] Successful discovery shows reconciled eligible choices. Unverified IDs use the existing manual-ID path with an explicit capability warning. Empty success stays empty, with manual entry; no stale verified choices.
+- [x] Failure preserves current selection and labels cached choices `Availability not verified`. Keep search, Escape, reopen, provider change, manual IDs, and prompt focus usable.
+- [x] Stage candidate model/reasoning locally until dialogs succeed. Cancel restores original model/effort; failed apply restores in-memory state and reports failure. Use existing successful onModelChange persistence path without changing key/endpoint.
+- [x] Abort/ignore stale discovery after close/provider change; late results cannot overwrite current options.
+- [x] Extend native renderer coverage for status/warnings/sparse metadata, keeping the finite-positive token guard. Add hook/controller tests for config wiring and cancellation, not only pure helpers.
 **Test first:** Catalog-only model excluded; failure preserves selection; Escape after entering reasoning dialog preserves original model/effort; late old-provider response ignored.
 **Verify:** From root: `bun -F @cline/cli test:unit src/utils/groq-model-discovery.test.ts src/tui/hooks/groq-model-selection.test.ts` and CLI typecheck. From `apps/cli`: `bun test ./src/tui/components/model-selector/model-selector.render.test.tsx` → exit 0 including actual renderer and wiring/cancel cases.
 **Don't touch:** Visual redesign, auth onboarding, unrelated provider behavior. May-change existing assertions: only Groq catalog-as-available expectations; retain token guards, transcription exclusion, and cancellation invariants.
@@ -185,10 +187,10 @@ A new session may start here.
 
 ### Checkpoint — Phase 2
 
-- [ ] Full verification: Phase 2 unit, typecheck, native renderer commands pass together.
-- [ ] Task commits recorded, or explicit uncommitted reasons.
-- [ ] Status updated: R11 source/picker proved; installed pending; next Task 10.
-- [ ] Progress Log records red/green, decisions, and issues.
+- [x] Full verification: Phase 2 unit, typecheck, native renderer commands pass together.
+- [x] Task commits recorded, or explicit uncommitted reasons.
+- [x] Status updated: R11 source/picker proved; installed pending; next Task 10.
+- [x] Progress Log records red/green, decisions, and issues.
 
 A new session may start here.
 
@@ -350,6 +352,8 @@ Append only. Before each task compare facts/anchors with reality. Local same-int
 |---|---|---|---|---|---|---|---|
 | 1 | 26/09/2026 | 8 | Run focused Bun workspace commands from sdk/ | Sandbox launcher exits 1 with `Failed to start process`; installed Vitest starts normally and approved host execution starts the exact command | Execution environment only | Use approved host execution with SDK working directory; no installation or source workaround | None needed |
 | 2 | 26/09/2026 | 8 | Focused gate retains cross-provider passes | Before production changes: 22 failed / 160 passed; 12 new Groq cases, 9 existing 5-second timeouts and one Vertex-signature assertion failure (`WORK/2026-09-26/task-8-red.log`) | Full gate requires re-verification; timeout failures are separate from Groq serialization | Preserve existing assertions; isolate new regressions, then rerun full gate after repair; record any unresolved failures | None needed for local diagnosis |
+| 3 | 07/10/2026 | 9.2 | Test hook-to-helper wiring with Vitest `groq-model-selection.test.ts` | Importing `use-model-selector.tsx` under Vitest fails: `Cannot find module …react-reconciler\constants` from `@opentui/react` (probe run, then deleted) | Hook glue itself has no automated test; its logic does | Used the task's own fallback: extracted `groq-model-selection.ts` (discovery wiring, stale gate, staged pick, transactional apply), consumed by the hook and tested in Vitest; picker props tested in the Bun native renderer. Remaining hook glue verified by typecheck and review | None needed; Phase 4 installed PTY is the end-to-end proof |
+| 4 | 07/10/2026 | 9.2 | Failed apply restores in-memory state | `applyInteractiveModelChange` saves model/reasoning to provider settings before `restartWithCurrentMessages`; if the restart throws, config is restored but the saved model may already be the new one | Saved default could differ from the running model after a rare restart failure | In-memory restore and picker notice implemented; persistence ordering unchanged (outside this task's files) | Owner: should a failed apply also roll back the saved model? |
 
 **Issue 2 follow-up, 26/09/2026:** The first post-repair exact test command returned 174 passed / 8 failed (182 total); every new case passed. Seven existing tests timed out, followed by a Vertex-signature assertion failure. Individual existing cases took 6–62 seconds against the runner's 5-second default. Diagnose using the same two files with `--maxWorkers 1 --testTimeout 120000`; this is an execution-only timeout/concurrency adjustment, with no assertion or shared-config edits. Keep the original command's failure explicit.
 
@@ -410,3 +414,12 @@ Original planning-only record: [WORK/2026-09-26/WORK.md](WORK/2026-09-26/WORK.md
 - **Surprises:** Plan did not classify an unparsable base URL; it returns `network` without sending a request (same-intent detail, no plan issue). Added an optional `timeoutMs` input only so tests can bound the deadline; the default stays 5,000 ms and is tested with fake timers. Correction to the previous entry: modified tracked files only staged under the lowercase `docs/` path; new files staged correctly from `DOCS/`.
 - **Next:** Task 9.2 — integrate discovery and transactional selection.
 - **Commit:** `feat(cli): add bounded Groq model discovery` (hash in STATUS).
+
+### 07/10/2026 — Task 9.2 and Phase 2 checkpoint (R11)
+
+- **Done:** Task 9.1 committed as `4e107a2`. New `apps/cli/src/tui/hooks/groq-model-selection.ts`: `loadGroqModelChoices` (connection from the existing `resolveCompactionProviderConfig`, the runtime's own precedence: session key over stored key, stored endpoint/headers, builtin default URL), `selectGroqPickerModels`, `DiscoveryGate`, `pickModelSelection` (dialogs without config mutation; Escape in reasoning returns to the list), `applyModelSelection` (commit, restore on failure). `use-model-selector.tsx`: Groq picker shows reconciled eligible models; failure keeps catalog with an `Availability not verified: …` notice; empty listing shows only manual entry; generic path stages selection and commits after dialogs; apply failure reopens the picker with a notice. `ModelSelectorContent` gained optional `notice` and `customModelWarning` props. Cline, openai-compatible, and provider-change paths unchanged.
+- **Verified:** Red: controller test → module missing ([log](WORK/2026-10-07/task-9.2-red.log)); render tests against the previous component → 2 new cases fail, 3 pass ([log](WORK/2026-10-07/task-9.2-render-red.log)). Pre-change defect by inspection: `config.modelId = selectedKey` ran before `ThinkingLevelContent`, and Escape there `continue`d without restoring. Green from root: `bun -F @cline/cli test:unit src/utils/groq-model-discovery.test.ts src/tui/hooks/groq-model-selection.test.ts` → 49/49; `bun -F @cline/cli typecheck` → exit 0. From `apps/cli`: `bun test ./src/tui/components/model-selector/model-selector.render.test.tsx` → 5/5 (existing token-guard and transcription cases unchanged). Biome: no new findings (3 existing a11y warnings in untouched rows). `git diff --check` clean.
+- **Surprises:** Plan issues 3–4. The `Availability not verified` label is a notice line above the list rather than per-row text. Unverified IDs are counted in the notice and reachable through manual entry; they are not listed.
+- **Limitations:** Hook glue has no automated test (issue 3). Installed PTY, live Groq `/models`, and the installed model smoke (its loopback fixture may lack `/models`, which now yields the notice path) are Phase 4.
+- **Next:** Phase 3, Task 10 — normalize effort and scope response visibility.
+- **Commit:** `fix(cli): use effective Groq discovery in model selection` (hash in STATUS).

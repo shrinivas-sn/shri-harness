@@ -44,6 +44,15 @@ import {
 	ThinkingLevelContent,
 } from "../components/model-selector/model-selector";
 import { resolveProviderSetupRoute } from "../views/onboarding/model";
+import {
+	applyModelSelection,
+	DiscoveryGate,
+	GROQ_MANUAL_MODEL_WARNING,
+	GROQ_PROVIDER_ID,
+	loadGroqModelChoices,
+	pickModelSelection,
+	selectGroqPickerModels,
+} from "./groq-model-selection";
 
 export interface OpenModelSelectorOptions {
 	onCancel?: () => Promise<void> | void;
@@ -345,7 +354,11 @@ export function useModelSelector(opts: {
 
 	const openModelSelector = useCallback(
 		async (options?: OpenModelSelectorOptions) => {
+			const discovery = new DiscoveryGate();
+			let pickerNotice: string | undefined;
+
 			const handleCancel = async () => {
+				discovery.cancel();
 				if (options?.onCancel) {
 					await options.onCancel();
 					return;
@@ -379,6 +392,27 @@ export function useModelSelector(opts: {
 				if (endpointModelOptions.length > 0) {
 					modelOptions = endpointModelOptions;
 				}
+				// Groq: show what this key's endpoint actually lists, reconciled
+				// with catalog capabilities, using the session's effective
+				// connection. Failure keeps the catalog but says so.
+				pickerNotice = undefined;
+				if (config.providerId !== GROQ_PROVIDER_ID) {
+					discovery.cancel();
+					return;
+				}
+				const run = discovery.begin();
+				const choices = await loadGroqModelChoices({
+					config,
+					settings: new ProviderSettingsManager(),
+					signal: run.signal,
+				});
+				if (!run.isCurrent()) return;
+				const view = selectGroqPickerModels(
+					choices,
+					config.knownModels as Record<string, Llms.ModelInfo> | undefined,
+				);
+				modelOptions = buildModelOptions(view.models);
+				pickerNotice = view.notice;
 			};
 
 			if (!options?.startWithProviderChange) {
@@ -565,68 +599,70 @@ export function useModelSelector(opts: {
 					continue;
 				}
 
-				const selectedKey = await dialog.choice<string>({
-					style: { maxHeight: termHeight - 2 },
-					content: (ctx: ChoiceContext<string>) => (
-						<ModelSelectorContent
-							{...ctx}
-							currentModel={config.modelId}
-							currentProviderName={providerDisplayName}
-							models={modelOptions}
-							showCustomModelId={config.providerId !== "cline-pass"}
-						/>
-					),
+				const pick = await pickModelSelection({
+					config,
+					models: modelOptions,
+					chooseModel: async () => {
+						const selectedKey = await dialog.choice<string>({
+							style: { maxHeight: termHeight - 2 },
+							content: (ctx: ChoiceContext<string>) => (
+								<ModelSelectorContent
+									{...ctx}
+									currentModel={config.modelId}
+									currentProviderName={providerDisplayName}
+									models={modelOptions}
+									showCustomModelId={config.providerId !== "cline-pass"}
+									notice={pickerNotice}
+									customModelWarning={
+										config.providerId === GROQ_PROVIDER_ID
+											? GROQ_MANUAL_MODEL_WARNING
+											: undefined
+									}
+								/>
+							),
+						});
+						if (!selectedKey) return undefined;
+						return selectedKey === CHANGE_PROVIDER_ACTION
+							? { kind: "change-provider" }
+							: { kind: "model", key: selectedKey };
+					},
+					chooseThinking: async (model, currentLevel) =>
+						await dialog.choice<ThinkingLevel>({
+							style: { maxHeight: termHeight - 2 },
+							content: (ctx: ChoiceContext<ThinkingLevel>) => (
+								<ThinkingLevelContent
+									{...ctx}
+									modelName={model.name}
+									currentLevel={currentLevel}
+								/>
+							),
+						}),
 				});
-				if (!selectedKey) {
+				if (pick.kind === "cancelled") {
 					await handleCancel();
 					return;
 				}
-
-				if (selectedKey === CHANGE_PROVIDER_ACTION) {
+				if (pick.kind === "change-provider") {
 					await changeProvider();
 					continue;
 				}
 
-				config.modelId = selectedKey;
-
-				const selectedModel = modelOptions.find(
-					(m: ModelOption) => m.key === selectedKey,
+				// Config changes only now, after every dialog succeeded; a failed
+				// apply restores the previous model and reasoning.
+				const selection = pick.selection;
+				const applied = await withLoadingDialog(
+					dialog,
+					"Applying model...",
+					async () =>
+						await applyModelSelection(config, selection, onModelChange),
 				);
-				if (!selectedModel?.supportsReasoning) {
-					clearReasoningConfig(config);
-					pickingModel = false;
-					break;
-				}
-
-				const currentLevel: ThinkingLevel = config.reasoningEffort
-					? (config.reasoningEffort as ThinkingLevel)
-					: config.thinking
-						? "medium"
-						: "none";
-
-				const thinkingLevel = await dialog.choice<ThinkingLevel>({
-					style: { maxHeight: termHeight - 2 },
-					content: (ctx: ChoiceContext<ThinkingLevel>) => (
-						<ThinkingLevelContent
-							{...ctx}
-							modelName={selectedModel.name}
-							currentLevel={currentLevel}
-						/>
-					),
-				});
-
-				if (thinkingLevel === undefined) {
+				if (!applied.ok) {
+					pickerNotice = `Could not switch to ${selection.modelId}; kept ${config.modelId}.`;
 					continue;
 				}
-
-				if (thinkingLevel === "none") {
-					config.thinking = false;
-					config.reasoningEffort = undefined;
-				} else {
-					config.thinking = true;
-					config.reasoningEffort = thinkingLevel;
-				}
-				pickingModel = false;
+				discovery.cancel();
+				refocusTextarea();
+				return;
 			}
 
 			await withLoadingDialog(dialog, "Applying model...", async () => {

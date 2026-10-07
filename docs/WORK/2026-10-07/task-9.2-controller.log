@@ -1,0 +1,10 @@
+@cline/cli test:unit:
+@cline/cli test:unit:  RUN  v4.1.11 E:/shri-harness/apps/cli
+@cline/cli test:unit:
+@cline/cli test:unit:
+@cline/cli test:unit:  Test Files  1 passed (1)
+@cline/cli test:unit:       Tests  15 passed (15)
+@cline/cli test:unit:    Start at  12:52:12
+@cline/cli test:unit:    Duration  18.89s (transform 10.19s, setup 38ms, import 18.61s, tests 30ms, environment 0ms)
+@cline/cli test:unit:
+@cline/cli test:unit: Exited with code 0

@@ -1,0 +1,26 @@
+@cline/cli test:unit:
+@cline/cli test:unit:  RUN  v4.1.11 E:/shri-harness/apps/cli
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ src/tui/hooks/groq-model-selection.test.ts (0 test)
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/tui/hooks/groq-model-selection.test.ts [ src/tui/hooks/groq-model-selection.test.ts ]
+@cline/cli test:unit: Error: Cannot find module './groq-model-selection' imported from E:/shri-harness/apps/cli/src/tui/hooks/groq-model-selection.test.ts
+@cline/cli test:unit:  ❯ src/tui/hooks/groq-model-selection.test.ts:4:1
+@cline/cli test:unit:       2| import type { DiscoveryFetch } from "../../utils/groq-model-discovery";
+@cline/cli test:unit:       3| import type { Config } from "../../utils/types";
+@cline/cli test:unit:       4| import {
+@cline/cli test:unit:        | ^
+@cline/cli test:unit:       5|  AVAILABILITY_NOT_VERIFIED,
+@cline/cli test:unit:       6|  applyModelSelection,
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:
+@cline/cli test:unit:  Test Files  1 failed (1)
+@cline/cli test:unit:       Tests  no tests
+@cline/cli test:unit:    Start at  12:51:44
+@cline/cli test:unit:    Duration  273ms (transform 46ms, setup 31ms, import 0ms, tests 0ms, environment 0ms)
+@cline/cli test:unit:
+@cline/cli test:unit: Exited with code 1
