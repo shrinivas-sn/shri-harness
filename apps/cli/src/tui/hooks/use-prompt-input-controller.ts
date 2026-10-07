@@ -22,6 +22,7 @@ import {
 } from "../utils/skill-command-input";
 import type { AutocompleteOption, useAutocomplete } from "./use-autocomplete";
 import { extractSlashQuery } from "./use-autocomplete";
+import { useFocusAfterRemount } from "./use-focus-after-remount";
 import { useInputHistory } from "./use-input-history";
 
 interface PastedImage {
@@ -80,6 +81,7 @@ export function usePromptInputController(input: {
 	const refocusTextarea = useCallback(() => {
 		setInputKey((k) => k + 1);
 	}, []);
+	useFocusAfterRemount(inputKey, focusTextarea);
 
 	useLayoutEffect(() => {
 		if (pendingCursorOffset === null) return;
