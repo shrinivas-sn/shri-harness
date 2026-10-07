@@ -4,7 +4,7 @@
 
 - **Phase 1 committed:** fix `8b16b5a`, docs `efd82f7`. Bounded gate re-run first: 182/182, both typechecks exit 0.
 - **Task 9.1 committed `4e107a2`:** bounded `discoverGroqModels` and pure `reconcileGroqModels`.
-- **Task 9.2 / R11 source+picker done:** `/model` on Groq lists only models the effective key's endpoint returns and the catalog proves tool-capable. Failure keeps the catalog with an `Availability not verified` notice; an empty list offers manual entry with a capability warning. Selection is staged until every dialog succeeds; failed apply restores the in-memory model and effort.
+- **Task 9.2 / R11 source+picker done (`75db91c`):** `/model` on Groq lists only models the effective key's endpoint returns and the catalog proves tool-capable. Failure keeps the catalog with an `Availability not verified` notice; an empty list offers manual entry with a capability warning. Selection is staged until every dialog succeeds; failed apply restores the in-memory model and effort.
 - **Verification:** 49/49 Vitest (discovery + controller), CLI typecheck exit 0, 5/5 Bun native renderer; red evidence recorded for both test files.
 - **Plan issues 3–4:** Vitest cannot load the picker `.tsx`, so wiring is proved through an extracted controller (hook glue: typecheck/review only). **Owner decision open (issue 4):** should a failed apply also roll back the saved model? `applyInteractiveModelChange` saves before restarting.
 - **Evidence:** [07/10/2026 work](WORK/2026-10-07/WORK.md), [PLAN Progress Log](PLAN.md#progress-log).
