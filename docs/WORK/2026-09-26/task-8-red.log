@@ -1,0 +1,509 @@
+@cline/llms test: 
+@cline/llms test:  RUN  v4.1.11 E:/shri-harness/sdk/packages/llms
+@cline/llms test: 
+@cline/llms test: (node:3096) Warning: AI SDK Warning System: To turn off warning logging, set the AI_SDK_LOG_WARNINGS global to false.
+@cline/llms test: (Use `node --trace-warnings ...` to show where the warning was created)
+@cline/llms test: (node:3096) DeprecationWarning: AI SDK Warning (openai-compatible.chat / openai/gpt-oss-120b): Deprecated: "providerOptions key 'openai-compatible'". Use 'openaiCompatible' instead.
+@cline/llms test: (node:3096) DeprecationWarning: AI SDK Warning (openai-compatible.chat / openai/gpt-oss-120b): Deprecated: "providerOptions key 'openai-compatible'". Use 'openaiCompatible' instead.
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts (17 tests | 4 failed) 229ms
+@cline/llms test:      × accepts follow-up and resumed history (tool call: false) 94ms
+@cline/llms test:      × accepts follow-up and resumed history (tool call: true) 18ms
+@cline/llms test:      × accepts follow-up and resumed history (tool call: false) 18ms
+@cline/llms test:      × accepts follow-up and resumed history (tool call: true) 14ms
+@cline/llms test:  ❯ src/providers/gateway.test.ts (165 tests | 18 failed) 129234ms
+@cline/llms test:      × uses the OpenRouter image transport for mixed Cline image models 6649ms
+@cline/llms test:      × requests Vertex text and image output without dropping provider options 11789ms
+@cline/llms test:        × omits replayed reasoning while preserving assistant text 11ms
+@cline/llms test:        × omits reasoning-only assistant turns but retains originally empty turns 5ms
+@cline/llms test:        × preserves tool call/result relationships when dropping reasoning 5ms
+@cline/llms test:        × normalizes saved thinking/tool blocks without mutating the transcript 4ms
+@cline/llms test:        × omits replayed reasoning while preserving assistant text 3ms
+@cline/llms test:        × omits reasoning-only assistant turns but retains originally empty turns 3ms
+@cline/llms test:        × preserves tool call/result relationships when dropping reasoning 8ms
+@cline/llms test:        × normalizes saved thinking/tool blocks without mutating the transcript 3ms
+@cline/llms test:      × preserves Vertex thought signatures on tool calls and replays them 895ms
+@cline/llms test:      × does not pass extra tools to providers that disable external tool execution 5401ms
+@cline/llms test:      × does not pass extra tools to the Claude Code provider 7273ms
+@cline/llms test:      × anchors the Claude Code session on workspace cwd, user settings, and auto-accepted edits 10221ms
+@cline/llms test:      × preserves explicit Claude Code session settings over the gateway defaults 7798ms
+@cline/llms test:      × drops a non-existent workspace cwd instead of failing Claude Code settings validation 62433ms
+@cline/llms test:      × tags tool call events with provider metadata for providers that disable external tool execution 5183ms
+@cline/llms test:      × falls back to bedrock-style anthropic model ids when family metadata is absent 7089ms
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > uses the OpenRouter image transport for mixed Cline image models
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:1839:2
+@cline/llms test:     1837|  });
+@cline/llms test:     1838|
+@cline/llms test:     1839|  it("uses the OpenRouter image transport for mixed Cline image models"…
+@cline/llms test:        |  ^
+@cline/llms test:     1840|   streamTextSpy.mockReturnValue({
+@cline/llms test:     1841|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > requests Vertex text and image output without dropping provider options
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:2394:2
+@cline/llms test:     2392|  });
+@cline/llms test:     2393|
+@cline/llms test:     2394|  it("requests Vertex text and image output without dropping provider o…
+@cline/llms test:        |  ^
+@cline/llms test:     2395|   streamTextSpy.mockReturnValue({
+@cline/llms test:     2396|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-120b > omits replayed reasoning while preserving assistant text
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-20b > omits replayed reasoning while preserving assistant text
+@cline/llms test: AssertionError: expected [ { role: 'user', …(1) }, …(2) ] to deeply equal [ { role: 'user', …(1) }, …(2) ]
+@cline/llms test: 
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test: 
+@cline/llms test: @@ -9,10 +9,14 @@
+@cline/llms test:       "role": "user",
+@cline/llms test:     },
+@cline/llms test:     {
+@cline/llms test:       "content": [
+@cline/llms test:         {
+@cline/llms test: +         "text": "private history",
+@cline/llms test: +         "type": "reasoning",
+@cline/llms test: +       },
+@cline/llms test: +       {
+@cline/llms test:           "text": "Hello!",
+@cline/llms test:           "type": "text",
+@cline/llms test:         },
+@cline/llms test:       ],
+@cline/llms test:       "role": "assistant",
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/gateway.test.ts:3072:43
+@cline/llms test:     3070|     },
+@cline/llms test:     3071|    ];
+@cline/llms test:     3072|    expect(await captureHistory(messages)).toEqual([
+@cline/llms test:        |                                           ^
+@cline/llms test:     3073|     { role: "user", content: [{ type: "text", text: "Hello" }] },
+@cline/llms test:     3074|     { role: "assistant", content: [{ type: "text", text: "Hello!" }] },
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-120b > omits reasoning-only assistant turns but retains originally empty turns
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-20b > omits reasoning-only assistant turns but retains originally empty turns
+@cline/llms test: AssertionError: expected [ { role: 'user', …(1) }, …(3) ] to deeply equal [ { role: 'user', …(1) }, …(2) ]
+@cline/llms test: 
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test: 
+@cline/llms test: @@ -7,11 +7,25 @@
+@cline/llms test:         },
+@cline/llms test:       ],
+@cline/llms test:       "role": "user",
+@cline/llms test:     },
+@cline/llms test:     {
+@cline/llms test: -     "content": "",
+@cline/llms test: +     "content": [
+@cline/llms test: +       {
+@cline/llms test: +         "text": "private history",
+@cline/llms test: +         "type": "reasoning",
+@cline/llms test: +       },
+@cline/llms test: +     ],
+@cline/llms test: +     "role": "assistant",
+@cline/llms test: +   },
+@cline/llms test: +   {
+@cline/llms test: +     "content": [
+@cline/llms test: +       {
+@cline/llms test: +         "text": "ERROR: EMPTY CONTENT",
+@cline/llms test: +         "type": "text",
+@cline/llms test: +       },
+@cline/llms test: +     ],
+@cline/llms test:       "role": "assistant",
+@cline/llms test:     },
+@cline/llms test:     {
+@cline/llms test:       "content": [
+@cline/llms test:         {
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/gateway.test.ts:3096:43
+@cline/llms test:     3094|     },
+@cline/llms test:     3095|    ];
+@cline/llms test:     3096|    expect(await captureHistory(messages)).toEqual([
+@cline/llms test:        |                                           ^
+@cline/llms test:     3097|     { role: "user", content: [{ type: "text", text: "Hello" }] },
+@cline/llms test:     3098|     { role: "assistant", content: "" },
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-120b > preserves tool call/result relationships when dropping reasoning
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-20b > preserves tool call/result relationships when dropping reasoning
+@cline/llms test: AssertionError: expected [ { role: 'user', …(1) }, …(2) ] to deeply equal [ { role: 'user', …(1) }, …(2) ]
+@cline/llms test: 
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test: 
+@cline/llms test: @@ -9,10 +9,14 @@
+@cline/llms test:       "role": "user",
+@cline/llms test:     },
+@cline/llms test:     {
+@cline/llms test:       "content": [
+@cline/llms test:         {
+@cline/llms test: +         "text": "private tool planning",
+@cline/llms test: +         "type": "reasoning",
+@cline/llms test: +       },
+@cline/llms test: +       {
+@cline/llms test:           "input": {
+@cline/llms test:             "path": "fixture.txt",
+@cline/llms test:           },
+@cline/llms test:           "toolCallId": "call_1",
+@cline/llms test:           "toolName": "read_file",
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/gateway.test.ts:3134:43
+@cline/llms test:     3132|     },
+@cline/llms test:     3133|    ];
+@cline/llms test:     3134|    expect(await captureHistory(messages)).toEqual([
+@cline/llms test:        |                                           ^
+@cline/llms test:     3135|     { role: "user", content: [{ type: "text", text: "Hello" }] },
+@cline/llms test:     3136|     {
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-120b > normalizes saved thinking/tool blocks without mutating the transcript
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-20b > normalizes saved thinking/tool blocks without mutating the transcript
+@cline/llms test: AssertionError: expected [ { role: 'user', …(1) }, …(4) ] to deeply equal [ { role: 'user', …(1) }, …(3) ]
+@cline/llms test: 
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test: 
+@cline/llms test: @@ -9,10 +9,28 @@
+@cline/llms test:       "role": "user",
+@cline/llms test:     },
+@cline/llms test:     {
+@cline/llms test:       "content": [
+@cline/llms test:         {
+@cline/llms test: +         "providerOptions": {
+@cline/llms test: +           "anthropic": {
+@cline/llms test: +             "signature": "saved-signature",
+@cline/llms test: +           },
+@cline/llms test: +         },
+@cline/llms test: +         "text": "reasoning-only history",
+@cline/llms test: +         "type": "reasoning",
+@cline/llms test: +       },
+@cline/llms test: +     ],
+@cline/llms test: +     "role": "assistant",
+@cline/llms test: +   },
+@cline/llms test: +   {
+@cline/llms test: +     "content": [
+@cline/llms test: +       {
+@cline/llms test: +         "text": "saved tool planning",
+@cline/llms test: +         "type": "reasoning",
+@cline/llms test: +       },
+@cline/llms test: +       {
+@cline/llms test:           "text": "Checking",
+@cline/llms test:           "type": "text",
+@cline/llms test:         },
+@cline/llms test:         {
+@cline/llms test:           "input": {
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/gateway.test.ts:3202:68
+@cline/llms test:     3200|    const before = structuredClone(saved);
+@cline/llms test:     3201|    const resumed = JSON.parse(JSON.stringify(saved)) as typeof saved;
+@cline/llms test:     3202|    expect(await captureHistory(toGatewayRequestMessages(resumed))).toE…
+@cline/llms test:        |                                                                    ^
+@cline/llms test:     3203|     { role: "user", content: [{ type: "text", text: "Hello" }] },
+@cline/llms test:     3204|     {
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > preserves Vertex thought signatures on tool calls and replays them
+@cline/llms test: AssertionError: expected [ { type: 'finish', …(5) } ] to deep equally contain ObjectContaining{…}
+@cline/llms test: 
+@cline/llms test: - Expected:
+@cline/llms test: ObjectContaining {
+@cline/llms test:   "metadata": ObjectContaining {
+@cline/llms test:     "thoughtSignature": "sig_1",
+@cline/llms test:   },
+@cline/llms test:   "toolCallId": "call_1",
+@cline/llms test:   "toolName": "editor",
+@cline/llms test:   "type": "tool-call-delta",
+@cline/llms test: }
+@cline/llms test: 
+@cline/llms test: + Received:
+@cline/llms test: [
+@cline/llms test:   {
+@cline/llms test:     "error": "Cannot read properties of undefined (reading 'fullStream')",
+@cline/llms test:     "errorClass": "unknown",
+@cline/llms test:     "errorReported": undefined,
+@cline/llms test:     "errorRetryable": false,
+@cline/llms test:     "reason": "error",
+@cline/llms test:     "type": "finish",
+@cline/llms test:   },
+@cline/llms test: ]
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4543:18
+@cline/llms test:     4541|   );
+@cline/llms test:     4542|
+@cline/llms test:     4543|   expect(events).toContainEqual(
+@cline/llms test:        |                  ^
+@cline/llms test:     4544|    expect.objectContaining({
+@cline/llms test:     4545|     type: "tool-call-delta",
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > does not pass extra tools to providers that disable external tool execution
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4778:2
+@cline/llms test:     4776|  });
+@cline/llms test:     4777|
+@cline/llms test:     4778|  it("does not pass extra tools to providers that disable external tool…
+@cline/llms test:        |  ^
+@cline/llms test:     4779|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4780|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > does not pass extra tools to the Claude Code provider
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4808:2
+@cline/llms test:     4806|  });
+@cline/llms test:     4807|
+@cline/llms test:     4808|  it("does not pass extra tools to the Claude Code provider", async () …
+@cline/llms test:        |  ^
+@cline/llms test:     4809|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4810|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > anchors the Claude Code session on workspace cwd, user settings, and auto-accepted edits
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4838:2
+@cline/llms test:     4836|  });
+@cline/llms test:     4837|
+@cline/llms test:     4838|  it("anchors the Claude Code session on workspace cwd, user settings, …
+@cline/llms test:        |  ^
+@cline/llms test:     4839|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4840|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > preserves explicit Claude Code session settings over the gateway defaults
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4877:2
+@cline/llms test:     4875|  });
+@cline/llms test:     4876|
+@cline/llms test:     4877|  it("preserves explicit Claude Code session settings over the gateway …
+@cline/llms test:        |  ^
+@cline/llms test:     4878|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4879|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > drops a non-existent workspace cwd instead of failing Claude Code settings validation
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4922:2
+@cline/llms test:     4920|  });
+@cline/llms test:     4921|
+@cline/llms test:     4922|  it("drops a non-existent workspace cwd instead of failing Claude Code…
+@cline/llms test:        |  ^
+@cline/llms test:     4923|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4924|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > tags tool call events with provider metadata for providers that disable external tool execution
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4953:2
+@cline/llms test:     4951|  });
+@cline/llms test:     4952|
+@cline/llms test:     4953|  it("tags tool call events with provider metadata for providers that d…
+@cline/llms test:        |  ^
+@cline/llms test:     4954|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4955|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > falls back to bedrock-style anthropic model ids when family metadata is absent
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:5686:2
+@cline/llms test:     5684|  });
+@cline/llms test:     5685|
+@cline/llms test:     5686|  it("falls back to bedrock-style anthropic model ids when family metad…
+@cline/llms test:        |  ^
+@cline/llms test:     5687|   streamTextSpy.mockReturnValue({
+@cline/llms test:     5688|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-120b > accepts follow-up and resumed history (tool call: false)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-120b > accepts follow-up and resumed history (tool call: true)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-20b > accepts follow-up and resumed history (tool call: false)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-20b > accepts follow-up and resumed history (tool call: true)
+@cline/llms test: AssertionError: expected { Object (role, content, ...) } to not have property "reasoning_content"
+@cline/llms test: 
+@cline/llms test: - Expected:
+@cline/llms test: undefined
+@cline/llms test: 
+@cline/llms test: + Received:
+@cline/llms test: "saved reasoning-only turn"
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:344:29
+@cline/llms test:     342|   // This absence assertion must fail against the pre-repair serialize…
+@cline/llms test:     343|   for (const message of followUp)
+@cline/llms test:     344|    expect.soft(message).not.toHaveProperty("reasoning_content");
+@cline/llms test:        |                             ^
+@cline/llms test:     345|   expect.soft(rejected).toEqual([]);
+@cline/llms test:     346|   expect(second.filter((event) => event.type === "error")).toEqual([]);
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-120b > accepts follow-up and resumed history (tool call: false)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-20b > accepts follow-up and resumed history (tool call: false)
+@cline/llms test: AssertionError: expected { role: 'assistant', …(2) } to not have property "reasoning_content"
+@cline/llms test: 
+@cline/llms test: - Expected:
+@cline/llms test: undefined
+@cline/llms test: 
+@cline/llms test: + Received:
+@cline/llms test: "fixture reasoning"
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:344:29
+@cline/llms test:     342|   // This absence assertion must fail against the pre-repair serialize…
+@cline/llms test:     343|   for (const message of followUp)
+@cline/llms test:     344|    expect.soft(message).not.toHaveProperty("reasoning_content");
+@cline/llms test:        |                             ^
+@cline/llms test:     345|   expect.soft(rejected).toEqual([]);
+@cline/llms test:     346|   expect(second.filter((event) => event.type === "error")).toEqual([]);
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-120b > accepts follow-up and resumed history (tool call: false)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-120b > accepts follow-up and resumed history (tool call: true)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-20b > accepts follow-up and resumed history (tool call: false)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-20b > accepts follow-up and resumed history (tool call: true)
+@cline/llms test: AssertionError: expected [ 2 ] to deeply equal []
+@cline/llms test: 
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test: 
+@cline/llms test: - []
+@cline/llms test: + [
+@cline/llms test: +   2,
+@cline/llms test: + ]
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:345:25
+@cline/llms test:     343|   for (const message of followUp)
+@cline/llms test:     344|    expect.soft(message).not.toHaveProperty("reasoning_content");
+@cline/llms test:     345|   expect.soft(rejected).toEqual([]);
+@cline/llms test:        |                         ^
+@cline/llms test:     346|   expect(second.filter((event) => event.type === "error")).toEqual([]);
+@cline/llms test:     347|   expect(followUp).toEqual(
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-120b > accepts follow-up and resumed history (tool call: false)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-20b > accepts follow-up and resumed history (tool call: false)
+@cline/llms test: AssertionError: expected [ …(4) ] to deeply equal [ …(3) ]
+@cline/llms test: 
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test: 
+@cline/llms test: @@ -2,11 +2,17 @@
+@cline/llms test:     {
+@cline/llms test:       "content": "Hello",
+@cline/llms test:       "role": "user",
+@cline/llms test:     },
+@cline/llms test:     {
+@cline/llms test: +     "content": "",
+@cline/llms test: +     "reasoning_content": "saved reasoning-only turn",
+@cline/llms test: +     "role": "assistant",
+@cline/llms test: +   },
+@cline/llms test: +   {
+@cline/llms test:       "content": "Hello!",
+@cline/llms test: +     "reasoning_content": "fixture reasoning",
+@cline/llms test:       "role": "assistant",
+@cline/llms test:     },
+@cline/llms test:     {
+@cline/llms test:       "content": "Continue",
+@cline/llms test:       "role": "user",
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:347:20
+@cline/llms test:     345|   expect.soft(rejected).toEqual([]);
+@cline/llms test:     346|   expect(second.filter((event) => event.type === "error")).toEqual([]);
+@cline/llms test:     347|   expect(followUp).toEqual(
+@cline/llms test:        |                    ^
+@cline/llms test:     348|    withTool
+@cline/llms test:     349|     ? [
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-120b > accepts follow-up and resumed history (tool call: true)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-20b > accepts follow-up and resumed history (tool call: true)
+@cline/llms test: AssertionError: expected { role: 'assistant', …(3) } to not have property "reasoning_content"
+@cline/llms test: 
+@cline/llms test: - Expected:
+@cline/llms test: undefined
+@cline/llms test: 
+@cline/llms test: + Received:
+@cline/llms test: "fixture reasoning"
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:344:29
+@cline/llms test:     342|   // This absence assertion must fail against the pre-repair serialize…
+@cline/llms test:     343|   for (const message of followUp)
+@cline/llms test:     344|    expect.soft(message).not.toHaveProperty("reasoning_content");
+@cline/llms test:        |                             ^
+@cline/llms test:     345|   expect.soft(rejected).toEqual([]);
+@cline/llms test:     346|   expect(second.filter((event) => event.type === "error")).toEqual([]);
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/34]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-120b > accepts follow-up and resumed history (tool call: true)
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq serialized history for openai/gpt-oss-20b > accepts follow-up and resumed history (tool call: true)
+@cline/llms test: AssertionError: expected [ …(4) ] to deeply equal [ …(3) ]
+@cline/llms test: 
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test: 
+@cline/llms test: @@ -2,11 +2,17 @@
+@cline/llms test:     {
+@cline/llms test:       "content": "Hello",
+@cline/llms test:       "role": "user",
+@cline/llms test:     },
+@cline/llms test:     {
+@cline/llms test: +     "content": "",
+@cline/llms test: +     "reasoning_content": "saved reasoning-only turn",
+@cline/llms test: +     "role": "assistant",
+@cline/llms test: +   },
+@cline/llms test: +   {
+@cline/llms test:       "content": "Hello!",
+@cline/llms test: +     "reasoning_content": "fixture reasoning",
+@cline/llms test:       "role": "assistant",
+@cline/llms test:       "tool_calls": [
+@cline/llms test:         {
+@cline/llms test:           "function": {
+@cline/llms test:             "arguments": "{\"path\":\"fixture.txt\"}",
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:347:20
+@cline/llms test:     345|   expect.soft(rejected).toEqual([]);
+@cline/llms test:     346|   expect(second.filter((event) => event.type === "error")).toEqual([]);
+@cline/llms test:     347|   expect(followUp).toEqual(
+@cline/llms test:        |                    ^
+@cline/llms test:     348|    withTool
+@cline/llms test:     349|     ? [
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/34]⎯
+@cline/llms test: 
+@cline/llms test: 
+@cline/llms test:  Test Files  2 failed (2)
+@cline/llms test:       Tests  22 failed | 160 passed (182)
+@cline/llms test:    Start at  12:40:55
+@cline/llms test:    Duration  165.27s (transform 47.97s, setup 0ms, import 67.11s, tests 129.46s, environment 0ms)
+@cline/llms test: 
+@cline/llms test: Exited with code 1

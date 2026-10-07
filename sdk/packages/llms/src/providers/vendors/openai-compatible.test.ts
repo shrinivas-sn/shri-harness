@@ -1,9 +1,12 @@
 import type { LanguageModelV4 } from "@ai-sdk/provider";
 import type {
+	AgentModelEvent,
 	GatewayProviderContext,
 	GatewayResolvedProviderConfig,
 } from "@cline/shared";
 import { describe, expect, it, vi } from "vitest";
+import { toGatewayRequestMessages } from "../compat";
+import { createGateway } from "../gateway";
 import { isOpenAIReasoningEraModelId } from "../model-facts";
 import {
 	createOpenAICompatibleProviderModule,
@@ -180,6 +183,389 @@ describe("createOpenAICompatibleProviderModule wire format", () => {
 		});
 	});
 });
+
+// Exercise the real gateway, AI SDK and installed compatible adapter. Only HTTP
+// is replaced: the fixture rejects exactly the unsupported assistant field.
+describe.each([
+	"openai/gpt-oss-120b",
+	"openai/gpt-oss-20b",
+])("Groq serialized history for %s", (modelId) => {
+	it.each([
+		false,
+		true,
+	])("accepts follow-up and resumed history (tool call: %s)", async (withTool) => {
+		const bodies: Array<{
+			model: string;
+			messages: Array<Record<string, unknown>>;
+		}> = [];
+		const rejected: number[] = [];
+		const fetchMock = vi.fn(async (_input: unknown, init?: RequestInit) => {
+			const body = JSON.parse(String(init?.body));
+			bodies.push(body);
+			if (
+				body.messages.some(
+					(message: Record<string, unknown>) =>
+						message.role === "assistant" && "reasoning_content" in message,
+				)
+			) {
+				rejected.push(bodies.length);
+				return new Response(
+					JSON.stringify({
+						error: {
+							message: "property 'reasoning_content' is unsupported",
+							type: "invalid_request_error",
+						},
+					}),
+					{
+						status: 400,
+						headers: { "content-type": "application/json" },
+					},
+				);
+			}
+			return reasoningCompletionResponse(
+				modelId,
+				withTool && bodies.length === 1,
+			);
+		});
+		const gateway = createGateway({
+			providerConfigs: [
+				{
+					providerId: "groq",
+					apiKey: "synthetic-key",
+					baseUrl: "http://127.0.0.1:1/v1",
+					fetch: fetchMock as unknown as typeof fetch,
+				},
+			],
+		});
+		const tools = [
+			{
+				name: "read_file",
+				description: "Read a synthetic fixture",
+				inputSchema: {
+					type: "object",
+					properties: { path: { type: "string" } },
+					required: ["path"],
+				},
+			},
+		];
+		async function send(saved: Parameters<typeof toGatewayRequestMessages>[0]) {
+			const savedBefore = structuredClone(saved);
+			const messages = toGatewayRequestMessages(saved);
+			const before = structuredClone(messages);
+			const events = await collectGatewayEvents(
+				await gateway.stream({ providerId: "groq", modelId, messages, tools }),
+			);
+			expect(messages).toEqual(before);
+			expect(saved).toEqual(savedBefore);
+			return events;
+		}
+		const saved: Parameters<typeof toGatewayRequestMessages>[0] = [
+			{ role: "user", content: "Hello" },
+		];
+		const first = await send(saved);
+		expect(first.filter((event) => event.type === "error")).toEqual([]);
+		expect(first).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "reasoning-delta",
+					text: "fixture reasoning",
+				}),
+				expect.objectContaining({ type: "text-delta", text: "Hello!" }),
+			]),
+		);
+		expect(bodies[0].messages).toEqual([{ role: "user", content: "Hello" }]);
+		const reasoning = first
+			.filter((event) => event.type === "reasoning-delta")
+			.map((event) => event.text)
+			.join("");
+		const text = first
+			.filter((event) => event.type === "text-delta")
+			.map((event) => event.text)
+			.join("");
+		saved.push(
+			{
+				role: "assistant",
+				content: [
+					{
+						type: "thinking",
+						thinking: "saved reasoning-only turn",
+						signature: "saved-signature",
+					},
+				],
+			},
+			{
+				role: "assistant",
+				content: [
+					{ type: "thinking", thinking: reasoning },
+					{ type: "text", text },
+				],
+			},
+		);
+		if (withTool) {
+			const call = first.find(
+				(event) =>
+					event.type === "tool-call-delta" && event.input !== undefined,
+			);
+			expect(call).toMatchObject({
+				toolCallId: "call_fixture",
+				toolName: "read_file",
+				input: { path: "fixture.txt" },
+			});
+			if (!call || call.type !== "tool-call-delta")
+				throw new Error("Missing fixture tool call");
+			const assistant = saved[2].content;
+			if (!Array.isArray(assistant))
+				throw new Error("Expected saved content blocks");
+			assistant.push({
+				type: "tool_use",
+				id: "stored_fixture",
+				call_id: call.toolCallId,
+				name: call.toolName,
+				input: call.input as Record<string, unknown>,
+			});
+			saved.push({
+				role: "user",
+				content: [
+					{
+						type: "tool_result",
+						tool_use_id: call.toolCallId,
+						content: "fixture contents",
+					},
+				],
+			});
+		} else {
+			saved.push({ role: "user", content: "Continue" });
+		}
+
+		const second = await send(saved);
+		const followUp = bodies[1].messages;
+		// This absence assertion must fail against the pre-repair serializer.
+		for (const message of followUp)
+			expect.soft(message).not.toHaveProperty("reasoning_content");
+		expect.soft(rejected).toEqual([]);
+		expect(second.filter((event) => event.type === "error")).toEqual([]);
+		expect(followUp).toEqual(
+			withTool
+				? [
+						{ role: "user", content: "Hello" },
+						{
+							role: "assistant",
+							content: "Hello!",
+							tool_calls: [
+								{
+									id: "call_fixture",
+									type: "function",
+									function: {
+										name: "read_file",
+										arguments: '{"path":"fixture.txt"}',
+									},
+								},
+							],
+						},
+						{
+							role: "tool",
+							tool_call_id: "call_fixture",
+							content: "fixture contents",
+						},
+					]
+				: [
+						{ role: "user", content: "Hello" },
+						{ role: "assistant", content: "Hello!" },
+						{ role: "user", content: "Continue" },
+					],
+		);
+		expect(second).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "reasoning-delta",
+					text: "fixture reasoning",
+				}),
+			]),
+		);
+
+		// Resume a JSON-shaped transcript through a fresh gateway, retaining all
+		// stored reasoning. No user history or filesystem settings are involved.
+		saved.push(
+			{
+				role: "assistant",
+				content: [
+					{
+						type: "thinking",
+						thinking: second
+							.filter((event) => event.type === "reasoning-delta")
+							.map((event) => event.text)
+							.join(""),
+					},
+					{
+						type: "text",
+						text: second
+							.filter((event) => event.type === "text-delta")
+							.map((event) => event.text)
+							.join(""),
+					},
+				],
+			},
+			{ role: "user", content: "Again" },
+		);
+		const before = structuredClone(saved);
+		const resumed = JSON.parse(JSON.stringify(saved)) as typeof saved;
+		const resumedGateway = createGateway({
+			providerConfigs: [
+				{
+					providerId: "groq",
+					apiKey: "synthetic-key",
+					baseUrl: "http://127.0.0.1:1/v1",
+					fetch: fetchMock as unknown as typeof fetch,
+				},
+			],
+		});
+		const resumedMessages = toGatewayRequestMessages(resumed);
+		const messagesBefore = structuredClone(resumedMessages);
+		const third = await collectGatewayEvents(
+			await resumedGateway.stream({
+				providerId: "groq",
+				modelId,
+				messages: resumedMessages,
+				tools,
+			}),
+		);
+		expect(third.filter((event) => event.type === "error")).toEqual([]);
+		expect(third).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ type: "text-delta", text: "Hello!" }),
+			]),
+		);
+		expect(bodies).toHaveLength(3);
+		expect(bodies.map((body) => body.model)).toEqual([
+			modelId,
+			modelId,
+			modelId,
+		]);
+		expect(bodies[2].messages).toEqual([
+			...followUp,
+			{ role: "assistant", content: "Hello!" },
+			{ role: "user", content: "Again" },
+		]);
+		expect(rejected).toEqual([]);
+		expect(resumedMessages).toEqual(messagesBefore);
+		expect(resumed).toEqual(before);
+		expect(saved).toEqual(before);
+	});
+});
+
+it("preserves serialized reasoning for an unrelated compatible provider", async () => {
+	const fetchMock = createFetchMock(() =>
+		reasoningCompletionResponse("openai/gpt-oss-120b"),
+	);
+	const gateway = createGateway({
+		providerConfigs: [
+			{
+				providerId: "openai-compatible",
+				apiKey: "synthetic-key",
+				baseUrl: "http://127.0.0.1:1/v1",
+				fetch: fetchMock as unknown as typeof fetch,
+			},
+		],
+	});
+	const saved: Parameters<typeof toGatewayRequestMessages>[0] = [
+		{ role: "user", content: "Hello" },
+		{
+			role: "assistant",
+			content: [
+				{ type: "thinking", thinking: "keep this reasoning" },
+				{ type: "text", text: "Hello!" },
+			],
+		},
+		{ role: "user", content: "Continue" },
+	];
+	const messages = toGatewayRequestMessages(saved);
+	const before = structuredClone(messages);
+	const events = await collectGatewayEvents(
+		await gateway.stream({
+			providerId: "openai-compatible",
+			modelId: "openai/gpt-oss-120b",
+			messages,
+		}),
+	);
+	expect(events.filter((event) => event.type === "error")).toEqual([]);
+	expect(capturedBody(fetchMock).messages).toEqual([
+		{ role: "user", content: "Hello" },
+		{
+			role: "assistant",
+			content: "Hello!",
+			reasoning_content: "keep this reasoning",
+		},
+		{ role: "user", content: "Continue" },
+	]);
+	expect(messages).toEqual(before);
+});
+
+async function collectGatewayEvents(
+	stream: AsyncIterable<AgentModelEvent>,
+): Promise<AgentModelEvent[]> {
+	const events: AgentModelEvent[] = [];
+	for await (const event of stream) events.push(event);
+	return events;
+}
+
+function reasoningCompletionResponse(
+	modelId: string,
+	withTool = false,
+): Response {
+	const chunks = [
+		{
+			choices: [
+				{
+					index: 0,
+					delta: { role: "assistant", reasoning: "fixture reasoning" },
+				},
+			],
+		},
+		{ choices: [{ index: 0, delta: { content: "Hello!" } }] },
+		...(withTool
+			? [
+					{
+						choices: [
+							{
+								index: 0,
+								delta: {
+									tool_calls: [
+										{
+											index: 0,
+											id: "call_fixture",
+											type: "function",
+											function: {
+												name: "read_file",
+												arguments: '{"path":"fixture.txt"}',
+											},
+										},
+									],
+								},
+							},
+						],
+					},
+				]
+			: []),
+		{
+			choices: [
+				{
+					index: 0,
+					delta: {},
+					finish_reason: withTool ? "tool_calls" : "stop",
+				},
+			],
+			usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+		},
+	];
+	const data = chunks.map(
+		(chunk) =>
+			`data: ${JSON.stringify({ id: "chatcmpl-history", created: 0, model: modelId, ...chunk })}`,
+	);
+	return new Response([...data, "data: [DONE]", ""].join("\n\n"), {
+		status: 200,
+		headers: { "content-type": "text/event-stream" },
+	});
+}
 
 async function createModel(input: {
 	modelId: string;

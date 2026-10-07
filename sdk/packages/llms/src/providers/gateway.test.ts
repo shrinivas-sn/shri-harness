@@ -22,6 +22,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { normalizeModelsDevProviderModels } from "../catalog/catalog-live";
 import { createOpenAICompatibleProvider } from "./ai-sdk";
+import { toGatewayRequestMessages } from "./compat";
 import {
 	createGateway,
 	DEFAULT_GATEWAY_MAX_OUTPUT_TOKENS,
@@ -3030,6 +3031,258 @@ describe("sdk-gateway", () => {
 				]),
 			}),
 		);
+	});
+
+	describe.each([
+		"openai/gpt-oss-120b",
+		"openai/gpt-oss-20b",
+	])("Groq reasoning history for %s", (modelId) => {
+		async function captureHistory(messages: AgentMessage[]) {
+			mockSuccessfulStream();
+			const before = structuredClone(messages);
+			const gateway = createGateway({
+				providerConfigs: [{ providerId: "groq", apiKey: "synthetic-key" }],
+			});
+			await collect(
+				await gateway.stream({ providerId: "groq", modelId, messages }),
+			);
+			expect(messages).toEqual(before);
+			return streamTextSpy.mock.calls.at(-1)?.[0].messages;
+		}
+
+		it("omits replayed reasoning while preserving assistant text", async () => {
+			const messages: AgentMessage[] = [
+				baseMessages[0],
+				{
+					id: "assistant_1",
+					role: "assistant",
+					createdAt: 1,
+					content: [
+						{ type: "reasoning", text: "private history" },
+						{ type: "text", text: "Hello!" },
+					],
+				},
+				{
+					id: "user_2",
+					role: "user",
+					createdAt: 2,
+					content: [{ type: "text", text: "Continue" }],
+				},
+			];
+			expect(await captureHistory(messages)).toEqual([
+				{ role: "user", content: [{ type: "text", text: "Hello" }] },
+				{ role: "assistant", content: [{ type: "text", text: "Hello!" }] },
+				{ role: "user", content: [{ type: "text", text: "Continue" }] },
+			]);
+		});
+
+		it("omits reasoning-only assistant turns but retains originally empty turns", async () => {
+			const messages: AgentMessage[] = [
+				baseMessages[0],
+				{
+					id: "reasoning_only",
+					role: "assistant",
+					createdAt: 1,
+					content: [{ type: "reasoning", text: "private history" }],
+				},
+				{ id: "empty_assistant", role: "assistant", createdAt: 2, content: [] },
+				{
+					id: "user_2",
+					role: "user",
+					createdAt: 3,
+					content: [{ type: "text", text: "Continue" }],
+				},
+			];
+			expect(await captureHistory(messages)).toEqual([
+				{ role: "user", content: [{ type: "text", text: "Hello" }] },
+				{
+					role: "assistant",
+					content: [{ type: "text", text: "ERROR: EMPTY CONTENT" }],
+				},
+				{ role: "user", content: [{ type: "text", text: "Continue" }] },
+			]);
+		});
+
+		it("preserves tool call/result relationships when dropping reasoning", async () => {
+			const messages: AgentMessage[] = [
+				baseMessages[0],
+				{
+					id: "assistant_tool",
+					role: "assistant",
+					createdAt: 1,
+					content: [
+						{ type: "reasoning", text: "private tool planning" },
+						{
+							type: "tool-call",
+							toolCallId: "call_1",
+							toolName: "read_file",
+							input: { path: "fixture.txt" },
+						},
+					],
+				},
+				{
+					id: "tool_result",
+					role: "tool",
+					createdAt: 2,
+					content: [
+						{
+							type: "tool-result",
+							toolCallId: "call_1",
+							toolName: "read_file",
+							output: "fixture contents",
+						},
+					],
+				},
+			];
+			expect(await captureHistory(messages)).toEqual([
+				{ role: "user", content: [{ type: "text", text: "Hello" }] },
+				{
+					role: "assistant",
+					content: [
+						{
+							type: "tool-call",
+							toolCallId: "call_1",
+							toolName: "read_file",
+							input: { path: "fixture.txt" },
+						},
+					],
+				},
+				{
+					role: "tool",
+					content: [
+						{
+							type: "tool-result",
+							toolCallId: "call_1",
+							toolName: "read_file",
+							output: { type: "text", value: "fixture contents" },
+						},
+					],
+				},
+			]);
+		});
+
+		it("normalizes saved thinking/tool blocks without mutating the transcript", async () => {
+			const saved: Parameters<typeof toGatewayRequestMessages>[0] = [
+				{ role: "user", content: "Hello" },
+				{
+					role: "assistant",
+					content: [
+						{
+							type: "thinking",
+							thinking: "reasoning-only history",
+							signature: "saved-signature",
+						},
+					],
+				},
+				{
+					role: "assistant",
+					content: [
+						{ type: "thinking", thinking: "saved tool planning" },
+						{ type: "text", text: "Checking" },
+						{
+							type: "tool_use",
+							id: "stored_1",
+							call_id: "call_1",
+							name: "read_file",
+							input: { path: "fixture.txt" },
+						},
+					],
+				},
+				{
+					role: "user",
+					content: [
+						{
+							type: "tool_result",
+							tool_use_id: "call_1",
+							content: "fixture contents",
+						},
+					],
+				},
+				{ role: "user", content: "Continue" },
+			];
+			const before = structuredClone(saved);
+			const resumed = JSON.parse(JSON.stringify(saved)) as typeof saved;
+			expect(await captureHistory(toGatewayRequestMessages(resumed))).toEqual([
+				{ role: "user", content: [{ type: "text", text: "Hello" }] },
+				{
+					role: "assistant",
+					content: [
+						{ type: "text", text: "Checking" },
+						{
+							type: "tool-call",
+							toolCallId: "call_1",
+							toolName: "read_file",
+							input: { path: "fixture.txt" },
+						},
+					],
+				},
+				{
+					role: "tool",
+					content: [
+						{
+							type: "tool-result",
+							toolCallId: "call_1",
+							toolName: "read_file",
+							output: { type: "text", value: "fixture contents" },
+						},
+					],
+				},
+				{ role: "user", content: [{ type: "text", text: "Continue" }] },
+			]);
+			expect(resumed).toEqual(before);
+			expect(saved).toEqual(before);
+		});
+	});
+
+	it("retains reasoning for generic compatible providers without a history policy", async () => {
+		mockSuccessfulStream();
+		const messages: AgentMessage[] = [
+			baseMessages[0],
+			{
+				id: "assistant_1",
+				role: "assistant",
+				createdAt: 1,
+				content: [
+					{ type: "reasoning", text: "retained reasoning" },
+					{ type: "text", text: "Hello!" },
+				],
+			},
+			{
+				id: "user_2",
+				role: "user",
+				createdAt: 2,
+				content: [{ type: "text", text: "Continue" }],
+			},
+		];
+		const before = structuredClone(messages);
+		const gateway = createGateway({
+			providerConfigs: [
+				{
+					providerId: "openai-compatible",
+					apiKey: "synthetic-key",
+					baseUrl: "https://compatible.example/v1",
+				},
+			],
+		});
+		await collect(
+			await gateway.stream({
+				providerId: "openai-compatible",
+				modelId: "openai/gpt-oss-120b",
+				messages,
+			}),
+		);
+		expect(streamTextSpy.mock.calls.at(-1)?.[0].messages).toEqual([
+			{ role: "user", content: [{ type: "text", text: "Hello" }] },
+			{
+				role: "assistant",
+				content: [
+					{ type: "reasoning", text: "retained reasoning" },
+					{ type: "text", text: "Hello!" },
+				],
+			},
+			{ role: "user", content: [{ type: "text", text: "Continue" }] },
+		]);
+		expect(messages).toEqual(before);
 	});
 
 	it("strips reasoning history before sending Cerebras follow-up requests", async () => {

@@ -1,0 +1,14 @@
+@cline/llms test: 
+@cline/llms test:  RUN  v4.1.11 E:/shri-harness/sdk/packages/llms
+@cline/llms test: 
+@cline/llms test: (node:8872) Warning: AI SDK Warning System: To turn off warning logging, set the AI_SDK_LOG_WARNINGS global to false.
+@cline/llms test: (Use `node --trace-warnings ...` to show where the warning was created)
+@cline/llms test: (node:8872) DeprecationWarning: AI SDK Warning (openai-compatible.chat / openai/gpt-oss-120b): Deprecated: "providerOptions key 'openai-compatible'". Use 'openaiCompatible' instead.
+@cline/llms test: (node:8872) DeprecationWarning: AI SDK Warning (openai-compatible.chat / openai/gpt-oss-120b): Deprecated: "providerOptions key 'openai-compatible'". Use 'openaiCompatible' instead.
+@cline/llms test: 
+@cline/llms test:  Test Files  2 passed (2)
+@cline/llms test:       Tests  182 passed (182)
+@cline/llms test:    Start at  12:53:33
+@cline/llms test:    Duration  118.13s (transform 25.80s, setup 0ms, import 36.16s, tests 73.13s, environment 0ms)
+@cline/llms test: 
+@cline/llms test: Exited with code 0

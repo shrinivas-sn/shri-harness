@@ -836,6 +836,7 @@ const OPENAI_COMPATIBLE_SPEC_OVERRIDES: BuiltinSpecOverride[] = [
 		family: "openai-compatible",
 		defaultModelId: "moonshotai/kimi-k2-instruct-0905",
 		apiKeyEnv: ["GROQ_API_KEY"],
+		metadata: { routing: { reasoningHistory: "omit" } },
 		defaults: { baseUrl: "https://api.groq.com/openai/v1" },
 	},
 	{

@@ -98,6 +98,8 @@ export interface GatewayModelOperationCapability {
 }
 
 export interface GatewayProviderRouting {
+	/** Omit outgoing reasoning history without changing stored or incoming content. */
+	reasoningHistory?: "omit";
 	/** Honor catalog model API protocols under this provider's shared base URL. */
 	modelApiProtocol?: boolean;
 	promptCache?: {

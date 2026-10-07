@@ -1,0 +1,54 @@
+@cline/llms test: 
+@cline/llms test:  RUN  v4.1.11 E:/shri-harness/sdk/packages/llms
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/gateway.test.ts (165 tests | 2 failed | 163 skipped) 323ms
+@cline/llms test:        × omits reasoning-only assistant turns but retains originally empty turns 311ms
+@cline/llms test:        × omits reasoning-only assistant turns but retains originally empty turns 7ms
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-120b > omits reasoning-only assistant turns but retains originally empty turns
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > Groq reasoning history for openai/gpt-oss-20b > omits reasoning-only assistant turns but retains originally empty turns
+@cline/llms test: AssertionError: expected [ { role: 'user', …(1) }, …(3) ] to deeply equal [ { role: 'user', …(1) }, …(2) ]
+@cline/llms test: 
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test: 
+@cline/llms test: @@ -9,10 +9,19 @@
+@cline/llms test:       "role": "user",
+@cline/llms test:     },
+@cline/llms test:     {
+@cline/llms test:       "content": [
+@cline/llms test:         {
+@cline/llms test: +         "text": "private history",
+@cline/llms test: +         "type": "reasoning",
+@cline/llms test: +       },
+@cline/llms test: +     ],
+@cline/llms test: +     "role": "assistant",
+@cline/llms test: +   },
+@cline/llms test: +   {
+@cline/llms test: +     "content": [
+@cline/llms test: +       {
+@cline/llms test:           "text": "ERROR: EMPTY CONTENT",
+@cline/llms test:           "type": "text",
+@cline/llms test:         },
+@cline/llms test:       ],
+@cline/llms test:       "role": "assistant",
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/gateway.test.ts:3096:43
+@cline/llms test:     3094|     },
+@cline/llms test:     3095|    ];
+@cline/llms test:     3096|    expect(await captureHistory(messages)).toEqual([
+@cline/llms test:        |                                           ^
+@cline/llms test:     3097|     { role: "user", content: [{ type: "text", text: "Hello" }] },
+@cline/llms test:     3098|     { role: "assistant", content: [{ type: "text", text: "ERROR: EMPTY…
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+@cline/llms test: 
+@cline/llms test: 
+@cline/llms test:  Test Files  1 failed (1)
+@cline/llms test:       Tests  2 failed | 163 skipped (165)
+@cline/llms test:    Start at  12:46:26
+@cline/llms test:    Duration  13.34s (transform 9.27s, setup 0ms, import 12.30s, tests 323ms, environment 0ms)
+@cline/llms test: 
+@cline/llms test: Exited with code 1

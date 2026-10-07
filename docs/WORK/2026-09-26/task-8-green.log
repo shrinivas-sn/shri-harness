@@ -1,0 +1,152 @@
+@cline/llms test: 
+@cline/llms test:  RUN  v4.1.11 E:/shri-harness/sdk/packages/llms
+@cline/llms test: 
+@cline/llms test: (node:7676) Warning: AI SDK Warning System: To turn off warning logging, set the AI_SDK_LOG_WARNINGS global to false.
+@cline/llms test: (Use `node --trace-warnings ...` to show where the warning was created)
+@cline/llms test: (node:7676) DeprecationWarning: AI SDK Warning (openai-compatible.chat / openai/gpt-oss-120b): Deprecated: "providerOptions key 'openai-compatible'". Use 'openaiCompatible' instead.
+@cline/llms test: (node:7676) DeprecationWarning: AI SDK Warning (openai-compatible.chat / openai/gpt-oss-120b): Deprecated: "providerOptions key 'openai-compatible'". Use 'openaiCompatible' instead.
+@cline/llms test:  ❯ src/providers/gateway.test.ts (165 tests | 8 failed) 90129ms
+@cline/llms test:      × uses the OpenRouter image transport for mixed Cline image models 8038ms
+@cline/llms test:      × requests Vertex text and image output without dropping provider options 6150ms
+@cline/llms test:      × preserves Vertex thought signatures on tool calls and replays them 357ms
+@cline/llms test:      × does not pass extra tools to providers that disable external tool execution 5221ms
+@cline/llms test:      × does not pass extra tools to the Claude Code provider 5488ms
+@cline/llms test:      × anchors the Claude Code session on workspace cwd, user settings, and auto-accepted edits 6056ms
+@cline/llms test:      × preserves explicit Claude Code session settings over the gateway defaults 48175ms
+@cline/llms test:      × drops a non-existent workspace cwd instead of failing Claude Code settings validation 5232ms
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > uses the OpenRouter image transport for mixed Cline image models
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:1839:2
+@cline/llms test:     1837|  });
+@cline/llms test:     1838|
+@cline/llms test:     1839|  it("uses the OpenRouter image transport for mixed Cline image models"…
+@cline/llms test:        |  ^
+@cline/llms test:     1840|   streamTextSpy.mockReturnValue({
+@cline/llms test:     1841|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > requests Vertex text and image output without dropping provider options
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:2394:2
+@cline/llms test:     2392|  });
+@cline/llms test:     2393|
+@cline/llms test:     2394|  it("requests Vertex text and image output without dropping provider o…
+@cline/llms test:        |  ^
+@cline/llms test:     2395|   streamTextSpy.mockReturnValue({
+@cline/llms test:     2396|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > preserves Vertex thought signatures on tool calls and replays them
+@cline/llms test: AssertionError: expected [ { type: 'finish', …(5) } ] to deep equally contain ObjectContaining{…}
+@cline/llms test: 
+@cline/llms test: - Expected:
+@cline/llms test: ObjectContaining {
+@cline/llms test:   "metadata": ObjectContaining {
+@cline/llms test:     "thoughtSignature": "sig_1",
+@cline/llms test:   },
+@cline/llms test:   "toolCallId": "call_1",
+@cline/llms test:   "toolName": "editor",
+@cline/llms test:   "type": "tool-call-delta",
+@cline/llms test: }
+@cline/llms test: 
+@cline/llms test: + Received:
+@cline/llms test: [
+@cline/llms test:   {
+@cline/llms test:     "error": "Cannot read properties of undefined (reading 'fullStream')",
+@cline/llms test:     "errorClass": "unknown",
+@cline/llms test:     "errorReported": undefined,
+@cline/llms test:     "errorRetryable": false,
+@cline/llms test:     "reason": "error",
+@cline/llms test:     "type": "finish",
+@cline/llms test:   },
+@cline/llms test: ]
+@cline/llms test: 
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4546:18
+@cline/llms test:     4544|   );
+@cline/llms test:     4545|
+@cline/llms test:     4546|   expect(events).toContainEqual(
+@cline/llms test:        |                  ^
+@cline/llms test:     4547|    expect.objectContaining({
+@cline/llms test:     4548|     type: "tool-call-delta",
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > does not pass extra tools to providers that disable external tool execution
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4781:2
+@cline/llms test:     4779|  });
+@cline/llms test:     4780|
+@cline/llms test:     4781|  it("does not pass extra tools to providers that disable external tool…
+@cline/llms test:        |  ^
+@cline/llms test:     4782|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4783|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > does not pass extra tools to the Claude Code provider
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4811:2
+@cline/llms test:     4809|  });
+@cline/llms test:     4810|
+@cline/llms test:     4811|  it("does not pass extra tools to the Claude Code provider", async () …
+@cline/llms test:        |  ^
+@cline/llms test:     4812|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4813|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > anchors the Claude Code session on workspace cwd, user settings, and auto-accepted edits
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4841:2
+@cline/llms test:     4839|  });
+@cline/llms test:     4840|
+@cline/llms test:     4841|  it("anchors the Claude Code session on workspace cwd, user settings, …
+@cline/llms test:        |  ^
+@cline/llms test:     4842|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4843|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > preserves explicit Claude Code session settings over the gateway defaults
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4880:2
+@cline/llms test:     4878|  });
+@cline/llms test:     4879|
+@cline/llms test:     4880|  it("preserves explicit Claude Code session settings over the gateway …
+@cline/llms test:        |  ^
+@cline/llms test:     4881|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4882|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+@cline/llms test: 
+@cline/llms test:  FAIL  src/providers/gateway.test.ts > sdk-gateway > drops a non-existent workspace cwd instead of failing Claude Code settings validation
+@cline/llms test: Error: Test timed out in 5000ms.
+@cline/llms test: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/llms test:  ❯ src/providers/gateway.test.ts:4925:2
+@cline/llms test:     4923|  });
+@cline/llms test:     4924|
+@cline/llms test:     4925|  it("drops a non-existent workspace cwd instead of failing Claude Code…
+@cline/llms test:        |  ^
+@cline/llms test:     4926|   streamTextSpy.mockReturnValue({
+@cline/llms test:     4927|    fullStream: makeStreamParts([
+@cline/llms test: 
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+@cline/llms test: 
+@cline/llms test: 
+@cline/llms test:  Test Files  1 failed | 1 passed (2)
+@cline/llms test:       Tests  8 failed | 174 passed (182)
+@cline/llms test:    Start at  12:47:26
+@cline/llms test:    Duration  100.63s (transform 13.04s, setup 0ms, import 21.04s, tests 90.50s, environment 0ms)
+@cline/llms test: 
+@cline/llms test: Exited with code 1

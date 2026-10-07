@@ -589,7 +589,10 @@ function shouldIncludeReasoningHistory(
 	request: GatewayStreamRequest,
 	context: GatewayProviderContext,
 ): boolean {
-	return !isCerebrasProvider(request, context);
+	return (
+		context.provider.metadata?.routing?.reasoningHistory !== "omit" &&
+		!isCerebrasProvider(request, context)
+	);
 }
 
 async function resolveGatewayAiSdkTelemetry(
