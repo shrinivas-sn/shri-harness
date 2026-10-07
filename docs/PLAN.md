@@ -241,10 +241,10 @@ A new session may start here.
 **Why:** Single-turn tests missed the real defect; hosted PTY failures also need disciplined diagnosis.
 **Where:** `apps/cli/script/smoke-installed-render-pty.mjs` (search text: `createServer`, `session.type`); `smoke-installed-model-pty.mjs` (`openModelPicker`); `smoke-installed.ts` (`model-pty`); `apps/cli/src/commands/installed-release.e2e.test.ts` (`describe`); new `DOCS/RESEARCH/groq-repair-test-matrix.md`.
 **Do:**
-- [ ] Run the test-plan skill during execution; save its scoped surface map, failure questions, scenario matrix, and existing-test mapping at the new research path, not another live PLAN.
-- [ ] Map R10–R14 to observable assertions and evidence levels. Include failures, ordering/stale responses, interruption, restart, old history, temporary key precedence, cleanup, Windows paths, and partial publication where applicable.
-- [ ] Define fixture sequences, unique visible markers, bounded waits, task-owned processes, and cleanup. Distinguish old seeded history from newly written history.
-- [ ] Specify a calibrated invalid-request control and rejection of stale terminal text. Mark unrun rows unproven; avoid unrelated suite expansion.
+- [x] Run the test-plan skill during execution; save its scoped surface map, failure questions, scenario matrix, and existing-test mapping at the new research path, not another live PLAN.
+- [x] Map R10–R14 to observable assertions and evidence levels. Include failures, ordering/stale responses, interruption, restart, old history, temporary key precedence, cleanup, Windows paths, and partial publication where applicable.
+- [x] Define fixture sequences, unique visible markers, bounded waits, task-owned processes, and cleanup. Distinguish old seeded history from newly written history.
+- [x] Specify a calibrated invalid-request control and rejection of stale terminal text. Mark unrun rows unproven; avoid unrelated suite expansion.
 **Test first:** n/a — documentation-only task defining tests before harness changes.
 **Verify:** Manual: every R13 row names driver/assertion, timeout, cleanup owner, and forbidden substitute evidence; none is proven from inspection. `git diff --check` → no whitespace errors.
 **Don't touch:** Application code, global install, live sessions. May-change existing assertions: none.
@@ -439,3 +439,11 @@ Original planning-only record: [WORK/2026-09-26/WORK.md](WORK/2026-09-26/WORK.md
 - **Limitations:** Fixture/wire evidence only; live Groq acceptance (including Safeguard, issue 6) is Task 12.2. Arbitrary custom Groq aliases are outside scope.
 - **Next:** Phase 4, Task 11.1 — specify installed evidence with the test-plan skill.
 - **Commit:** `fix(llms): respect Groq model reasoning capabilities` (hash in STATUS).
+
+### 07/10/2026 — Task 11.1 installed acceptance matrix
+
+- **Done:** Task 10 committed as `ab3fa24`. Ran the test-plan skill (plan mode) with the shared method; wrote [groq-repair-test-matrix.md](RESEARCH/groq-repair-test-matrix.md): 8 surfaces, all eight failure questions answered per surface, 25 project-local rows (GR-01–GR-25) mapping R10–R14 to installed assertions, all `unproven`; existing installed tests mapped; fixture design (strict replay/option rejection, separate `/models`/chat/catalog routes, per-turn markers after prompt echo, bounded waits, task-owned cleanup, calibration GR-24, optional baseline GR-25).
+- **Verified:** `node E:/dev-recipes/_knowledge/scripts/test-plan-check.js DOCS/RESEARCH/groq-repair-test-matrix.md` → valid, 25 rows, exit 0; `git diff --check` clean. Manual: each R13 row names its driver/assertion, wait bound (§5), cleanup owner (§5) and forbidden substitute evidence; none is marked proven.
+- **Surprises:** Finding F1 — the existing installed model smoke never overrides Groq `baseUrl`, so since `75db91c` it calls the real `api.groq.com/.../models` with a synthetic key and its `missingMetadataRendered` expectation assumes catalog-only listing. To fix in Task 11.2 (allowed may-change). No harness or app code changed here.
+- **Next:** Task 11.2 — extend installed smoke and verify fresh artifacts.
+- **Commit:** `docs(test): define installed Groq repair acceptance`.

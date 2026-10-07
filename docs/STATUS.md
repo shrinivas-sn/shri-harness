@@ -1,12 +1,17 @@
 # Project status
 
-## Current state - 07/10/2026, Phase 3 checkpoint
+## Current state - 07/10/2026, Phase 4 in progress
+
+- **Task 11.1 done:** installed acceptance matrix [groq-repair-test-matrix.md](RESEARCH/groq-repair-test-matrix.md) — 25 rows, all `unproven`, checker valid. **Finding F1:** the existing installed model smoke now calls the real Groq `/models` with a synthetic key (no `baseUrl` override); fix in Task 11.2.
+- **Next: Task 11.2 — extend installed smoke and verify fresh artifacts.**
+
+## Phase 3 checkpoint - 07/10/2026
 
 - **Task 10 / R12 done (`ab3fa24`):** Groq gets only reasoning fields the selected model's catalog controls advertise (official docs re-checked 07/10/2026). GPT-OSS keeps low/medium/high (legacy `xhigh`→`high`, `minimal`→`low`) and Off hides its trace; Qwen 3.8/Safeguard get efforts but no visibility field; Llama, Qwen 3.6 and unknown IDs get no reasoning fields. The thinking dialog offers only supported levels.
 - **Verification:** SDK 399/399 (5 files incl. R10 history), LLM/shared typechecks, CLI 50/50 unit + 8/8 render + typecheck, neighbor suites 71 + 36 passing.
 - **Plan issues 5–6:** defect was wider than planned (portable path skipped normalization for all Groq models). **Open for live check (issue 6):** does Groq accept effort for `gpt-oss-safeguard-20b`? Docs and catalog disagree.
 - **Still open (issue 4):** roll back saved model after a failed apply?
-- **Next: Phase 4, Task 11.1 — specify installed evidence with the test-plan skill.**
+- Next was Task 11.1 (done above).
 
 ## Phase 2 checkpoint - 07/10/2026
 
@@ -52,4 +57,4 @@
 
 ## Next up (start here)
 
-On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 4, Task 11.1 — Specify missing installed evidence with test-plan** (documentation-only; run the test-plan skill). Do not restart Tasks 0–10. Surface open Plan issues 4 and 6 to the owner. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.
+On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 4, Task 11.2 — Extend installed smoke and verify fresh artifacts**, driven by [the matrix](RESEARCH/groq-repair-test-matrix.md) rows GR-01–GR-25 and Finding F1. Do not restart Tasks 0–11.1. Surface open Plan issues 4 and 6 to the owner. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.
