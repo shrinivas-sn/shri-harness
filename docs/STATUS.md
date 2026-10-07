@@ -15,7 +15,7 @@
 - **Plan issue 6:** does Groq accept `reasoning_effort` for `openai/gpt-oss-safeguard-20b`? Docs and catalog disagree; live check in Task 12.2.
 - Phase 5: push authorized (08/10); Task 12.1 done, [hosted run](https://github.com/shrinivas-sn/shri-harness/actions/runs/37671691809) green. Live calls and candidate tag (12.2) and publish/global update (12.3) still need owner authorization.
 - Plan issue 4 fixed 08/10 (`70e9d81`); included in the next.2 candidate.
-- **next.2 candidate:** built, installed E2E 9/9, live Groq acceptance passed. Evidence: [release evidence](RESEARCH/groq-repair-release-evidence.md). Your global `shri` is still the old next.1 until next.2 is published and installed.
+- **next.2 candidate:** built, installed E2E 9/9, live Groq acceptance passed. Evidence: [release evidence](RESEARCH/groq-repair-release-evidence.md). The owner's global `shri` is next.2, installed 08/10 from these local tarballs (not from npm). npm still has only next.1.
 - Stable plain versions (e.g. `0.2.0`) are a future roadmap item, not now.
 - **New Groq key ready (owner, 07/10/2026):** in the git-ignored root `.env` as `GROQ_API_KEY` (presence and `gsk_` shape checked, value not read or printed). Use it only for Task 12.2 live acceptance, in disposable config, never in commands, logs or CI. The old saved key is expired; don't reuse it.
 
