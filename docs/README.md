@@ -7,7 +7,7 @@ Current reliability investigation: [chat and model-selection diagnosis](RESEARCH
 Proposed future features and customization: [product roadmap](CONTEXT/ROADMAP.md).
 The roadmap is a proposal inventory, not a second live execution plan.
 
-Current execution handoff: [Groq repair plan](PLAN.md), restructured 26/09/2026; Phases 1–3 committed, Phase 4 Task 11.2 nearly done (22/25 rows proven).
+Current execution handoff: [Groq repair plan](PLAN.md), restructured 26/09/2026; Phases 1–3 committed, Phase 4 done 08/10; next Task 12.1.
 
 Earlier verbose status is preserved in [WORK/archive.md](WORK/archive.md); use [STATUS.md](STATUS.md) for current resume instructions.
 

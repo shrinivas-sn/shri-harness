@@ -272,10 +272,10 @@ A new session may start here.
 
 ### Checkpoint — Phase 4
 
-- [ ] Full verification: fresh SDK/native build, verified tarballs, installed E2E, affected typechecks, and diff check pass; R13 matrix updated.
-- [ ] Task commits recorded, or explicit uncommitted reasons.
-- [ ] Status updated with exact artifact identity and fixture limitations; next Task 12.1.
-- [ ] Progress Log records hashes, outputs, cleanup, and unresolved evidence.
+- [x] Full verification: fresh SDK/native build, verified tarballs, installed E2E, affected typechecks, and diff check pass; R13 matrix updated.
+- [x] Task commits recorded, or explicit uncommitted reasons.
+- [x] Status updated with exact artifact identity and fixture limitations; next Task 12.1.
+- [x] Progress Log records hashes, outputs, cleanup, and unresolved evidence.
 
 A new session may start here.
 
@@ -469,3 +469,13 @@ Original planning-only record: [WORK/2026-09-26/WORK.md](WORK/2026-09-26/WORK.md
 - **Surprises:** none in product behaviour; long notices wrap in dialogs, so waits match short fragments.
 - **Next:** owner decision on GR-14/GR-19, then the Phase 4 checkpoint.
 - **Commit:** `test(cli): cover remaining installed Groq repair journeys`.
+
+### 08/10/2026 — Phase 4 checkpoint
+
+- **Owner decision:** Groq-only scope for now; GR-14, GR-19 and GR-25 accepted as `n/a` with reasons in the matrix. Matrix: 22 proven, 3 `n/a`, 0 unproven.
+- **Artifact identity:** `0.1.0-next.1`, Windows x64. Wrapper sha256 `4659c4b31e099dea727223d238f67d1fa457b3a42e9347c66afb249d39c9168f`; platform sha256 `7045934a0389c6dc4f82066e9782cc63b94b404dfbc6f511721b01c6c3ea60c9`. Built from the tree committed as `9d5152b`; later commits changed only harness, E2E and docs (`git diff 9d5152b HEAD` outside those paths is empty).
+- **Verified:** installed E2E 9/9 locally and on hosted CI; CLI, LLM and shared typechecks exit 0; `git diff --check` clean.
+- **Commits:** `9d5152b` fix(tui) focus; `3b9dc63` and `ef6fbf1` installed coverage. Pushed.
+- **Cleanup:** smoke temp roots removed by `smoke-installed.ts`; temporary focus trace and store-format probe removed; global install unchanged (`globalInstallUnchanged`).
+- **Fixture limitations:** all installed proof uses loopback fixtures; real Groq behaviour (including Safeguard, issue 6) is Task 12.2.
+- **Next:** Task 12.1.
