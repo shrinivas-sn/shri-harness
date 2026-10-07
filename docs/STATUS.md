@@ -1,23 +1,20 @@
 # Project status
 
-## Current state - 07/10/2026, Phase 4 Task 11.2 in progress
+## Current state - 07/10/2026, Phase 4 Task 11.2 checkpoint committed, gaps open
 
-- **Project:** `E:\shri-harness`, branch `main`. Live plan [PLAN.md](PLAN.md) (Groq conversation and model reliability).
-- **Done and committed:** Phase 1 Task 8 (`8b16b5a`), Phase 2 Tasks 9.1 (`4e107a2`) and 9.2 (`75db91c`), Phase 3 Task 10 (`ab3fa24`), Phase 4 Task 11.1 matrix (`d687d61`). Older checkpoint detail: [archive](WORK/archive.md), 07/10/2026 entry.
-- **Task 11.2 (uncommitted harness work):**
-  - Fresh artifacts built, packaged, verified (all exit 0): [build log](WORK/2026-10-07/task-11.2-build.log). Pre-rebuild next.1 release evidence copied byte-identical to `tmp/preserved/release-next.1` (gitignored) because `script/build.ts` wipes `apps/cli/dist`.
-  - `apps/cli/script/smoke-installed-model-pty.mjs` rewritten: loopback `/models` + chat + catalog fixture (fixes Finding F1), `--key` temporary key, strict option rejection, cancel-in-thinking-dialog, four switches, failure/empty notices.
-  - **Run 5 result:** in the installed binary all four switches sent exactly the expected bodies (GPT-OSS 120B `high`; Llama none; GPT-OSS 20B `include_reasoning:false`; Qwen 3.8 `low`) and the picker listed only `/models` entries. Run then failed at the next harness step (`slash suggestion` before the 401 notice check) — harness timing, not yet diagnosed: [run 5 log](WORK/2026-10-07/task-11.2-model-run5.log). Runs 1–4 fixed harness waits (welcome text gone after first message; loading overlay; dropped keystrokes during session restart).
-  - `apps/cli/script/smoke-installed-conversation-pty.mjs` written (3 turns with reasoning, tool pairing, `--id` resume, calibration, key-leak, cleanup) — **never run yet**.
-  - `apps/cli/script/smoke-installed.ts` wired: `MODEL_PTY_CHECKS`, `CONVERSATION_PTY_CHECKS`, `--conversation-pty`. `src/commands/installed-release.e2e.test.ts` **not yet updated** for the new checks.
-- **Matrix:** [groq-repair-test-matrix.md](RESEARCH/groq-repair-test-matrix.md) rows GR-01–GR-25 all still `unproven` (no row updated until a full passing run).
+- **Project:** `E:shri-harness`, branch `main`. Live plan [PLAN.md](PLAN.md) (Groq conversation and model reliability).
+- **Done and committed:** Phase 1 Task 8 (`8b16b5a`), Phase 2 Tasks 9.1 (`4e107a2`) and 9.2 (`75db91c`), Phase 3 Task 10 (`ab3fa24`), Phase 4 Task 11.1 matrix (`d687d61`), Plan issue 7 focus fix and Task 11.2 checkpoint (hashes: see `git log`, messages `fix(tui): refocus prompt after dialog focus restore` and `test(cli): cover installed Groq conversations and model switches`). Older detail: [archive](WORK/archive.md).
+- **Task 11.2 checkpoint:** installed model PTY (four switches with exact bodies, 401/empty listings, cancel, reopen, temporary key) and conversation PTY (three reasoning turns, tool pairing, `--id` resume, calibration, key-leak, cleanup) pass on freshly built `0.1.0-next.1` tarballs. [Installed E2E](WORK/2026-10-07/task-11.2-e2e.log) 9/9. Details: PLAN Progress Log, 07/10/2026 Task 11.2 entry.
+- **Plan issue 7 (fixed):** the prompt went deaf after `/model` dialogs because the dialog library's 1 ms focus-restore timer re-focused the old textarea before React destroyed it. Fixed by `useFocusAfterRemount` (passive effect) in `use-prompt-input-controller.ts`.
+- **Matrix:** [groq-repair-test-matrix.md](RESEARCH/groq-repair-test-matrix.md) has 12 rows proven. Open with written gaps: GR-03, 06, 07, 09, 11, 12, 13, 14, 18, 19, 20, 23; GR-25 optional.
+- `tmp/preserved/release-next.1` (git-ignored) still holds the pre-rebuild next.1 release evidence.
 
 ## Open owner questions
 
 - **Plan issue 4:** after a failed model apply, should the saved model also roll back? (`applyInteractiveModelChange` saves before restarting.)
 - **Plan issue 6:** does Groq accept `reasoning_effort` for `openai/gpt-oss-safeguard-20b`? Docs and catalog disagree; live check in Task 12.2.
-- Phase 5 needs owner authorization: push/hosted CI (12.1), live key + candidate tag (12.2), publish/global update (12.3).
-- **Groq API key expired (owner, 07/10/2026).** Owner will supply a new key in a coming session. Until then, run no live Groq calls and don't read or reuse the saved key; ask for the new key before starting Task 12.2 live acceptance (it also settles Plan issue 6).
+- Phase 5 needs owner authorization: push/hosted CI (12.1), candidate tag (12.2), publish/global update (12.3).
+- **New Groq key ready (owner, 07/10/2026):** in the git-ignored root `.env` as `GROQ_API_KEY` (presence and `gsk_` shape checked, value not read or printed). Use it only for Task 12.2 live acceptance, in disposable config, never in commands, logs or CI. The old saved key is expired; don't reuse it.
 
 ## Execution constraints and pending evidence
 
@@ -32,4 +29,9 @@
 
 ## Next up (start here)
 
-1. Continue **Task 11.2**: from `apps/cli`, run `bun script/smoke-installed.ts --target windows-x64 --model-pty`; diagnose the `slash suggestion` timeout after the switch block (likely typing `/model` before the post-reply UI settles — reuse `waitForPrompt`/stable-screen before `openModelPicker`). Then run `--conversation-pty`, fix harness-only issues (product defects go back to their owning task via Plan issues), update `installed-release.e2e.test.ts` to assert every new check, run the full Task 11.2 verify set, update matrix rows with real evidence, and commit `test(cli): cover installed Groq conversations and model switches`.
+1. Close the open **Task 11.2** rows, one harness step each, run against a fresh build:
+   - GR-13: use a manual unverified ID for a turn. GR-11: send a turn after the 401 notice. GR-14: switch provider away and back. GR-12: malformed and stalled `/models`.
+   - GR-06: saved legacy `xhigh` is sent as `high`. GR-07/GR-09: seeded synthetic saved session resumed with `--id`, then read the stored history back.
+   - GR-03: 5xx on turn 2. GR-18: search raw captures before redaction. GR-20: PID lineage and Ctrl+C mid-stream. GR-23: global prefix unchanged.
+   - Product defects go to Plan issues; then rerun `bun run test:e2e src/commands/installed-release.e2e.test.ts` and update the matrix.
+2. Then the **Phase 4 checkpoint** (PLAN), then Phase 5 with owner authorization (push, candidate tag, live key from `.env`).

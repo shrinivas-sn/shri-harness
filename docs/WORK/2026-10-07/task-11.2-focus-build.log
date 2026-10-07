@@ -1,0 +1,28 @@
+$ bun script/build.ts --single
+Building @cline/cli v0.1.0-next.1
+Building SDK packages...
+$ bun --production -F './sdk/packages/*' build
+@cline/shared build: Exited with code 0
+@cline/ui build: $ bun scripts/generate-theme.ts --check
+@cline/ui build: @cline/ui generated theme files are current
+@cline/ui build: @cline/ui theme contract is valid
+@cline/ui build: Exited with code 0
+@cline/llms build: Exited with code 0
+@cline/agents build: Exited with code 0
+@cline/core build: Exited with code 0
+@cline/sdk build: Exited with code 0
+Building CLI bundle...
+@cline/cli build: Exited with code 0
+
+Building @cline/cli-windows-x64 (target: bun-windows-x64)...
+  Smoke test: E:\shri-harness\apps\cli\dist\cli-windows-x64\bin\cline.exe --version
+  Passed: 0.1.0-next.1
+  Built @cline/cli-windows-x64
+
+Build complete. 1 targets built.
+Packages:
+  @cline/cli-windows-x64@0.1.0-next.1
+$ bun script/package-release.ts --target "windows-x64"
+Generated local Shri release packages in dist/npm.
+$ bun script/verify-release.ts --target "windows-x64"
+Verified 2 local Shri tarballs. Report: dist/npm/verification-report.json

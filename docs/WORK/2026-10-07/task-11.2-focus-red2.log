@@ -1,0 +1,22 @@
+bun test v1.3.14 (0d9b296a)
+
+src\tui\hooks\use-focus-after-remount.render.test.tsx:
+108 | 
+109 | 	test(`focuses the remounted prompt after stale focus at ${stealAt} time`, async () => {
+110 | 		const result = await remountWithStaleFocus(true, stealAt);
+111 | 		expect(result.stolen).toBe(true);
+112 | 		expect(result.staleDestroyed).toBe(true);
+113 | 		expect(result.focusedIsLive).toBe(true);
+                                     ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (E:\shri-harness\apps\cli\src\tui\hooks\use-focus-after-remount.render.test.tsx:113:32)
+(fail) focuses the remounted prompt after stale focus at layout time [11.48ms]
+
+ 3 pass
+ 1 fail
+ 19 expect() calls
+Ran 4 tests across 1 file. [281.00ms]

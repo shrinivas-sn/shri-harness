@@ -176,12 +176,46 @@ function verifyTarball(reportDir: string, pkg: VerifiedPackage): string {
 	return path;
 }
 
+// Every listed check must be reported true, so an omitted journey fails.
+const MODEL_PTY_CHECKS = [
+	"modelOpen",
+	"transcriptionFiltered",
+	"missingMetadataRendered",
+	"localCatalogRequested",
+	"fixtureTranscriptionFiltered",
+	"catalogOnlyExcluded",
+	"discoveryRequested",
+	"temporaryKeyDiscovery",
+	"savedKeyUnchanged",
+	"selectionCancelKeepsModel",
+	"switchOptions",
+	"noOptionRejected",
+	"modelSelected",
+	"discoveryFailureNotice",
+	"discoveryEmptyManual",
+	"noUnknownRequests",
+	"modelReopened",
+] as const;
+
+const CONVERSATION_PTY_CHECKS = [
+	"calibrated",
+	"conversationThreeTurns",
+	"toolPairing",
+	"resumeRestart",
+	"noReplayRejected",
+	"savedKeyUsed",
+	"keyAbsentFromTerminal",
+	"noUnknownRequests",
+	"cleanupComplete",
+] as const;
+
 export async function runInstalledSmoke(
 	target: string,
 	options: {
 		pty?: boolean;
 		authPty?: boolean;
 		modelPty?: boolean;
+		conversationPty?: boolean;
 		renderPty?: boolean;
 		daemon?: boolean;
 		providerFixture?: boolean;
@@ -537,40 +571,18 @@ export async function runInstalledSmoke(
 				unrelated,
 				env,
 			);
-			let modelChecks: {
-				modelOpen?: boolean;
-				transcriptionFiltered?: boolean;
-				missingMetadataRendered?: boolean;
-				localCatalogRequested?: boolean;
-				fixtureTranscriptionFiltered?: boolean;
-				modelSelected?: boolean;
-				modelReopened?: boolean;
-			} = {};
+			let modelChecks: Partial<
+				Record<(typeof MODEL_PTY_CHECKS)[number], boolean>
+			> = {};
 			try {
 				modelChecks = JSON.parse(modelResult.stdout);
 			} catch {
 				// The PTY helper reports only boolean outcomes, never terminal contents.
 			}
-			for (const key of [
-				"modelOpen",
-				"transcriptionFiltered",
-				"missingMetadataRendered",
-				"localCatalogRequested",
-				"fixtureTranscriptionFiltered",
-				"modelSelected",
-				"modelReopened",
-			] as const) {
+			for (const key of MODEL_PTY_CHECKS) {
 				checks[key] = modelResult.status === 0 && modelChecks[key] === true;
 			}
-			if (
-				!checks.modelOpen ||
-				!checks.transcriptionFiltered ||
-				!checks.missingMetadataRendered ||
-				!checks.localCatalogRequested ||
-				!checks.fixtureTranscriptionFiltered ||
-				!checks.modelSelected ||
-				!checks.modelReopened
-			) {
+			if (MODEL_PTY_CHECKS.some((key) => !checks[key])) {
 				const diagnostic = modelResult.stderr.trim().split(/\r?\n/)[0] ?? "";
 				const failedChecks = Object.entries(modelChecks)
 					.filter(([, value]) => value === false)
@@ -578,6 +590,46 @@ export async function runInstalledSmoke(
 					.join(",");
 				fail(
 					`model-pty${diagnostic ? `: ${diagnostic.slice(0, 1_700)}` : `: status=${modelResult.status} failed=${failedChecks || "no-json"}`}`,
+				);
+			}
+		}
+		if (options.conversationPty) {
+			const conversationResult = run(
+				"node",
+				[
+					join(cliDir, "script", "smoke-installed-conversation-pty.mjs"),
+					join(
+						installedPlatform,
+						"bin",
+						process.platform === "win32" ? "shri.exe" : "shri",
+					),
+					unrelated,
+					settingsPath,
+				],
+				unrelated,
+				env,
+			);
+			let conversationChecks: Partial<
+				Record<(typeof CONVERSATION_PTY_CHECKS)[number], boolean>
+			> = {};
+			try {
+				conversationChecks = JSON.parse(conversationResult.stdout);
+			} catch {
+				// The PTY helper reports only booleans and a request count.
+			}
+			for (const key of CONVERSATION_PTY_CHECKS) {
+				checks[key] =
+					conversationResult.status === 0 && conversationChecks[key] === true;
+			}
+			if (CONVERSATION_PTY_CHECKS.some((key) => !checks[key])) {
+				const diagnostic =
+					conversationResult.stderr.trim().split(/\r?\n/)[0] ?? "";
+				const failedChecks = Object.entries(conversationChecks)
+					.filter(([, value]) => value === false)
+					.map(([key]) => key)
+					.join(",");
+				fail(
+					`conversation-pty${diagnostic ? `: ${diagnostic.slice(0, 1_700)}` : `: status=${conversationResult.status} failed=${failedChecks || "no-json"}`}`,
 				);
 			}
 		}
@@ -780,6 +832,7 @@ if (import.meta.main) {
 			pty: { type: "boolean" },
 			"auth-pty": { type: "boolean" },
 			"model-pty": { type: "boolean" },
+			"conversation-pty": { type: "boolean" },
 			"render-pty": { type: "boolean" },
 			daemon: { type: "boolean" },
 			"provider-fixture": { type: "boolean" },
@@ -800,6 +853,7 @@ if (import.meta.main) {
 					pty: values.pty,
 					authPty: values["auth-pty"],
 					modelPty: values["model-pty"],
+					conversationPty: values["conversation-pty"],
 					renderPty: values["render-pty"],
 					daemon: values.daemon,
 					providerFixture: values["provider-fixture"],

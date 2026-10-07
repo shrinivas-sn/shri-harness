@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 E:/shri-harness/apps/cli
+
+
+ Test Files  46 passed (46)
+      Tests  342 passed (342)
+   Start at  23:20:23
+   Duration  74.33s (transform 16.22s, setup 471ms, import 50.20s, tests 12.95s, environment 5ms)
+

@@ -169,8 +169,10 @@ describe.skipIf(process.platform !== "win32")(
 			expect(report.checks.authCancel).toBe(true);
 		});
 
-		it("opens, searches, selects, and reopens the installed model picker", {
-			timeout: 80_000,
+		// Measured 07/10/2026: model PTY 53 s, conversation PTY 33 s; failing
+		// model runs took up to 68 s.
+		it("switches Groq models and reasoning options in the installed model picker", {
+			timeout: 160_000,
 		}, () => {
 			const result = spawnSync(
 				"cmd.exe",
@@ -183,22 +185,76 @@ describe.skipIf(process.platform !== "win32")(
 				{
 					cwd: cliDir,
 					encoding: "utf8",
-					timeout: 70_000,
+					timeout: 150_000,
 					maxBuffer: 1024 * 1024,
 				},
 			);
 			expect(result.error).toBeUndefined();
-			expect(result.status).toBe(0);
+			expect(result.status, result.stderr.trim().slice(0, 600)).toBe(0);
 			const report = JSON.parse(result.stdout) as {
 				checks: Record<string, boolean>;
 			};
-			expect(report.checks.modelOpen).toBe(true);
-			expect(report.checks.transcriptionFiltered).toBe(true);
-			expect(report.checks.missingMetadataRendered).toBe(true);
-			expect(report.checks.localCatalogRequested).toBe(true);
-			expect(report.checks.fixtureTranscriptionFiltered).toBe(true);
-			expect(report.checks.modelSelected).toBe(true);
-			expect(report.checks.modelReopened).toBe(true);
+			for (const check of [
+				"modelOpen",
+				"transcriptionFiltered",
+				"missingMetadataRendered",
+				"localCatalogRequested",
+				"fixtureTranscriptionFiltered",
+				"catalogOnlyExcluded",
+				"discoveryRequested",
+				"temporaryKeyDiscovery",
+				"savedKeyUnchanged",
+				"selectionCancelKeepsModel",
+				"switchOptions",
+				"noOptionRejected",
+				"modelSelected",
+				"discoveryFailureNotice",
+				"discoveryEmptyManual",
+				"noUnknownRequests",
+				"modelReopened",
+				"stateIsolation",
+			]) {
+				expect(report.checks[check], check).toBe(true);
+			}
+		});
+
+		it("keeps a three-turn Groq conversation with tools across an installed resume", {
+			timeout: 130_000,
+		}, () => {
+			const result = spawnSync(
+				"cmd.exe",
+				[
+					"/d",
+					"/s",
+					"/c",
+					"bun script/smoke-installed.ts --target windows-x64 --conversation-pty",
+				],
+				{
+					cwd: cliDir,
+					encoding: "utf8",
+					timeout: 120_000,
+					maxBuffer: 1024 * 1024,
+				},
+			);
+			expect(result.error).toBeUndefined();
+			expect(result.status, result.stderr.trim().slice(0, 600)).toBe(0);
+			const report = JSON.parse(result.stdout) as {
+				checks: Record<string, boolean>;
+			};
+			for (const check of [
+				"calibrated",
+				"conversationThreeTurns",
+				"toolPairing",
+				"resumeRestart",
+				"noReplayRejected",
+				"savedKeyUsed",
+				"keyAbsentFromTerminal",
+				"noUnknownRequests",
+				"cleanupComplete",
+				"stateIsolation",
+			]) {
+				expect(report.checks[check], check).toBe(true);
+			}
 		});
 
 		it("uses CLI, environment, then saved Groq keys without persisting overrides", {

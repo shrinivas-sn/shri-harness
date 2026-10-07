@@ -1,0 +1,22 @@
+bun test v1.3.14 (0d9b296a)
+
+src\tui\hooks\use-focus-after-remount.render.test.tsx:
+81 | 
+82 | test("focuses the remounted prompt after the stale textarea is deleted", async () => {
+83 | 	const result = await remountWithStaleFocus(true);
+84 | 	expect(result.stolen).toBe(true);
+85 | 	expect(result.staleDestroyed).toBe(true);
+86 | 	expect(result.focusedIsLive).toBe(true);
+                                   ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (E:\shri-harness\apps\cli\src\tui\hooks\use-focus-after-remount.render.test.tsx:86:31)
+(fail) focuses the remounted prompt after the stale textarea is deleted [5.38ms]
+
+ 1 pass
+ 1 fail
+ 9 expect() calls
+Ran 2 tests across 1 file. [276.00ms]

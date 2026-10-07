@@ -50,6 +50,20 @@ Matrix [groq-repair-test-matrix.md](../../RESEARCH/groq-repair-test-matrix.md), 
 - Model PTY runs 1–5: [1](task-11.2-model-run1.log) [2](task-11.2-model-run2.log) [3](task-11.2-model-run3.log) [4](task-11.2-model-run4.log) [5](task-11.2-model-run5.log). Run 5: all four installed switches sent the expected bodies; failed later at a harness wait.
 - Conversation PTY script written, not run. E2E assertions not updated.
 
+## Task 11.2 continued (later session)
+
+- Model PTY [run 6](task-11.2-model-run6.log) passed every check; runs [7](task-11.2-model-run7.log)–[11](task-11.2-model-run11.log) failed intermittently with the prompt not taking keys after a dialog closed. Not fixed by retyping over 8 s, so this is a product focus defect, not timing: Plan issue 7.
+- Harness: live screen first in failure detail, caller-labelled picker stages, echo-checked typing with an `inputRetries` count (both PTY scripts).
+- Conversation PTY [run 1](task-11.2-conversation-run1.log): all checks passed.
+
+## Plan issue 7 fix and Task 11.2 checkpoint (third session)
+
+- Owner said fix issue 7 in this plan, and put a new Groq key in `.env` (presence checked only).
+- Escape and Tab probes in the installed PTY: Escape did not revive the prompt; Tab toggled Plan/Act, so keys arrived and only focus was lost. A first renderer probe (synchronous commits) did not reproduce it and was deleted.
+- An env-gated focus trace in a local build (not committed) showed the dialog library's 1 ms restore timer focusing the old textarea before React's passive-phase destroy.
+- Fix: `use-focus-after-remount.ts` and its render test (calibration plus fix, render-time and layout-time steals). A first layout-effect version failed the installed runs 4/5; the passive-effect version passed 5/5.
+- Harness typing made strict again; E2E asserts every check; matrix updated (12 proven). Evidence: `task-11.2-*` logs in this folder.
+
 ## Resume
 
 Continue Task 11.2 per DOCS/STATUS.md "Next up".
