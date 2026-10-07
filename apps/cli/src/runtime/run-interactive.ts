@@ -133,7 +133,13 @@ export async function applyInteractiveModelChange(input: {
 	// the endpoint, headers, provider-specific options, tools, and plugins. Rebuild
 	// the runtime with the existing transcript so all of that state changes
 	// together. restartWithCurrentMessages preserves the session ID.
-	await sessionRuntime.restartWithCurrentMessages();
+	try {
+		await sessionRuntime.restartWithCurrentMessages();
+	} catch (error) {
+		// The previous model keeps running, so the saved default must match it.
+		providerSettingsManager.saveProviderSettings(existing);
+		throw error;
+	}
 	// A same-ID restart reuses the existing manifest. Sync its connection label
 	// after the fully configured runtime is live so session history reflects the
 	// provider/model that will handle subsequent turns.

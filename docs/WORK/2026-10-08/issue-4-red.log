@@ -1,0 +1,26 @@
+
+ RUN  v4.1.11 E:/shri-harness/apps/cli
+
+ ❯ src/runtime/run-interactive.test.ts (10 tests | 1 failed) 51ms
+     × restores the previously saved settings when the restart fails 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runtime/run-interactive.test.ts > applyInteractiveModelChange > restores the previously saved settings when the restart fails
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+ ❯ src/runtime/run-interactive.test.ts:167:32
+    165|   ).rejects.toBe(restartFailure);
+    166|
+    167|   expect(saveProviderSettings).toHaveBeenCalledTimes(2);
+       |                                ^
+    168|   expect(saveProviderSettings).toHaveBeenNthCalledWith(1, {
+    169|    ...previous,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  00:28:54
+   Duration  24.94s (transform 13.34s, setup 67ms, import 24.46s, tests 51ms, environment 0ms)
+

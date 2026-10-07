@@ -12,7 +12,6 @@
 
 ## Open owner questions
 
-- **Plan issue 4:** after a failed model apply, should the saved model also roll back? (`applyInteractiveModelChange` saves before restarting.)
 - **Plan issue 6:** does Groq accept `reasoning_effort` for `openai/gpt-oss-safeguard-20b`? Docs and catalog disagree; live check in Task 12.2.
 - Phase 5: push is authorized (08/10). Candidate tag (12.2) and publish/global update (12.3) still need owner authorization.
 - **New Groq key ready (owner, 07/10/2026):** in the git-ignored root `.env` as `GROQ_API_KEY` (presence and `gsk_` shape checked, value not read or printed). Use it only for Task 12.2 live acceptance, in disposable config, never in commands, logs or CI. The old saved key is expired; don't reuse it.
@@ -32,4 +31,4 @@
 
 1. **Task 12.1:** add the Task 8/10 SDK tests, LLM/shared typechecks, Task 9 CLI tests and the Bun renderer tests to `.github/workflows/ci.yml`; update `RELEASE.md` gates; push and check the hosted run.
 2. **Task 12.2** (needs owner yes): choose the next unused `0.1.0-next.N`, rebuild, run live acceptance with the key in `.env`, tag a candidate. Settles plan issue 6.
-3. Owner still to answer: plan issue 4 (roll back saved model on a failed apply?).
+3. Plan issue 4 fixed 08/10 (saved model rolls back on a failed apply); not yet in a built artifact.

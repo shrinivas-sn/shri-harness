@@ -125,6 +125,54 @@ describe("applyInteractiveModelChange", () => {
 			updateCurrentSessionConnection.mock.invocationCallOrder[0] ?? 0,
 		);
 	});
+
+	it("restores the previously saved settings when the restart fails", async () => {
+		const config = {
+			providerId: "groq",
+			modelId: "openai/gpt-oss-20b",
+			thinking: true,
+			reasoningEffort: "low",
+		} as Config;
+		const previous = {
+			provider: "groq",
+			apiKey: "saved-key",
+			model: "openai/gpt-oss-120b",
+			reasoning: { enabled: true, effort: "high" as const },
+		};
+		const saveProviderSettings = vi.fn(() => ({
+			version: 1 as const,
+			providers: {},
+			modes: {},
+		}));
+		const restartFailure = new Error("restart failed");
+		const updateCurrentSessionConnection = vi.fn(async () => {});
+
+		await expect(
+			applyInteractiveModelChange({
+				config,
+				providerSettingsManager: {
+					getProviderSettings: vi.fn(() => previous),
+					saveProviderSettings,
+				},
+				sessionRuntime: {
+					ensureReady: vi.fn(async () => {}),
+					restartWithCurrentMessages: vi.fn(async () => {
+						throw restartFailure;
+					}),
+					updateCurrentSessionConnection,
+				},
+			}),
+		).rejects.toBe(restartFailure);
+
+		expect(saveProviderSettings).toHaveBeenCalledTimes(2);
+		expect(saveProviderSettings).toHaveBeenNthCalledWith(1, {
+			...previous,
+			model: "openai/gpt-oss-20b",
+			reasoning: { enabled: true, effort: "low" },
+		});
+		expect(saveProviderSettings).toHaveBeenLastCalledWith(previous);
+		expect(updateCurrentSessionConnection).not.toHaveBeenCalled();
+	});
 });
 
 describe("resumeInteractiveSession", () => {
