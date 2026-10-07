@@ -1,6 +1,6 @@
 # Project status
 
-## Current state - 08/10/2026, Task 12.2: next.2 candidate passed live acceptance; tag and dry-run release next
+## Current state - 08/10/2026, Task 12.2: next.2 tagged and dry-run passed; npm publish failed (E404, nothing published)
 
 - **Project:** `E:shri-harness`, branch `main`. Live plan [PLAN.md](PLAN.md) (Groq conversation and model reliability).
 - **Done and committed:** Phase 1 Task 8 (`8b16b5a`), Phase 2 Tasks 9.1 (`4e107a2`) and 9.2 (`75db91c`), Phase 3 Task 10 (`ab3fa24`), Phase 4 Task 11.1 matrix (`d687d61`), Plan issue 7 focus fix and Task 11.2 checkpoint (hashes: see `git log`, messages `fix(tui): refocus prompt after dialog focus restore` and `test(cli): cover installed Groq conversations and model switches`). Older detail: [archive](WORK/archive.md).
