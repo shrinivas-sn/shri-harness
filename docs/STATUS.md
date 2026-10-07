@@ -32,4 +32,6 @@
 
 ## Next up (start here)
 
+0. **Before the next release:** fix GitHub trusted publishing. `release.yml` publish failed twice with npm E404 (run 37679726336, attempts 1–2) even after the owner re-enabled the trusted publisher. Retrieve current npm trusted-publishing docs (`/context-brief`), compare with `release.yml` (setup-node `registry-url` token handling, npm version, provenance) and both packages’ npm settings, fix, then publish the next version with one `publish=true` run. next.2 was published manually by the owner from the local verified tarballs (no provenance).
+
 1. **Task 12.2** (needs owner yes): choose the next unused `0.1.0-next.N`, rebuild, run live acceptance with the key in `.env`, tag a candidate. Settles plan issue 6.
