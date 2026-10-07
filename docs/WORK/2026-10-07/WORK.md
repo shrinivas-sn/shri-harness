@@ -28,6 +28,16 @@ Committed as `4e107a2`.
 - Green: [task-9.2-green.log](task-9.2-green.log) 49/49; [task-9.2-typecheck.log](task-9.2-typecheck.log) exit 0; [task-9.2-render.log](task-9.2-render.log) 5/5.
 - Open owner question: Plan issue 4 (saved model after a failed apply).
 
+Committed as `75db91c`.
+
+## Task 10 and Phase 3 checkpoint
+
+- Docs re-check: Groq reasoning.md/models.md fetched 07/10/2026; brief in `E:\dev-recipes\_knowledge\cache\groq-reasoning-controls.md`, registry entry `groq-api` added to `sources.yaml` (dev-recipes changes not committed).
+- Pre-fix actual bodies: [task-10-bodies-before.txt](task-10-bodies-before.txt). Probe test deleted after use.
+- Red: [wire](task-10-red-wire.log), [CLI render](task-10-cli-render-red.log), [controller](task-10-cli-controller-red.log).
+- Green: [SDK 399/399](task-10-green.log), [LLM typecheck](task-10-llms-typecheck.log), [shared typecheck](task-10-shared-typecheck.log), [CLI unit 50/50](task-10-cli-unit.log), [CLI typecheck](task-10-cli-typecheck.log), [render 8/8](task-10-cli-render.log).
+- Open: Plan issues 4 (saved-model rollback) and 6 (Safeguard effort, live check).
+
 ## Resume
 
-Phase 3, Task 10 is next. Details in the PLAN Progress Log.
+Phase 4, Task 11.1 is next. Details in the PLAN Progress Log.

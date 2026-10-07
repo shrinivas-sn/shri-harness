@@ -1,0 +1,48 @@
+bun test v1.3.14 (0d9b296a)
+
+src\tui\components\model-selector\model-selector.render.test.tsx:
+224 | 		},
+225 | 	} as never);
+226 |
+227 | 	expect(
+228 | 		Object.fromEntries(options.map((o) => [o.key, o.reasoningEfforts])),
+229 | 	).toEqual({
+         ^
+error: expect(received).toEqual(expected)
+
+@@ -2,8 +2,4 @@
+    "llama-3.1-8b-instant": undefined,
+-   "openai/gpt-oss-120b": [
+-     "low",
+-     "medium",
+-     "high",
+-   ],
+-   "qwen/qwen3.6-27b": [],
++   "openai/gpt-oss-120b": undefined,
++   "qwen/qwen3.6-27b": undefined,
+  }
+
+- Expected  - 6
++ Received  + 2
+
+      at <anonymous> (E:\shri-harness\apps\cli\src\tui\components\model-selector\model-selector.render.test.tsx:229:4)
+(fail) records each model's supported effort levels from catalog controls [8.79ms]
+274 | test("offers only the selected model's supported thinking levels", async () => {
+275 | 	const frame = await renderThinking({ levels: ["low", "medium", "high"] });
+276 |
+277 | 	expect(frame).toContain("Off");
+278 | 	expect(frame).toContain("High");
+279 | 	expect(frame).not.toContain("Extra High");
+                         ^
+error: expect(received).not.toContain(expected)
+
+Expected to not contain: "Extra High"
+Received: "Thinking Level for GPT OSS 120B                                                                     \n                                                                                                    \n   Off                                                                         No extended thinking \n   Low                                                                            Minimal reasoning \n   Medium                                                                        Balanced reasoning \n   High                                                                              Deep reasoning \n ❯ Extra High                                                           Maximum reasoning (current) \n                                                                                                    \n↑/↓ navigate, Enter to select, Esc to go back                                                       \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n"
+
+      at <anonymous> (E:\shri-harness\apps\cli\src\tui\components\model-selector\model-selector.render.test.tsx:279:20)
+(fail) offers only the selected model's supported thinking levels [17.71ms]
+
+ 6 pass
+ 2 fail
+ 22 expect() calls
+Ran 8 tests across 1 file. [1.66s]

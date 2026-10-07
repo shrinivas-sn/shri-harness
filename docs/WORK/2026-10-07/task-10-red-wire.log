@@ -1,0 +1,293 @@
+@cline/llms test:
+@cline/llms test:  RUN  v4.1.11 E:/shri-harness/sdk/packages/llms
+@cline/llms test:
+@cline/llms test: (node:20860) Warning: AI SDK Warning System: To turn off warning logging, set the AI_SDK_LOG_WARNINGS global to false.
+@cline/llms test: (Use `node --trace-warnings ...` to show where the warning was created)
+@cline/llms test: (node:20860) DeprecationWarning: AI SDK Warning (openai-compatible.chat / manual/unknown-model): Deprecated: "providerOptions key 'openai-compatible'". Use 'openaiCompatible' instead.
+@cline/llms test: (node:20860) DeprecationWarning: AI SDK Warning (openai-compatible.chat / manual/unknown-model): Deprecated: "providerOptions key 'openai-compatible'". Use 'openaiCompatible' instead.
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts (75 tests | 36 failed | 17 skipped) 591ms
+@cline/llms test:        × reasoning on 19ms
+@cline/llms test:        × reasoning xhigh 14ms
+@cline/llms test:        × reasoning minimal 10ms
+@cline/llms test:        × reasoning on 8ms
+@cline/llms test:        × reasoning xhigh 9ms
+@cline/llms test:        × reasoning minimal 5ms
+@cline/llms test:        × reasoning off 5ms
+@cline/llms test:        × reasoning on 10ms
+@cline/llms test:        × reasoning xhigh 10ms
+@cline/llms test:        × reasoning minimal 6ms
+@cline/llms test:        × reasoning off 4ms
+@cline/llms test:        × reasoning on 8ms
+@cline/llms test:        × reasoning xhigh 6ms
+@cline/llms test:        × reasoning minimal 5ms
+@cline/llms test:        × reasoning off 6ms
+@cline/llms test:        × reasoning on 12ms
+@cline/llms test:        × reasoning low 11ms
+@cline/llms test:        × reasoning medium 9ms
+@cline/llms test:        × reasoning high 10ms
+@cline/llms test:        × reasoning xhigh 9ms
+@cline/llms test:        × reasoning minimal 5ms
+@cline/llms test:        × reasoning off 4ms
+@cline/llms test:        × reasoning on 5ms
+@cline/llms test:        × reasoning low 4ms
+@cline/llms test:        × reasoning medium 5ms
+@cline/llms test:        × reasoning high 4ms
+@cline/llms test:        × reasoning xhigh 4ms
+@cline/llms test:        × reasoning minimal 5ms
+@cline/llms test:        × reasoning off 6ms
+@cline/llms test:        × reasoning on 6ms
+@cline/llms test:        × reasoning low 4ms
+@cline/llms test:        × reasoning medium 4ms
+@cline/llms test:        × reasoning high 4ms
+@cline/llms test:        × reasoning xhigh 5ms
+@cline/llms test:        × reasoning minimal 10ms
+@cline/llms test:      × follows the selected model across reasoning → non-reasoning → reasoning switches 40ms
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯ Failed Tests 36 ⎯⎯⎯⎯⎯⎯⎯
+@cline/llms test:
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-120b > reasoning on
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-20b > reasoning on
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-safeguard-20b > reasoning on
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.8-27b > reasoning on
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.6-27b > reasoning on
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.6-27b > reasoning medium
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > llama-3.1-8b-instant > reasoning on
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > llama-3.1-8b-instant > reasoning medium
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > manual/unknown-model > reasoning on
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > manual/unknown-model > reasoning medium
+@cline/llms test: AssertionError: expected { reasoning_effort: 'medium' } to deeply equal {}
+@cline/llms test:
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test:
+@cline/llms test: - {}
+@cline/llms test: + {
+@cline/llms test: +   "reasoning_effort": "medium",
+@cline/llms test: + }
+@cline/llms test:
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:842:39
+@cline/llms test:     840|
+@cline/llms test:     841|    expect(bodies).toHaveLength(1);
+@cline/llms test:     842|    expect(reasoningFields(bodies[0])).toEqual(expected[modelId][intent…
+@cline/llms test:        |                                       ^
+@cline/llms test:     843|   });
+@cline/llms test:     844|  });
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/36]⎯
+@cline/llms test:
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-120b > reasoning xhigh
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-20b > reasoning xhigh
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-safeguard-20b > reasoning xhigh
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.8-27b > reasoning xhigh
+@cline/llms test: AssertionError: expected { reasoning_effort: 'xhigh' } to deeply equal { reasoning_effort: 'high' }
+@cline/llms test:
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test:
+@cline/llms test:   {
+@cline/llms test: -   "reasoning_effort": "high",
+@cline/llms test: +   "reasoning_effort": "xhigh",
+@cline/llms test:   }
+@cline/llms test:
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:842:39
+@cline/llms test:     840|
+@cline/llms test:     841|    expect(bodies).toHaveLength(1);
+@cline/llms test:     842|    expect(reasoningFields(bodies[0])).toEqual(expected[modelId][intent…
+@cline/llms test:        |                                       ^
+@cline/llms test:     843|   });
+@cline/llms test:     844|  });
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/36]⎯
+@cline/llms test:
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-120b > reasoning minimal
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-20b > reasoning minimal
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-safeguard-20b > reasoning minimal
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.8-27b > reasoning minimal
+@cline/llms test: AssertionError: expected { reasoning_effort: 'minimal' } to deeply equal { reasoning_effort: 'low' }
+@cline/llms test:
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test:
+@cline/llms test:   {
+@cline/llms test: -   "reasoning_effort": "low",
+@cline/llms test: +   "reasoning_effort": "minimal",
+@cline/llms test:   }
+@cline/llms test:
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:842:39
+@cline/llms test:     840|
+@cline/llms test:     841|    expect(bodies).toHaveLength(1);
+@cline/llms test:     842|    expect(reasoningFields(bodies[0])).toEqual(expected[modelId][intent…
+@cline/llms test:        |                                       ^
+@cline/llms test:     843|   });
+@cline/llms test:     844|  });
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/36]⎯
+@cline/llms test:
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > openai/gpt-oss-safeguard-20b > reasoning off
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.8-27b > reasoning off
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.6-27b > reasoning off
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > llama-3.1-8b-instant > reasoning off
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > manual/unknown-model > reasoning off
+@cline/llms test: AssertionError: expected { include_reasoning: false } to deeply equal {}
+@cline/llms test:
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test:
+@cline/llms test: - {}
+@cline/llms test: + {
+@cline/llms test: +   "include_reasoning": false,
+@cline/llms test: + }
+@cline/llms test:
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:842:39
+@cline/llms test:     840|
+@cline/llms test:     841|    expect(bodies).toHaveLength(1);
+@cline/llms test:     842|    expect(reasoningFields(bodies[0])).toEqual(expected[modelId][intent…
+@cline/llms test:        |                                       ^
+@cline/llms test:     843|   });
+@cline/llms test:     844|  });
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/36]⎯
+@cline/llms test:
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.6-27b > reasoning low
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > llama-3.1-8b-instant > reasoning low
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > manual/unknown-model > reasoning low
+@cline/llms test: AssertionError: expected { reasoning_effort: 'low' } to deeply equal {}
+@cline/llms test:
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test:
+@cline/llms test: - {}
+@cline/llms test: + {
+@cline/llms test: +   "reasoning_effort": "low",
+@cline/llms test: + }
+@cline/llms test:
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:842:39
+@cline/llms test:     840|
+@cline/llms test:     841|    expect(bodies).toHaveLength(1);
+@cline/llms test:     842|    expect(reasoningFields(bodies[0])).toEqual(expected[modelId][intent…
+@cline/llms test:        |                                       ^
+@cline/llms test:     843|   });
+@cline/llms test:     844|  });
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/36]⎯
+@cline/llms test:
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.6-27b > reasoning high
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > llama-3.1-8b-instant > reasoning high
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > manual/unknown-model > reasoning high
+@cline/llms test: AssertionError: expected { reasoning_effort: 'high' } to deeply equal {}
+@cline/llms test:
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test:
+@cline/llms test: - {}
+@cline/llms test: + {
+@cline/llms test: +   "reasoning_effort": "high",
+@cline/llms test: + }
+@cline/llms test:
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:842:39
+@cline/llms test:     840|
+@cline/llms test:     841|    expect(bodies).toHaveLength(1);
+@cline/llms test:     842|    expect(reasoningFields(bodies[0])).toEqual(expected[modelId][intent…
+@cline/llms test:        |                                       ^
+@cline/llms test:     843|   });
+@cline/llms test:     844|  });
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/36]⎯
+@cline/llms test:
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.6-27b > reasoning xhigh
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > llama-3.1-8b-instant > reasoning xhigh
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > manual/unknown-model > reasoning xhigh
+@cline/llms test: AssertionError: expected { reasoning_effort: 'xhigh' } to deeply equal {}
+@cline/llms test:
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test:
+@cline/llms test: - {}
+@cline/llms test: + {
+@cline/llms test: +   "reasoning_effort": "xhigh",
+@cline/llms test: + }
+@cline/llms test:
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:842:39
+@cline/llms test:     840|
+@cline/llms test:     841|    expect(bodies).toHaveLength(1);
+@cline/llms test:     842|    expect(reasoningFields(bodies[0])).toEqual(expected[modelId][intent…
+@cline/llms test:        |                                       ^
+@cline/llms test:     843|   });
+@cline/llms test:     844|  });
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/36]⎯
+@cline/llms test:
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > qwen/qwen3.6-27b > reasoning minimal
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > llama-3.1-8b-instant > reasoning minimal
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > manual/unknown-model > reasoning minimal
+@cline/llms test: AssertionError: expected { reasoning_effort: 'minimal' } to deeply equal {}
+@cline/llms test:
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test:
+@cline/llms test: - {}
+@cline/llms test: + {
+@cline/llms test: +   "reasoning_effort": "minimal",
+@cline/llms test: + }
+@cline/llms test:
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:842:39
+@cline/llms test:     840|
+@cline/llms test:     841|    expect(bodies).toHaveLength(1);
+@cline/llms test:     842|    expect(reasoningFields(bodies[0])).toEqual(expected[modelId][intent…
+@cline/llms test:        |                                       ^
+@cline/llms test:     843|   });
+@cline/llms test:     844|  });
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/36]⎯
+@cline/llms test:
+@cline/llms test:  FAIL  src/providers/vendors/openai-compatible.test.ts > Groq reasoning request bodies > follows the selected model across reasoning → non-reasoning → reasoning switches
+@cline/llms test: AssertionError: expected [ …(5) ] to deeply equal [ …(5) ]
+@cline/llms test:
+@cline/llms test: - Expected
+@cline/llms test: + Received
+@cline/llms test:
+@cline/llms test: @@ -1,19 +1,23 @@
+@cline/llms test:   [
+@cline/llms test:     [
+@cline/llms test:       "openai/gpt-oss-120b",
+@cline/llms test:       {
+@cline/llms test: -       "reasoning_effort": "high",
+@cline/llms test: +       "reasoning_effort": "xhigh",
+@cline/llms test:       },
+@cline/llms test:     ],
+@cline/llms test:     [
+@cline/llms test:       "llama-3.1-8b-instant",
+@cline/llms test: -     {},
+@cline/llms test: +     {
+@cline/llms test: +       "reasoning_effort": "xhigh",
+@cline/llms test: +     },
+@cline/llms test:     ],
+@cline/llms test:     [
+@cline/llms test:       "manual/unknown-model",
+@cline/llms test: -     {},
+@cline/llms test: +     {
+@cline/llms test: +       "include_reasoning": false,
+@cline/llms test: +     },
+@cline/llms test:     ],
+@cline/llms test:     [
+@cline/llms test:       "openai/gpt-oss-20b",
+@cline/llms test:       {
+@cline/llms test:         "include_reasoning": false,
+@cline/llms test:
+@cline/llms test:  ❯ src/providers/vendors/openai-compatible.test.ts:857:69
+@cline/llms test:     855|   await send(gateway, "qwen/qwen3.8-27b", intents.low);
+@cline/llms test:     856|
+@cline/llms test:     857|   expect(bodies.map((body) => [body.model, reasoningFields(body)])).to…
+@cline/llms test:        |                                                                     ^
+@cline/llms test:     858|    ["openai/gpt-oss-120b", { reasoning_effort: "high" }],
+@cline/llms test:     859|    ["llama-3.1-8b-instant", {}],
+@cline/llms test:
+@cline/llms test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/36]⎯
+@cline/llms test:
+@cline/llms test:
+@cline/llms test:  Test Files  1 failed (1)
+@cline/llms test:       Tests  36 failed | 22 passed | 17 skipped (75)
+@cline/llms test:    Start at  13:10:09
+@cline/llms test:    Duration  4.36s (transform 2.61s, setup 0ms, import 3.56s, tests 591ms, environment 0ms)
+@cline/llms test:
+@cline/llms test: Exited with code 1

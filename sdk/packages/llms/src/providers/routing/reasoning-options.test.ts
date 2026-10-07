@@ -4,7 +4,11 @@ import type {
 	ModelReasoningOption,
 } from "@cline/shared";
 import { describe, expect, it } from "vitest";
-import { normalizeReasoningRequest } from "./reasoning-options";
+import { GROQ_ROUTING_METADATA } from "./groq-reasoning";
+import {
+	enforceKnownReasoningControls,
+	normalizeReasoningRequest,
+} from "./reasoning-options";
 
 function makeRequest(
 	reasoning: GatewayStreamRequest["reasoning"],
@@ -198,5 +202,97 @@ describe("normalizeReasoningRequest", () => {
 				makeContext(undefined),
 			).reasoning?.effort,
 		).toBe("high");
+	});
+});
+
+describe("enforceKnownReasoningControls", () => {
+	const effort = (values: string[]): ModelReasoningOption[] => [
+		{ type: "effort", values } as ModelReasoningOption,
+	];
+	const groq = (options: readonly ModelReasoningOption[] | undefined) =>
+		makeContext(options, { metadata: GROQ_ROUTING_METADATA });
+
+	it("leaves providers without the policy untouched", () => {
+		const request = makeRequest({ enabled: true, effort: "xhigh" });
+
+		expect(enforceKnownReasoningControls(request, makeContext(undefined))).toBe(
+			request,
+		);
+	});
+
+	it("drops all reasoning for models without known controls", () => {
+		for (const reasoning of [
+			{ enabled: true, effort: "high" as const },
+			{ enabled: false },
+			{ enabled: true },
+		]) {
+			expect(
+				enforceKnownReasoningControls(makeRequest(reasoning), groq(undefined))
+					.reasoning,
+			).toBeUndefined();
+			expect(
+				enforceKnownReasoningControls(makeRequest(reasoning), groq([]))
+					.reasoning,
+			).toBeUndefined();
+		}
+	});
+
+	it("normalizes legacy efforts to the nearest supported value", () => {
+		const gptOss = groq(effort(["low", "medium", "high"]));
+
+		expect(
+			enforceKnownReasoningControls(
+				makeRequest({ enabled: true, effort: "xhigh" }),
+				gptOss,
+			).reasoning,
+		).toEqual({ enabled: true, effort: "high" });
+		expect(
+			enforceKnownReasoningControls(
+				makeRequest({ enabled: true, effort: "max" }),
+				gptOss,
+			).reasoning,
+		).toEqual({ enabled: true, effort: "high" });
+		expect(
+			enforceKnownReasoningControls(
+				makeRequest({ enabled: true, effort: "minimal" }),
+				gptOss,
+			).reasoning,
+		).toEqual({ enabled: true, effort: "low" });
+	});
+
+	it("omits effort without an explicit preference", () => {
+		expect(
+			enforceKnownReasoningControls(
+				makeRequest({ enabled: true }),
+				groq(effort(["low", "medium", "high"])),
+			).reasoning,
+		).toBeUndefined();
+	});
+
+	it("omits effort for models that advertise no effort levels", () => {
+		expect(
+			enforceKnownReasoningControls(
+				makeRequest({ enabled: true, effort: "low" }),
+				groq(effort(["none", "default"])),
+			).reasoning,
+		).toBeUndefined();
+	});
+
+	it("keeps Off for known reasoning models so visibility rules can apply", () => {
+		expect(
+			enforceKnownReasoningControls(
+				makeRequest({ enabled: false, effort: "high" }),
+				groq(effort(["low", "medium", "high"])),
+			).reasoning,
+		).toEqual({ enabled: false });
+	});
+
+	it("does not mutate the input request", () => {
+		const request = makeRequest({ enabled: true, effort: "xhigh" });
+		const before = structuredClone(request);
+
+		enforceKnownReasoningControls(request, groq(effort(["low", "high"])));
+
+		expect(request).toEqual(before);
 	});
 });

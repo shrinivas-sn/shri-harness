@@ -8,6 +8,7 @@ import {
 	buildModelOptions,
 	type ModelOption,
 	ModelSelectorContent,
+	ThinkingLevelContent,
 } from "./model-selector";
 
 const groqModelOptions: ModelOption[] = [
@@ -200,4 +201,89 @@ test("excludes dedicated transcription models from picker options while retainin
 		"openai/gpt-oss-120b",
 		"unknown-metadata",
 	]);
+});
+
+test("records each model's supported effort levels from catalog controls", () => {
+	const options = buildModelOptions({
+		"openai/gpt-oss-120b": {
+			id: "openai/gpt-oss-120b",
+			name: "GPT OSS 120B",
+			capabilities: ["tools", "reasoning"],
+			reasoningOptions: [{ type: "effort", values: ["low", "medium", "high"] }],
+		},
+		"qwen/qwen3.6-27b": {
+			id: "qwen/qwen3.6-27b",
+			name: "Qwen3.6 27B",
+			capabilities: ["tools", "reasoning"],
+			reasoningOptions: [{ type: "effort", values: ["none", "default"] }],
+		},
+		"llama-3.1-8b-instant": {
+			id: "llama-3.1-8b-instant",
+			name: "Llama 3.1 8B",
+			capabilities: ["tools"],
+		},
+	} as never);
+
+	expect(
+		Object.fromEntries(options.map((o) => [o.key, o.reasoningEfforts])),
+	).toEqual({
+		"openai/gpt-oss-120b": ["low", "medium", "high"],
+		"qwen/qwen3.6-27b": [],
+		"llama-3.1-8b-instant": undefined,
+	});
+});
+
+async function renderThinking(
+	props: Partial<Parameters<typeof ThinkingLevelContent>[0]>,
+): Promise<string> {
+	(
+		globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
+	).IS_REACT_ACT_ENVIRONMENT = true;
+	const setup = await createTestRenderer({ width: 100, height: 20 });
+	const root = createRoot(setup.renderer);
+	try {
+		await act(async () => {
+			root.render(
+				<DialogProvider>
+					<ThinkingLevelContent
+						dialogId={"thinking" as never}
+						dismiss={() => undefined}
+						resolve={() => undefined}
+						modelName="GPT OSS 120B"
+						currentLevel="xhigh"
+						{...props}
+					/>
+				</DialogProvider>,
+			);
+		});
+		await setup.renderOnce();
+		return setup.captureCharFrame();
+	} finally {
+		try {
+			await act(async () => {
+				root.unmount();
+			});
+		} finally {
+			setup.renderer.destroy();
+			(
+				globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
+			).IS_REACT_ACT_ENVIRONMENT = false;
+		}
+	}
+}
+
+test("offers only the selected model's supported thinking levels", async () => {
+	const frame = await renderThinking({ levels: ["low", "medium", "high"] });
+
+	expect(frame).toContain("Off");
+	expect(frame).toContain("High");
+	expect(frame).not.toContain("Extra High");
+	expect(frame).toMatch(/❯ Medium/);
+});
+
+test("keeps every thinking level when the model's controls are unknown", async () => {
+	const frame = await renderThinking({ currentLevel: "high" });
+
+	expect(frame).toContain("Extra High");
+	expect(frame).toMatch(/❯ High/);
 });

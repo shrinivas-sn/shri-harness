@@ -202,16 +202,18 @@ A new session may start here.
 
 ### Task 10 — Normalize effort and scope response visibility
 
+**Execution notes (amended, see issues 5–6):** The defect was wider than planned — Groq's portable path skipped catalog normalization for every model — so the policy is applied once at gateway stream entry. Safeguard 20B keeps catalog efforts pending live proof.
+
 **Goal:** Every selected model receives only supported reasoning options.
 **Why:** Missing metadata currently permits generic effort, while the GPT-OSS visibility rule applies too broadly.
 **Where:** `sdk/packages/llms/src/providers/routing/reasoning-options.ts` (search text: `options === undefined`); `portable-reasoning.ts` (`resolvePortableReasoning`); `provider-option-rules.ts` (`provider.groq.reasoning-visibility`); `sdk/packages/llms/src/providers/model-facts.ts` (`getModelReasoningControls`); shared GatewayProviderRouting, Groq builtin, and Task 9.2 ThinkingLevelContent call sites. Tests: routing `reasoning-options.test.ts`, `provider-options.test.ts`, providers `ai-sdk-reasoning.test.ts` and `gateway.test.ts`.
 **Do:**
-- [ ] Add optional routing policy `reasoningRequiresKnownControls?: boolean` for Groq. Resolve known model facts/catalog controls before applying it; unknown/non-reasoning Groq omits optional controls. Preserve unrelated providers' missing-metadata behavior.
-- [ ] Preserve GPT-OSS low/medium/high. Normalize legacy minimal to low and xhigh/max to high through the existing helper. Omit effort without explicit preference. Off omits unsupported none/reasoning_format and uses include_reasoning false only for verified GPT-OSS routes.
-- [ ] Narrow the visibility rule through existing typed model-fact helpers. Other families use their own freshly verified controls; absent proof means omit optional fields and label controls unavailable.
-- [ ] UI offers supported values only. Preserve and document existing normalization of recognized CLI effort input; never forward invalid values or introduce a duplicate setting.
-- [ ] Capture actual request bodies for both GPT-OSS sizes, non-reasoning and unknown models, and another verified reasoning family if present. Cover no preference, Off, low/medium/high, legacy xhigh, and reasoning → non-reasoning → reasoning switches.
-- [ ] Preserve incoming reasoning, stored history, Phase 1 filtering, and cross-provider option/signature regressions.
+- [x] Add optional routing policy `reasoningRequiresKnownControls?: boolean` for Groq. Resolve known model facts/catalog controls before applying it; unknown/non-reasoning Groq omits optional controls. Preserve unrelated providers' missing-metadata behavior.
+- [x] Preserve GPT-OSS low/medium/high. Normalize legacy minimal to low and xhigh/max to high through the existing helper. Omit effort without explicit preference. Off omits unsupported none/reasoning_format and uses include_reasoning false only for verified GPT-OSS routes.
+- [x] Narrow the visibility rule through existing typed model-fact helpers. Other families use their own freshly verified controls; absent proof means omit optional fields and label controls unavailable.
+- [x] UI offers supported values only. Preserve and document existing normalization of recognized CLI effort input; never forward invalid values or introduce a duplicate setting.
+- [x] Capture actual request bodies for both GPT-OSS sizes, non-reasoning and unknown models, and another verified reasoning family if present. Cover no preference, Off, low/medium/high, legacy xhigh, and reasoning → non-reasoning → reasoning switches.
+- [x] Preserve incoming reasoning, stored history, Phase 1 filtering, and cross-provider option/signature regressions.
 **Test first:** Unknown/non-reasoning Groq with old effort omits optional fields; Off on non-GPT-OSS does not get the GPT-OSS-only visibility field; GPT-OSS Off keeps existing behavior. Capture actual-body failures first.
 **Verify:** From `sdk/`: `bun -F @cline/llms test src/providers/routing/reasoning-options.test.ts src/providers/routing/provider-options.test.ts src/providers/ai-sdk-reasoning.test.ts src/providers/gateway.test.ts src/providers/vendors/openai-compatible.test.ts`; LLM/shared typechecks. Rerun Task 9.2 CLI/native commands → exit 0 with supported/unsupported wire cases and retained providers passing.
 **Don't touch:** Catalog generation, account limits, fallback selection, token optimization. May-change existing assertions: Groq optional-field expectations contradicted by verified contract only; retain GPT-OSS Off and non-Groq regressions.
@@ -220,10 +222,10 @@ A new session may start here.
 
 ### Checkpoint — Phase 3
 
-- [ ] Full verification: Task 10 command set passes; R10–R12 remain intact.
-- [ ] Commit recorded, or explicit uncommitted reason.
-- [ ] Status updated: source repairs complete within tested scope; installed/live pending; next Task 11.1.
-- [ ] Progress Log includes official sources/date and actual outputs.
+- [x] Full verification: Task 10 command set passes; R10–R12 remain intact.
+- [x] Commit recorded, or explicit uncommitted reason.
+- [x] Status updated: source repairs complete within tested scope; installed/live pending; next Task 11.1.
+- [x] Progress Log includes official sources/date and actual outputs.
 
 A new session may start here.
 
@@ -354,6 +356,8 @@ Append only. Before each task compare facts/anchors with reality. Local same-int
 | 2 | 26/09/2026 | 8 | Focused gate retains cross-provider passes | Before production changes: 22 failed / 160 passed; 12 new Groq cases, 9 existing 5-second timeouts and one Vertex-signature assertion failure (`WORK/2026-09-26/task-8-red.log`) | Full gate requires re-verification; timeout failures are separate from Groq serialization | Preserve existing assertions; isolate new regressions, then rerun full gate after repair; record any unresolved failures | None needed for local diagnosis |
 | 3 | 07/10/2026 | 9.2 | Test hook-to-helper wiring with Vitest `groq-model-selection.test.ts` | Importing `use-model-selector.tsx` under Vitest fails: `Cannot find module …react-reconciler\constants` from `@opentui/react` (probe run, then deleted) | Hook glue itself has no automated test; its logic does | Used the task's own fallback: extracted `groq-model-selection.ts` (discovery wiring, stale gate, staged pick, transactional apply), consumed by the hook and tested in Vitest; picker props tested in the Bun native renderer. Remaining hook glue verified by typecheck and review | None needed; Phase 4 installed PTY is the end-to-end proof |
 | 4 | 07/10/2026 | 9.2 | Failed apply restores in-memory state | `applyInteractiveModelChange` saves model/reasoning to provider settings before `restartWithCurrentMessages`; if the restart throws, config is restored but the saved model may already be the new one | Saved default could differ from the running model after a rare restart failure | In-memory restore and picker notice implemented; persistence ordering unchanged (outside this task's files) | Owner: should a failed apply also roll back the saved model? |
+| 5 | 07/10/2026 | 10 | Missing metadata permits generic effort; visibility rule too broad | Actual bodies before repair ([table](WORK/2026-10-07/task-10-bodies-before.txt)): every Groq model — including Llama and unknown IDs — got `reasoning_effort`, raw `xhigh`/`minimal` reached GPT-OSS, and Off sent `include_reasoning: false` everywhere. Cause: Groq is a portable-reasoning provider, so `resolvePortableReasoning` reads the raw request while `normalizeReasoningRequest` runs only on the provider-options path after portable intent is stripped | Wider than the plan's unknown-model case; same intent | Policy `reasoningRequiresKnownControls` applied once at `createAiSdkProvider` stream entry (gated by provider metadata, so other providers are unchanged); visibility rule narrowed via typed `include-reasoning` route | None needed |
+| 6 | 07/10/2026 | 10 | Use freshly verified controls per family | Groq docs (07/10/2026) name GPT-OSS 20B/120B and Qwen 3.8 for `reasoning_effort`; the catalog also lists low/medium/high for `gpt-oss-safeguard-20b` | Possible 400 if Safeguard rejects effort | Kept catalog efforts for Safeguard (typed model facts); omitted `include_reasoning` for it (undocumented). Qwen 3.8 Off sends nothing (its Groq `default` returns no reasoning tokens); no new `none` wire value | Owner/live: confirm Safeguard effort in Task 12.2 live acceptance |
 
 **Issue 2 follow-up, 26/09/2026:** The first post-repair exact test command returned 174 passed / 8 failed (182 total); every new case passed. Seven existing tests timed out, followed by a Vertex-signature assertion failure. Individual existing cases took 6–62 seconds against the runner's 5-second default. Diagnose using the same two files with `--maxWorkers 1 --testTimeout 120000`; this is an execution-only timeout/concurrency adjustment, with no assertion or shared-config edits. Keep the original command's failure explicit.
 
@@ -423,3 +427,15 @@ Original planning-only record: [WORK/2026-09-26/WORK.md](WORK/2026-09-26/WORK.md
 - **Limitations:** Hook glue has no automated test (issue 3). Installed PTY, live Groq `/models`, and the installed model smoke (its loopback fixture may lack `/models`, which now yields the notice path) are Phase 4.
 - **Next:** Phase 3, Task 10 — normalize effort and scope response visibility.
 - **Commit:** `fix(cli): use effective Groq discovery in model selection` (hash in STATUS).
+
+### 07/10/2026 — Task 10 and Phase 3 checkpoint (R12)
+
+- **Done:** Task 9.2 committed as `75db91c`. Re-check: fetched official https://console.groq.com/docs/reasoning.md and models.md (07/10/2026); brief saved at `E:\dev-recipes\_knowledge\cache\groq-reasoning-controls.md`. Shared: `GatewayProviderRouting.reasoningRequiresKnownControls` and reasoning format `include-reasoning`. New `routing/groq-reasoning.ts` `GROQ_ROUTING_METADATA` (history omit, known-controls policy, GPT-OSS 120B/20B visibility routes) used by the Groq builtin. `enforceKnownReasoningControls` in `reasoning-options.ts` (existing `getModelReasoningControls`/`normalizeReasoningEffort`), applied at `createAiSdkProvider` stream entry. `provider.groq.reasoning-visibility` now also requires the route. CLI: `ModelOption.reasoningEfforts` from catalog controls; `ThinkingLevelContent` offers Off plus supported levels (all levels when unknown); models with no effort levels skip the dialog.
+- **Resulting Groq bodies:** GPT-OSS 120B/20B: low/medium/high kept, `xhigh`/`max`→`high`, `minimal`→`low`, bare enabled → omitted, Off → `include_reasoning: false`. Safeguard 20B and Qwen 3.8: same efforts, Off → nothing. Qwen 3.6, Llama, unknown/manual IDs: no reasoning fields. Generic `openai-compatible` unchanged (tested).
+- **CLI effort input (documented, unchanged):** `resolveCliReasoning` accepts `low/medium/high/xhigh`; `none` or persisted disabled → Off; persisted enabled without effort → `medium`; unrecognized values dropped. The gateway policy then maps to each model's supported levels.
+- **Verified:** Red: actual bodies before repair ([table](WORK/2026-10-07/task-10-bodies-before.txt)); new wire table 36 failed / 22 passed ([log](WORK/2026-10-07/task-10-red-wire.log)); CLI render 2 failed ([log](WORK/2026-10-07/task-10-cli-render-red.log)); controller 1 failed ([log](WORK/2026-10-07/task-10-cli-controller-red.log)). Green from `sdk/`: `bun -F @cline/llms test src/providers/routing/reasoning-options.test.ts src/providers/routing/provider-options.test.ts src/providers/ai-sdk-reasoning.test.ts src/providers/gateway.test.ts src/providers/vendors/openai-compatible.test.ts --maxWorkers 1 --testTimeout 120000` → 399/399 (R10 history cases included); LLM and shared typechecks exit 0. Task 9.2 commands rerun: 50/50 unit, CLI typecheck exit 0, 8/8 native renderer. Neighbor suites: 71/71 LLM (catalog-live, model-operations, transcription, builtins), 36/36 CLI (run-agent, groq-auth, shri-auth-integration). Biome: no new findings.
+- **Existing assertions:** none changed. The existing "Groq GPT-OSS disabled reasoning" case gained `metadata: GROQ_ROUTING_METADATA` in its context fixture (same pattern as GLM/MiniMax cases); its expectations are unchanged.
+- **Surprises:** Plan issues 5–6. A first draft of the no-effort controller test looped forever against the old code (heap OOM); fixed by bounding the mock before recording red.
+- **Limitations:** Fixture/wire evidence only; live Groq acceptance (including Safeguard, issue 6) is Task 12.2. Arbitrary custom Groq aliases are outside scope.
+- **Next:** Phase 4, Task 11.1 — specify installed evidence with the test-plan skill.
+- **Commit:** `fix(llms): respect Groq model reasoning capabilities` (hash in STATUS).

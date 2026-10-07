@@ -52,7 +52,9 @@ export type GatewayPromptCacheFormat =
 export type GatewayReasoningFormat =
 	| "anthropic-thinking"
 	| "glm-thinking"
-	| "minimax-thinking";
+	| "minimax-thinking"
+	/** Groq trace visibility: Off sends `include_reasoning: false`. */
+	| "include-reasoning";
 export type GatewayModelRoute =
 	| { matcher: "anthropic-compatible" }
 	| {
@@ -100,6 +102,12 @@ export interface GatewayModelOperationCapability {
 export interface GatewayProviderRouting {
 	/** Omit outgoing reasoning history without changing stored or incoming content. */
 	reasoningHistory?: "omit";
+	/**
+	 * Send reasoning controls only when the model advertises them: models
+	 * without known controls get none, and efforts are normalized to the
+	 * model's supported values before any wire encoding.
+	 */
+	reasoningRequiresKnownControls?: boolean;
 	/** Honor catalog model API protocols under this provider's shared base URL. */
 	modelApiProtocol?: boolean;
 	promptCache?: {

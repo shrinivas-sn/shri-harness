@@ -1,6 +1,14 @@
 # Project status
 
-## Current state - 07/10/2026, Phase 2 checkpoint
+## Current state - 07/10/2026, Phase 3 checkpoint
+
+- **Task 10 / R12 done:** Groq gets only reasoning fields the selected model's catalog controls advertise (official docs re-checked 07/10/2026). GPT-OSS keeps low/medium/high (legacy `xhigh`→`high`, `minimal`→`low`) and Off hides its trace; Qwen 3.8/Safeguard get efforts but no visibility field; Llama, Qwen 3.6 and unknown IDs get no reasoning fields. The thinking dialog offers only supported levels.
+- **Verification:** SDK 399/399 (5 files incl. R10 history), LLM/shared typechecks, CLI 50/50 unit + 8/8 render + typecheck, neighbor suites 71 + 36 passing.
+- **Plan issues 5–6:** defect was wider than planned (portable path skipped normalization for all Groq models). **Open for live check (issue 6):** does Groq accept effort for `gpt-oss-safeguard-20b`? Docs and catalog disagree.
+- **Still open (issue 4):** roll back saved model after a failed apply?
+- **Next: Phase 4, Task 11.1 — specify installed evidence with the test-plan skill.**
+
+## Phase 2 checkpoint - 07/10/2026
 
 - **Phase 1 committed:** fix `8b16b5a`, docs `efd82f7`. Bounded gate re-run first: 182/182, both typechecks exit 0.
 - **Task 9.1 committed `4e107a2`:** bounded `discoverGroqModels` and pure `reconcileGroqModels`.
@@ -9,7 +17,7 @@
 - **Plan issues 3–4:** Vitest cannot load the picker `.tsx`, so wiring is proved through an extracted controller (hook glue: typecheck/review only). **Owner decision open (issue 4):** should a failed apply also roll back the saved model? `applyInteractiveModelChange` saves before restarting.
 - **Evidence:** [07/10/2026 work](WORK/2026-10-07/WORK.md), [PLAN Progress Log](PLAN.md#progress-log).
 - **Limits:** installed TUI, live Groq `/models`, hosted CI, registry remain pending; installed model smoke may now take the notice path if its fixture lacks `/models` (Phase 4).
-- **Next: Phase 3, Task 10 — normalize effort and scope response visibility.**
+- Next was Phase 3, Task 10 (done above).
 
 ## Phase 1 checkpoint - 26/09/2026
 
@@ -44,4 +52,4 @@
 
 ## Next up (start here)
 
-On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 3, Task 10 — Normalize effort and scope response visibility** (re-check the official Groq reasoning docs first, per the phase's re-check rule). Do not restart Tasks 0–9.2. Surface open Plan issue 4 to the owner. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.
+On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 4, Task 11.1 — Specify missing installed evidence with test-plan** (documentation-only; run the test-plan skill). Do not restart Tasks 0–10. Surface open Plan issues 4 and 6 to the owner. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.

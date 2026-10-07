@@ -185,3 +185,41 @@ export function normalizeReasoningRequest(
 
 	return { ...request, reasoning: undefined };
 }
+
+/**
+ * Apply a provider's `reasoningRequiresKnownControls` policy before any
+ * portable or provider-specific encoding. Only catalog-advertised controls
+ * survive: models without known controls get no reasoning fields, requested
+ * efforts move to the nearest supported value, a bare "enabled" leaves the
+ * model default in place, and Off is kept for visibility rules to handle.
+ */
+export function enforceKnownReasoningControls(
+	request: GatewayStreamRequest,
+	context: GatewayProviderContext,
+): GatewayStreamRequest {
+	const reasoning = request.reasoning;
+	if (
+		!reasoning ||
+		context.provider.metadata?.routing?.reasoningRequiresKnownControls !== true
+	) {
+		return request;
+	}
+	const options = context.model.reasoningOptions;
+	const controls =
+		options && options.length > 0
+			? getModelReasoningControls(options)
+			: undefined;
+	if (!controls) {
+		return { ...request, reasoning: undefined };
+	}
+	if (reasoning.enabled === false) {
+		return { ...request, reasoning: { enabled: false } };
+	}
+	const effort = reasoning.effort
+		? normalizeReasoningEffort(reasoning.effort, controls.efforts)
+		: undefined;
+	return {
+		...request,
+		reasoning: effort ? { enabled: true, effort } : undefined,
+	};
+}

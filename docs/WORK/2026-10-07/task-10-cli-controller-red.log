@@ -1,0 +1,45 @@
+@cline/cli test:unit:
+@cline/cli test:unit:  RUN  v4.1.11 E:/shri-harness/apps/cli
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ src/tui/hooks/groq-model-selection.test.ts (16 tests | 1 failed) 44ms
+@cline/cli test:unit:        × skips the reasoning dialog for models that advertise no effort levels 8ms
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/tui/hooks/groq-model-selection.test.ts > Groq model selection > transactional selection > skips the reasoning dialog for models that advertise no effort levels
+@cline/cli test:unit: AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+@cline/cli test:unit:
+@cline/cli test:unit: Received:
+@cline/cli test:unit:
+@cline/cli test:unit:   1st vi.fn() call:
+@cline/cli test:unit:
+@cline/cli test:unit:     Array [
+@cline/cli test:unit:       Object {
+@cline/cli test:unit:         "key": "qwen/qwen3.6-27b",
+@cline/cli test:unit:         "name": "Qwen3.6 27B",
+@cline/cli test:unit:         "reasoningEfforts": Array [],
+@cline/cli test:unit:         "supportsReasoning": true,
+@cline/cli test:unit:       },
+@cline/cli test:unit:       "high",
+@cline/cli test:unit:     ]
+@cline/cli test:unit:
+@cline/cli test:unit:
+@cline/cli test:unit: Number of calls: 1
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ src/tui/hooks/groq-model-selection.test.ts:336:31
+@cline/cli test:unit:     334|    });
+@cline/cli test:unit:     335|
+@cline/cli test:unit:     336|    expect(chooseThinking).not.toHaveBeenCalled();
+@cline/cli test:unit:        |                               ^
+@cline/cli test:unit:     337|    expect(result).toEqual({
+@cline/cli test:unit:     338|     kind: "selected",
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:
+@cline/cli test:unit:  Test Files  1 failed (1)
+@cline/cli test:unit:       Tests  1 failed | 15 passed (16)
+@cline/cli test:unit:    Start at  13:13:53
+@cline/cli test:unit:    Duration  18.12s (transform 9.88s, setup 57ms, import 17.67s, tests 44ms, environment 0ms)
+@cline/cli test:unit:
+@cline/cli test:unit: Exited with code 1

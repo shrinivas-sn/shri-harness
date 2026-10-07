@@ -73,6 +73,7 @@ import {
 	type AiSdkProviderOptionsTarget,
 	composeAiSdkProviderOptions,
 } from "./routing/provider-options";
+import { enforceKnownReasoningControls } from "./routing/reasoning-options";
 import type {
 	AiSdkStreamPart,
 	AiSdkStreamResult,
@@ -2098,7 +2099,10 @@ function createAiSdkProvider(
 	defaultKind: ProviderModuleKind,
 ): GatewayProviderFactory {
 	return async (config) => ({
-		async *stream(request, context) {
+		async *stream(incomingRequest, context) {
+			// Provider policy may restrict reasoning to the model's advertised
+			// controls; apply it before portable or provider-option encoding.
+			const request = enforceKnownReasoningControls(incomingRequest, context);
 			// Multi-protocol HTTP gateways declare model adapters in models.dev.
 			// Keep native and local CLI transports authoritative for their models.
 			const kind = resolveModelProviderKind(defaultKind, context);

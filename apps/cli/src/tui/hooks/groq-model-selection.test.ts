@@ -314,6 +314,36 @@ describe("Groq model selection", () => {
 			}
 		});
 
+		it("skips the reasoning dialog for models that advertise no effort levels", async () => {
+			const chooseThinking = vi.fn();
+			const result = await pickModelSelection({
+				config: groqConfig(),
+				models: [
+					{
+						key: "qwen/qwen3.6-27b",
+						name: "Qwen3.6 27B",
+						supportsReasoning: true,
+						reasoningEfforts: [],
+					},
+				],
+				chooseModel: vi
+					.fn()
+					.mockResolvedValueOnce({ kind: "model", key: "qwen/qwen3.6-27b" })
+					.mockResolvedValue(undefined),
+				chooseThinking,
+			});
+
+			expect(chooseThinking).not.toHaveBeenCalled();
+			expect(result).toEqual({
+				kind: "selected",
+				selection: {
+					modelId: "qwen/qwen3.6-27b",
+					thinking: false,
+					reasoningEffort: undefined,
+				},
+			});
+		});
+
 		it("maps Off to thinking disabled", async () => {
 			const result = await pickModelSelection({
 				config: groqConfig(),

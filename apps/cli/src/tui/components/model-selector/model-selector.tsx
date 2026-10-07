@@ -13,6 +13,8 @@ export interface ModelOption {
 	maxInputTokens?: number;
 	family?: string;
 	supportsReasoning: boolean;
+	/** Effort levels the catalog advertises; undefined when controls are unknown. */
+	reasoningEfforts?: ThinkingLevel[];
 }
 
 const MAX_VISIBLE = 10;
@@ -337,14 +339,27 @@ export function ThinkingLevelContent(
 	props: ChoiceContext<ThinkingLevel> & {
 		modelName: string;
 		currentLevel: ThinkingLevel;
+		/** Supported effort levels; Off is always offered. Omit to offer all. */
+		levels?: readonly ThinkingLevel[];
 	},
 ) {
-	const { resolve, dismiss, dialogId, modelName, currentLevel } = props;
+	const { resolve, dismiss, dialogId, modelName, currentLevel, levels } = props;
 	const palette = useDialogPalette();
+	const options = useMemo(
+		() =>
+			levels
+				? THINKING_LEVELS.filter(
+						(l) => l.value === "none" || levels.includes(l.value),
+					)
+				: THINKING_LEVELS,
+		[levels],
+	);
 	const [selected, setSelected] = useState(() => {
 		const initialLevel = currentLevel === "none" ? "medium" : currentLevel;
-		const idx = THINKING_LEVELS.findIndex((l) => l.value === initialLevel);
-		return idx >= 0 ? idx : 0;
+		const idx = options.findIndex((l) => l.value === initialLevel);
+		if (idx >= 0) return idx;
+		const medium = options.findIndex((l) => l.value === "medium");
+		return medium >= 0 ? medium : 0;
 	});
 
 	useDialogKeyboard((key) => {
@@ -353,16 +368,16 @@ export function ThinkingLevelContent(
 			return;
 		}
 		if (key.name === "return" || key.name === "enter") {
-			const level = THINKING_LEVELS[selected];
+			const level = options[selected];
 			if (level) resolve(level.value);
 			return;
 		}
 		if (key.name === "up" || (key.ctrl && key.name === "p")) {
-			setSelected((s) => (s <= 0 ? THINKING_LEVELS.length - 1 : s - 1));
+			setSelected((s) => (s <= 0 ? options.length - 1 : s - 1));
 			return;
 		}
 		if (key.name === "down" || (key.ctrl && key.name === "n")) {
-			setSelected((s) => (s >= THINKING_LEVELS.length - 1 ? 0 : s + 1));
+			setSelected((s) => (s >= options.length - 1 ? 0 : s + 1));
 			return;
 		}
 	}, dialogId);
@@ -372,7 +387,7 @@ export function ThinkingLevelContent(
 			<text>Thinking Level for {modelName}</text>
 
 			<box flexDirection="column">
-				{THINKING_LEVELS.map((level, i) => (
+				{options.map((level, i) => (
 					<box
 						key={level.value}
 						paddingX={1}
@@ -611,6 +626,25 @@ function ModelRow(props: {
 
 // -- Build model options from catalog --
 
+const SELECTABLE_EFFORTS: readonly ThinkingLevel[] = [
+	"low",
+	"medium",
+	"high",
+	"xhigh",
+];
+
+function supportedThinkingLevels(
+	reasoningOptions: Llms.ModelInfo["reasoningOptions"],
+): ThinkingLevel[] | undefined {
+	if (!reasoningOptions) return undefined;
+	const advertised = new Set<string | null>(
+		reasoningOptions.flatMap((option) =>
+			option.type === "effort" ? option.values : [],
+		),
+	);
+	return SELECTABLE_EFFORTS.filter((level) => advertised.has(level));
+}
+
 export function buildModelOptions(
 	knownModels?: Record<string, Llms.ModelInfo>,
 ): ModelOption[] {
@@ -622,6 +656,7 @@ export function buildModelOptions(
 			maxInputTokens: info.maxInputTokens ?? info.contextWindow,
 			family: info.family,
 			supportsReasoning: info.capabilities?.includes("reasoning") ?? false,
+			reasoningEfforts: supportedThinkingLevels(info.reasoningOptions),
 		}))
 		.sort((a, b) => a.name.localeCompare(b.name));
 }

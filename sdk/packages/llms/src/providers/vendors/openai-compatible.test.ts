@@ -752,3 +752,158 @@ function context(): GatewayProviderContext {
 		config: config(),
 	} as unknown as GatewayProviderContext;
 }
+
+// Task 10: Groq receives only reasoning fields the selected model supports.
+// Expected bodies follow Groq's reasoning docs (checked 07/10/2026) and the
+// catalog's per-model controls; only HTTP is replaced.
+describe("Groq reasoning request bodies", () => {
+	type Intent =
+		| "unset"
+		| "off"
+		| "on"
+		| "low"
+		| "medium"
+		| "high"
+		| "xhigh"
+		| "minimal";
+	const intents: Record<Intent, GatewayStreamRequestReasoning> = {
+		unset: undefined,
+		off: { enabled: false },
+		on: { enabled: true },
+		low: { enabled: true, effort: "low" },
+		medium: { enabled: true, effort: "medium" },
+		high: { enabled: true, effort: "high" },
+		xhigh: { enabled: true, effort: "xhigh" },
+		minimal: { enabled: true, effort: "minimal" },
+	};
+	const effortBodies = (visibility: boolean) => ({
+		unset: {},
+		off: visibility ? { include_reasoning: false } : {},
+		on: {},
+		low: { reasoning_effort: "low" },
+		medium: { reasoning_effort: "medium" },
+		high: { reasoning_effort: "high" },
+		xhigh: { reasoning_effort: "high" },
+		minimal: { reasoning_effort: "low" },
+	});
+	const noReasoning = Object.fromEntries(
+		Object.keys(intents).map((intent) => [intent, {}]),
+	) as Record<Intent, Record<string, unknown>>;
+	const expected: Record<string, Record<Intent, Record<string, unknown>>> = {
+		"openai/gpt-oss-120b": effortBodies(true),
+		"openai/gpt-oss-20b": effortBodies(true),
+		"openai/gpt-oss-safeguard-20b": effortBodies(false),
+		"qwen/qwen3.8-27b": effortBodies(false),
+		"qwen/qwen3.6-27b": noReasoning,
+		"llama-3.1-8b-instant": noReasoning,
+		"manual/unknown-model": noReasoning,
+	};
+
+	function reasoningFields(body: Record<string, unknown>) {
+		return Object.fromEntries(
+			Object.entries(body).filter(([key]) =>
+				["reasoning_effort", "include_reasoning", "reasoning_format"].includes(
+					key,
+				),
+			),
+		);
+	}
+
+	function groqGateway(bodies: Array<Record<string, unknown>>) {
+		const fetchMock = vi.fn(async (_input: unknown, init?: RequestInit) => {
+			bodies.push(JSON.parse(String(init?.body)));
+			return reasoningCompletionResponse("fixture");
+		});
+		return createGateway({
+			providerConfigs: [
+				{
+					providerId: "groq",
+					apiKey: "synthetic-key",
+					baseUrl: "http://127.0.0.1:1/v1",
+					fetch: fetchMock as unknown as typeof fetch,
+				},
+			],
+		});
+	}
+
+	async function send(
+		gateway: ReturnType<typeof createGateway>,
+		modelId: string,
+		reasoning: GatewayStreamRequestReasoning,
+	) {
+		await collectGatewayEvents(
+			await gateway.stream({
+				providerId: "groq",
+				modelId,
+				messages: [{ role: "user", content: [{ type: "text", text: "hi" }] }],
+				reasoning,
+			}),
+		);
+	}
+
+	describe.each(Object.keys(expected))("%s", (modelId) => {
+		it.each(
+			Object.keys(intents) as Intent[],
+		)("reasoning %s", async (intent) => {
+			const bodies: Array<Record<string, unknown>> = [];
+			await send(groqGateway(bodies), modelId, intents[intent]);
+
+			expect(bodies).toHaveLength(1);
+			expect(reasoningFields(bodies[0])).toEqual(expected[modelId][intent]);
+		});
+	});
+
+	it("follows the selected model across reasoning → non-reasoning → reasoning switches", async () => {
+		const bodies: Array<Record<string, unknown>> = [];
+		const gateway = groqGateway(bodies);
+		const legacyEffort = intents.xhigh;
+
+		await send(gateway, "openai/gpt-oss-120b", legacyEffort);
+		await send(gateway, "llama-3.1-8b-instant", legacyEffort);
+		await send(gateway, "manual/unknown-model", intents.off);
+		await send(gateway, "openai/gpt-oss-20b", intents.off);
+		await send(gateway, "qwen/qwen3.8-27b", intents.low);
+
+		expect(bodies.map((body) => [body.model, reasoningFields(body)])).toEqual([
+			["openai/gpt-oss-120b", { reasoning_effort: "high" }],
+			["llama-3.1-8b-instant", {}],
+			["manual/unknown-model", {}],
+			["openai/gpt-oss-20b", { include_reasoning: false }],
+			["qwen/qwen3.8-27b", { reasoning_effort: "low" }],
+		]);
+	});
+
+	it("keeps generic OpenAI-compatible providers on their existing reasoning behavior", async () => {
+		const bodies: Array<Record<string, unknown>> = [];
+		const fetchMock = vi.fn(async (_input: unknown, init?: RequestInit) => {
+			bodies.push(JSON.parse(String(init?.body)));
+			return reasoningCompletionResponse("fixture");
+		});
+		const gateway = createGateway({
+			providerConfigs: [
+				{
+					providerId: "openai-compatible",
+					apiKey: "synthetic-key",
+					baseUrl: "http://127.0.0.1:1/v1",
+					fetch: fetchMock as unknown as typeof fetch,
+				},
+			],
+		});
+
+		await collectGatewayEvents(
+			await gateway.stream({
+				providerId: "openai-compatible",
+				modelId: "manual/unknown-model",
+				messages: [{ role: "user", content: [{ type: "text", text: "hi" }] }],
+				reasoning: { enabled: true, effort: "low" },
+			}),
+		);
+
+		expect(bodies).toHaveLength(1);
+		expect(bodies[0]).not.toHaveProperty("include_reasoning");
+	});
+});
+
+type GatewayStreamRequestReasoning = Parameters<
+	ReturnType<typeof createGateway>["stream"]
+>[0]["reasoning"];

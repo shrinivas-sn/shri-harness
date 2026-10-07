@@ -20,7 +20,7 @@ Dates in this table are written **DD/MM/YYYY** (user is India-based). This is di
 | 21/09/2026 | Extracted lean harness and built Shri orchestration scaffolding; completion claim corrected on 22/09 | done | yes | `apps/cli/src/shri/**`, `DOCS/**` | — |
 | 22/09/2026 | Groq onboarding/live inference, npm preview plan, `/model` investigation, final static review and Terra handoff | done | yes | `apps/cli/**`, `package.json`, `DOCS/**` | `WORK/2026-09-21/WORK.md` |
 | 26/09/2026 | Restructured Groq repair plan; preserved prior plan verbatim; then implemented Phase 1 / Task 8 (committed `8b16b5a` on 07/10) | active | yes | `sdk/packages/llms/**`, `sdk/packages/shared/**`, `apps/cli/**`, `.github/workflows/**`, `DOCS/**` | `WORK/2026-09-22/WORK.md` |
-| 07/10/2026 | Committed Phase 1; Phase 2 done: Groq model discovery, reconciliation, and staged `/model` selection | active | yes | `apps/cli/src/utils/**`, `apps/cli/src/tui/hooks/**`, `apps/cli/src/tui/components/model-selector/**`, `DOCS/**` | `WORK/2026-09-26/WORK.md` |
+| 07/10/2026 | Committed Phase 1; Phases 2–3 done: Groq model discovery, staged `/model` selection, model-specific reasoning controls | active | yes | `apps/cli/src/utils/**`, `apps/cli/src/tui/hooks/**`, `apps/cli/src/tui/components/model-selector/**`, `sdk/packages/llms/src/providers/**`, `sdk/packages/shared/src/llms/**`, `DOCS/**` | `WORK/2026-09-26/WORK.md` |
 
 **Status** — `active` (in progress), `done` (finished, not touched again), `superseded` (a later entry replaced this approach), `abandoned` (started, dropped, note why in the WORK.md itself).
 

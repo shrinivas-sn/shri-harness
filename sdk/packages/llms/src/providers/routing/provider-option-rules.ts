@@ -230,7 +230,12 @@ const groqReasoningVisibilityRule: ProviderOptionRule = {
 		"Groq GPT-OSS cannot disable internal reasoning, but can hide its reasoning trace.",
 	applies: (input) =>
 		input.request.providerId === "groq" &&
-		input.originalRequest.reasoning?.enabled === false,
+		input.originalRequest.reasoning?.enabled === false &&
+		providerReasoningRouteMatches(
+			"include-reasoning",
+			input.request,
+			input.context,
+		),
 	build: (input) =>
 		buildProviderAndAliasPatch({
 			providerId: input.request.providerId,

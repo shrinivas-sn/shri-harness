@@ -634,6 +634,7 @@ export function useModelSelector(opts: {
 									{...ctx}
 									modelName={model.name}
 									currentLevel={currentLevel}
+									levels={model.reasoningEfforts}
 								/>
 							),
 						}),

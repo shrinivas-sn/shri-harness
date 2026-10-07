@@ -55,6 +55,7 @@ import {
 } from "./routing/anthropic-compatible";
 import { BEDROCK_ROUTING_METADATA } from "./routing/bedrock-cache-point";
 import { GLM_THINKING_ROUTING_METADATA } from "./routing/glm-thinking";
+import { GROQ_ROUTING_METADATA } from "./routing/groq-reasoning";
 import { MINIMAX_THINKING_ROUTING_METADATA } from "./routing/minimax-thinking";
 
 export const DEFAULT_INTERNAL_OCA_BASE_URL =
@@ -836,7 +837,7 @@ const OPENAI_COMPATIBLE_SPEC_OVERRIDES: BuiltinSpecOverride[] = [
 		family: "openai-compatible",
 		defaultModelId: "moonshotai/kimi-k2-instruct-0905",
 		apiKeyEnv: ["GROQ_API_KEY"],
-		metadata: { routing: { reasoningHistory: "omit" } },
+		metadata: GROQ_ROUTING_METADATA,
 		defaults: { baseUrl: "https://api.groq.com/openai/v1" },
 	},
 	{

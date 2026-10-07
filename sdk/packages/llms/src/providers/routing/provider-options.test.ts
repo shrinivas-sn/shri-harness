@@ -6,6 +6,7 @@ import type {
 import { describe, expect, it } from "vitest";
 import { BEDROCK_ROUTING_METADATA } from "./bedrock-cache-point";
 import { GLM_THINKING_ROUTING_METADATA } from "./glm-thinking";
+import { GROQ_ROUTING_METADATA } from "./groq-reasoning";
 import { MINIMAX_THINKING_ROUTING_METADATA } from "./minimax-thinking";
 import { resolvePortableReasoning } from "./portable-reasoning";
 import {
@@ -843,6 +844,7 @@ describe("composeAiSdkProviderOptions: family/provider thinking patches", () => 
 			context: {
 				family: "gpt-oss",
 				reasoningOptions: effortOptions(["low", "medium", "high"]),
+				metadata: GROQ_ROUTING_METADATA,
 			},
 			expect: [
 				{
@@ -851,6 +853,57 @@ describe("composeAiSdkProviderOptions: family/provider thinking patches", () => 
 					lacks: ["reasoningEffort"],
 				},
 			],
+		},
+		{
+			name: "Groq GPT-OSS 20B disabled reasoning hides the reasoning trace",
+			request: {
+				providerId: "groq",
+				modelId: "openai/gpt-oss-20b",
+				reasoning: { enabled: false },
+			},
+			context: {
+				modelId: "openai/gpt-oss-20b",
+				family: "gpt-oss",
+				reasoningOptions: effortOptions(["low", "medium", "high"]),
+				metadata: GROQ_ROUTING_METADATA,
+			},
+			expect: [{ bucket: "groq", has: { include_reasoning: false } }],
+		},
+		{
+			name: "Groq Off on a non-GPT-OSS reasoning model omits the GPT-OSS-only visibility field",
+			request: {
+				providerId: "groq",
+				modelId: "qwen/qwen3.8-27b",
+				reasoning: { enabled: false },
+			},
+			context: {
+				modelId: "qwen/qwen3.8-27b",
+				family: "qwen",
+				reasoningOptions: effortOptions([
+					"none",
+					"default",
+					"low",
+					"medium",
+					"high",
+				]),
+				metadata: GROQ_ROUTING_METADATA,
+			},
+			expect: [{ bucket: "groq", lacks: ["include_reasoning"] }],
+		},
+		{
+			name: "Groq Off on GPT-OSS Safeguard omits the unverified visibility field",
+			request: {
+				providerId: "groq",
+				modelId: "openai/gpt-oss-safeguard-20b",
+				reasoning: { enabled: false },
+			},
+			context: {
+				modelId: "openai/gpt-oss-safeguard-20b",
+				family: "gpt-oss",
+				reasoningOptions: effortOptions(["low", "medium", "high"]),
+				metadata: GROQ_ROUTING_METADATA,
+			},
+			expect: [{ bucket: "groq", lacks: ["include_reasoning"] }],
 		},
 		{
 			name: "Anthropic default effort uses adaptive thinking without an invalid effort",

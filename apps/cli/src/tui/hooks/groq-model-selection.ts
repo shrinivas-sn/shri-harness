@@ -116,6 +116,8 @@ export interface PickerModel {
 	key: string;
 	name: string;
 	supportsReasoning: boolean;
+	/** Advertised effort levels; an empty list means none can be chosen. */
+	reasoningEfforts?: readonly ThinkingChoice[];
 }
 
 export interface ModelSelectionState {
@@ -161,7 +163,7 @@ export async function pickModelSelection(input: {
 		if (pick.kind === "change-provider") return pick;
 
 		const model = input.models.find((m) => m.key === pick.key);
-		if (!model?.supportsReasoning) {
+		if (!model?.supportsReasoning || model.reasoningEfforts?.length === 0) {
 			return {
 				kind: "selected",
 				selection: {
