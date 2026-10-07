@@ -291,10 +291,10 @@ A new session may start here.
 **Why:** Current CI omits focused SDK routing tests.
 **Where:** `.github/workflows/ci.yml` (search text: `Test Windows preview source surface`, `Test clean installed tarballs`); `DOCS/RELEASE.md` (`Gates before publishing`); Phase 4 matrix.
 **Do:**
-- [ ] Add Task 8/10 focused SDK tests and shared/LLM typechecks with SDK working directory; include Task 9 CLI tests and explicit Bun renderer invocation from apps/cli.
-- [ ] Preserve packaging, installed smoke, integrity, and synthetic-only credential boundaries.
-- [ ] Update release gates for three turns, tools, resume, switches, and separate live acceptance. State that each publish dispatch produces its own identified artifacts.
-- [ ] Once remote operations are authorized, push reviewed work and inspect the real hosted run. Use the recorded command-scoped GitHub HTTPS helper, not global auth changes or the known wrong-account SSH default.
+- [x] Add Task 8/10 focused SDK tests and shared/LLM typechecks with SDK working directory; include Task 9 CLI tests and explicit Bun renderer invocation from apps/cli.
+- [x] Preserve packaging, installed smoke, integrity, and synthetic-only credential boundaries.
+- [x] Update release gates for three turns, tools, resume, switches, and separate live acceptance. State that each publish dispatch produces its own identified artifacts.
+- [x] Once remote operations are authorized, push reviewed work and inspect the real hosted run. Use the recorded command-scoped GitHub HTTPS helper, not global auth changes or the known wrong-account SSH default.
 **Test first:** n/a — workflow/docs wiring; behavior tests already have red/green evidence. Validate command paths against manifests.
 **Verify:** Exact added commands pass locally; `git diff --check` passes. Manual: selected hosted run summary and `gh run view --log-failed` show SDK/CLI/native/installed steps executed successfully; otherwise hosted proof remains pending.
 **Don't touch:** Publish permissions, secrets, unrelated broad-suite policy. May-change existing assertions: none.
@@ -481,3 +481,11 @@ Original planning-only record: [WORK/2026-09-26/WORK.md](WORK/2026-09-26/WORK.md
 - **Cleanup:** smoke temp roots removed by `smoke-installed.ts`; temporary focus trace and store-format probe removed; global install unchanged (`globalInstallUnchanged`).
 - **Fixture limitations:** all installed proof uses loopback fixtures; real Groq behaviour (including Safeguard, issue 6) is Task 12.2.
 - **Next:** Task 12.1.
+
+### 08/10/2026 — Plan issue 4 and Task 12.1
+
+- **Done:** Plan issue 4 fixed (`70e9d81`, see Issue 4 resolution). CI gained LLM and shared typechecks, the Task 8/10 SDK routing tests, the Task 9 and issue 4 CLI tests, and Bun native renderer tests; RELEASE.md gates updated (`9cead12`). Packaging, installed smoke, integrity and synthetic-only credentials unchanged.
+- **Verified locally:** [SDK routing 399/399](WORK/2026-10-08/task-12.1-sdk-tests.log); [LLM and shared typechecks](WORK/2026-10-08/task-12.1-sdk-typecheck.log) exit 0; [CLI source surface 293 passed, 2 skipped](WORK/2026-10-08/task-12.1-cli-unit.log) (the skips are in existing files); [renderer 12/12](WORK/2026-10-08/task-12.1-render.log).
+- **Verified hosted:** [CI run 37671691809](https://github.com/shrinivas-sn/shri-harness/actions/runs/37671691809) on `9cead12` succeeded; each new step and the installed E2E passed.
+- **Next:** Task 12.2 — needs owner approval for live Groq calls with the key in `.env` and for a candidate tag.
+- **Commits:** `fix(cli): roll back the saved model when a model switch fails`; `ci: gate Groq repairs on wire and installed tests`.
