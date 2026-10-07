@@ -1,6 +1,14 @@
 # Project status
 
-## Current state - 26/09/2026, Phase 1 checkpoint
+## Current state - 07/10/2026, Phase 2 in progress
+
+- **Phase 1 committed:** fix `8b16b5a`, docs `efd82f7`. Bounded gate re-run first: 182/182, both typechecks exit 0.
+- **Task 9.1 / R11 (part) done:** `apps/cli/src/utils/groq-model-discovery.ts` adds bounded `discoverGroqModels` (typed errors, fixed safe messages, no retries/redirects, 5 s deadline) and pure `reconcileGroqModels`. 37/37 focused tests, CLI typecheck and Biome clean; mutation check caught naive variants. Not wired into the picker yet.
+- **Evidence:** [07/10/2026 work](WORK/2026-10-07/WORK.md), [PLAN Progress Log](PLAN.md#progress-log).
+- **Limits:** pure helper only; picker behavior, installed TUI, live Groq, hosted CI, registry remain pending.
+- **Next: Task 9.2 — integrate discovery and transactional selection.**
+
+## Phase 1 checkpoint - 26/09/2026
 
 - **Task 8 / R10 completed locally with the verification adjustment in Plan issue 2.** Builtin Groq now omits outgoing reasoning history while preserving input/stored reasoning, incoming events, text, and tool relationships. Both GPT-OSS IDs have gateway and real-adapter regression coverage.
 - **Verification:** 182/182 focused tests passed with `--maxWorkers 1 --testTimeout 120000`; LLM and shared typechecks passed; diff check passed. The original 5-second invocation still recorded 8 existing failures after repair, so it is not claimed as passing.
@@ -33,4 +41,4 @@
 
 ## Next up (start here)
 
-On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 2, Task 9.1 — Implement bounded discovery and pure reconciliation**. Do not restart Tasks 0–8. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.
+On the next execution request, read PLAN.md's preflight/rules and latest Progress Log, then start **Phase 2, Task 9.2 — Integrate discovery and transactional selection**, using `discoverGroqModels`/`reconcileGroqModels` from Task 9.1. Do not restart Tasks 0–9.1. Keep the Phase 1 default-timeout limitation and later installed/live gates explicit.

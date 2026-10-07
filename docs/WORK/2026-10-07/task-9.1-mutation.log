@@ -1,0 +1,210 @@
+@cline/cli test:unit:
+@cline/cli test:unit:  RUN  v4.1.11 E:/shri-harness/apps/cli
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts (34 tests | 11 failed) 15121ms
+@cline/cli test:unit:      × returns trimmed IDs deduplicated in endpoint order 8ms
+@cline/cli test:unit:      × rejects a malformed response (missing data) 4ms
+@cline/cli test:unit:      × rejects a malformed response (non-array data) 3ms
+@cline/cli test:unit:      × rejects a malformed response (entry without id) 1ms
+@cline/cli test:unit:      × rejects a malformed response (blank id) 2ms
+@cline/cli test:unit:      × rejects a malformed response (non-string id) 1ms
+@cline/cli test:unit:      × rejects a malformed response (null entry) 1ms
+@cline/cli test:unit:      × rejects a malformed response (array payload) 1ms
+@cline/cli test:unit:      × rejects a non-JSON body without echoing it 1ms
+@cline/cli test:unit:      × applies the deadline to body parsing 15018ms
+@cline/cli test:unit:      × reports caller cancellation as cancelled, not timeout 3ms
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > returns trimmed IDs deduplicated in endpoint order
+@cline/cli test:unit: AssertionError: expected { status: 'ok', ids: [ …(2) ] } to deeply equal { status: 'ok', ids: [ …(2) ] }
+@cline/cli test:unit:
+@cline/cli test:unit: - Expected
+@cline/cli test:unit: + Received
+@cline/cli test:unit:
+@cline/cli test:unit:   {
+@cline/cli test:unit:     "ids": [
+@cline/cli test:unit:       "openai/gpt-oss-120b",
+@cline/cli test:unit: -     "llama-3.1-8b-instant",
+@cline/cli test:unit: +     " llama-3.1-8b-instant ",
+@cline/cli test:unit:     ],
+@cline/cli test:unit:     "status": "ok",
+@cline/cli test:unit:   }
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts:114:18
+@cline/cli test:unit:     112|   });
+@cline/cli test:unit:     113|
+@cline/cli test:unit:     114|   expect(result).toEqual({
+@cline/cli test:unit:        |                  ^
+@cline/cli test:unit:     115|    status: "ok",
+@cline/cli test:unit:     116|    ids: ["openai/gpt-oss-120b", "llama-3.1-8b-instant"],
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > rejects a malformed response (missing data)
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > rejects a malformed response (non-array data)
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > rejects a malformed response (null entry)
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > rejects a malformed response (array payload)
+@cline/cli test:unit: AssertionError: expected { status: 'error', …(2) } to match object { status: 'error', kind: 'response' }
+@cline/cli test:unit: (1 matching property omitted from actual)
+@cline/cli test:unit:
+@cline/cli test:unit: - Expected
+@cline/cli test:unit: + Received
+@cline/cli test:unit:
+@cline/cli test:unit:   {
+@cline/cli test:unit: -   "kind": "response",
+@cline/cli test:unit: +   "kind": "network",
+@cline/cli test:unit:     "status": "error",
+@cline/cli test:unit:   }
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ expectError src/utils/groq-model-discovery.test.ts:41:17
+@cline/cli test:unit:      39|  kind: string,
+@cline/cli test:unit:      40| ): asserts result is Extract<GroqDiscoveryResult, { status: "error" }>…
+@cline/cli test:unit:      41|  expect(result).toMatchObject({ status: "error", kind });
+@cline/cli test:unit:        |                 ^
+@cline/cli test:unit:      42|  if (result.status !== "error") throw new Error("expected error");
+@cline/cli test:unit:      43|  expect(result.message).not.toContain(SECRET_KEY);
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts:145:3
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > rejects a malformed response (entry without id)
+@cline/cli test:unit: AssertionError: expected { status: 'ok', …(1) } to match object { status: 'error', kind: 'response' }
+@cline/cli test:unit: (1 matching property omitted from actual)
+@cline/cli test:unit:
+@cline/cli test:unit: - Expected
+@cline/cli test:unit: + Received
+@cline/cli test:unit:
+@cline/cli test:unit:   {
+@cline/cli test:unit: -   "kind": "response",
+@cline/cli test:unit: -   "status": "error",
+@cline/cli test:unit: +   "status": "ok",
+@cline/cli test:unit:   }
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ expectError src/utils/groq-model-discovery.test.ts:41:17
+@cline/cli test:unit:      39|  kind: string,
+@cline/cli test:unit:      40| ): asserts result is Extract<GroqDiscoveryResult, { status: "error" }>…
+@cline/cli test:unit:      41|  expect(result).toMatchObject({ status: "error", kind });
+@cline/cli test:unit:        |                 ^
+@cline/cli test:unit:      42|  if (result.status !== "error") throw new Error("expected error");
+@cline/cli test:unit:      43|  expect(result.message).not.toContain(SECRET_KEY);
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts:145:3
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > rejects a malformed response (blank id)
+@cline/cli test:unit: AssertionError: expected { status: 'ok', ids: [ 'a', '  ' ] } to match object { status: 'error', kind: 'response' }
+@cline/cli test:unit: (1 matching property omitted from actual)
+@cline/cli test:unit:
+@cline/cli test:unit: - Expected
+@cline/cli test:unit: + Received
+@cline/cli test:unit:
+@cline/cli test:unit:   {
+@cline/cli test:unit: -   "kind": "response",
+@cline/cli test:unit: -   "status": "error",
+@cline/cli test:unit: +   "status": "ok",
+@cline/cli test:unit:   }
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ expectError src/utils/groq-model-discovery.test.ts:41:17
+@cline/cli test:unit:      39|  kind: string,
+@cline/cli test:unit:      40| ): asserts result is Extract<GroqDiscoveryResult, { status: "error" }>…
+@cline/cli test:unit:      41|  expect(result).toMatchObject({ status: "error", kind });
+@cline/cli test:unit:        |                 ^
+@cline/cli test:unit:      42|  if (result.status !== "error") throw new Error("expected error");
+@cline/cli test:unit:      43|  expect(result.message).not.toContain(SECRET_KEY);
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts:145:3
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > rejects a malformed response (non-string id)
+@cline/cli test:unit: AssertionError: expected { status: 'ok', ids: [ 7 ] } to match object { status: 'error', kind: 'response' }
+@cline/cli test:unit: (1 matching property omitted from actual)
+@cline/cli test:unit:
+@cline/cli test:unit: - Expected
+@cline/cli test:unit: + Received
+@cline/cli test:unit:
+@cline/cli test:unit:   {
+@cline/cli test:unit: -   "kind": "response",
+@cline/cli test:unit: -   "status": "error",
+@cline/cli test:unit: +   "status": "ok",
+@cline/cli test:unit:   }
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ expectError src/utils/groq-model-discovery.test.ts:41:17
+@cline/cli test:unit:      39|  kind: string,
+@cline/cli test:unit:      40| ): asserts result is Extract<GroqDiscoveryResult, { status: "error" }>…
+@cline/cli test:unit:      41|  expect(result).toMatchObject({ status: "error", kind });
+@cline/cli test:unit:        |                 ^
+@cline/cli test:unit:      42|  if (result.status !== "error") throw new Error("expected error");
+@cline/cli test:unit:      43|  expect(result.message).not.toContain(SECRET_KEY);
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts:145:3
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > rejects a non-JSON body without echoing it
+@cline/cli test:unit: AssertionError: expected { status: 'error', …(2) } to match object { status: 'error', kind: 'response' }
+@cline/cli test:unit: (1 matching property omitted from actual)
+@cline/cli test:unit:
+@cline/cli test:unit: - Expected
+@cline/cli test:unit: + Received
+@cline/cli test:unit:
+@cline/cli test:unit:   {
+@cline/cli test:unit: -   "kind": "response",
+@cline/cli test:unit: +   "kind": "network",
+@cline/cli test:unit:     "status": "error",
+@cline/cli test:unit:   }
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ expectError src/utils/groq-model-discovery.test.ts:41:17
+@cline/cli test:unit:      39|  kind: string,
+@cline/cli test:unit:      40| ): asserts result is Extract<GroqDiscoveryResult, { status: "error" }>…
+@cline/cli test:unit:      41|  expect(result).toMatchObject({ status: "error", kind });
+@cline/cli test:unit:        |                 ^
+@cline/cli test:unit:      42|  if (result.status !== "error") throw new Error("expected error");
+@cline/cli test:unit:      43|  expect(result.message).not.toContain(SECRET_KEY);
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts:155:3
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > applies the deadline to body parsing
+@cline/cli test:unit: Error: Test timed out in 15000ms.
+@cline/cli test:unit: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts:247:2
+@cline/cli test:unit:     245|  });
+@cline/cli test:unit:     246|
+@cline/cli test:unit:     247|  it("applies the deadline to body parsing", async () => {
+@cline/cli test:unit:        |  ^
+@cline/cli test:unit:     248|   const stalled = {
+@cline/cli test:unit:     249|    ok: true,
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts > discoverGroqModels > reports caller cancellation as cancelled, not timeout
+@cline/cli test:unit: AssertionError: expected { status: 'error', …(2) } to match object { status: 'error', kind: 'cancelled' }
+@cline/cli test:unit: (1 matching property omitted from actual)
+@cline/cli test:unit:
+@cline/cli test:unit: - Expected
+@cline/cli test:unit: + Received
+@cline/cli test:unit:
+@cline/cli test:unit:   {
+@cline/cli test:unit: -   "kind": "cancelled",
+@cline/cli test:unit: +   "kind": "network",
+@cline/cli test:unit:     "status": "error",
+@cline/cli test:unit:   }
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ expectError src/utils/groq-model-discovery.test.ts:41:17
+@cline/cli test:unit:      39|  kind: string,
+@cline/cli test:unit:      40| ): asserts result is Extract<GroqDiscoveryResult, { status: "error" }>…
+@cline/cli test:unit:      41|  expect(result).toMatchObject({ status: "error", kind });
+@cline/cli test:unit:        |                 ^
+@cline/cli test:unit:      42|  if (result.status !== "error") throw new Error("expected error");
+@cline/cli test:unit:      43|  expect(result.message).not.toContain(SECRET_KEY);
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts:301:3
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:
+@cline/cli test:unit:  Test Files  1 failed (1)
+@cline/cli test:unit:       Tests  11 failed | 23 passed (34)
+@cline/cli test:unit:    Start at  12:43:24
+@cline/cli test:unit:    Duration  17.38s (transform 1.04s, setup 70ms, import 1.80s, tests 15.12s, environment 0ms)
+@cline/cli test:unit:
+@cline/cli test:unit: Exited with code 1

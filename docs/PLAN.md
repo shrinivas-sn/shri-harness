@@ -153,12 +153,12 @@ A new session may start here.
 **Why:** Catalog membership and endpoint membership are different evidence.
 **Where:** New `apps/cli/src/utils/groq-model-discovery.ts` and `groq-model-discovery.test.ts` (new search text: `discoverGroqModels`); `apps/cli/src/utils/chat-models.ts` (`filterChatModels`); `apps/cli/src/utils/types.ts` (`Config`); reference `sdk/packages/core/src/services/llms/handler-factory.ts` (`normalizedProviderConfig`) and `provider-defaults.ts` in that directory (`resolveProviderConfig`).
 **Do:**
-- [ ] Define discoverGroqModels input: resolved baseUrl, apiKey, headers, optional signal, and injected fetch. No settings reads/writes. Result: `{ status: "ok", ids: string[] }` or `{ status: "error", kind: "auth" | "timeout" | "network" | "response" | "cancelled", message: string }`.
-- [ ] GET normalized base URL plus /models with a 5,000 ms deadline covering body parsing and caller cancellation. Reject redirects; no retries or fallback endpoint.
-- [ ] Preserve explicit Authorization case-insensitively, otherwise use effective key. Validate data array and nonblank string IDs; deduplicate in endpoint order. Empty array is success; malformed entries/schema are response errors.
-- [ ] Classify 401/403 as auth, deadline as timeout, user abort as cancelled, 429/5xx/malformed responses as response, and transport failures as network. Errors use fixed safe messages, never raw body, headers, key, or credential-bearing URL.
-- [ ] Add pure reconcileGroqModels in the same module: intersect successful IDs with catalog; exclude known non-chat, audio/moderation-only, or explicitly tool-incapable entries. Missing capability evidence remains unverified/manual-only. Do not infer support from names or token limits.
-- [ ] Keep current selection separate from discovered options; failure never masquerades as empty success.
+- [x] Define discoverGroqModels input: resolved baseUrl, apiKey, headers, optional signal, and injected fetch. No settings reads/writes. Result: `{ status: "ok", ids: string[] }` or `{ status: "error", kind: "auth" | "timeout" | "network" | "response" | "cancelled", message: string }`.
+- [x] GET normalized base URL plus /models with a 5,000 ms deadline covering body parsing and caller cancellation. Reject redirects; no retries or fallback endpoint.
+- [x] Preserve explicit Authorization case-insensitively, otherwise use effective key. Validate data array and nonblank string IDs; deduplicate in endpoint order. Empty array is success; malformed entries/schema are response errors.
+- [x] Classify 401/403 as auth, deadline as timeout, user abort as cancelled, 429/5xx/malformed responses as response, and transport failures as network. Errors use fixed safe messages, never raw body, headers, key, or credential-bearing URL.
+- [x] Add pure reconcileGroqModels in the same module: intersect successful IDs with catalog; exclude known non-chat, audio/moderation-only, or explicitly tool-incapable entries. Missing capability evidence remains unverified/manual-only. Do not infer support from names or token limits.
+- [x] Keep current selection separate from discovered options; failure never masquerades as empty success.
 **Test first:** Effective key differs from saved key and custom endpoint is selected → fetch uses only effective fields; no secret appears in errors. Cover empty/duplicate/malformed, cancellation/deadline, auth/429/5xx, redirects, and known/unknown capability cases.
 **Verify:** From root: `bun -F @cline/cli test:unit src/utils/groq-model-discovery.test.ts src/utils/chat-models.test.ts`; `bun -F @cline/cli typecheck` → exit 0 with negative/failure cases executed.
 **Don't touch:** Saved settings, non-Groq discovery, generated model catalog, global persistence. May-change existing assertions: none in shared chat filtering.
@@ -402,3 +402,11 @@ Original planning-only record: [WORK/2026-09-26/WORK.md](WORK/2026-09-26/WORK.md
 - **Surprises:** Disk folder is `DOCS/`, Git tracks `docs/`; staging with `core.ignorecase=true` kept the tracked `docs/` casing.
 - **Next:** Phase 2, Task 9.1.
 - **Commit:** `8b16b5a` (fix); docs commit follows.
+
+### 07/10/2026 — Task 9.1 bounded discovery and reconciliation
+
+- **Done:** Added `apps/cli/src/utils/groq-model-discovery.ts` with `discoverGroqModels` (resolved baseUrl/apiKey/headers/signal/injected fetch; one GET to `/models`; 5,000 ms deadline over request and body; `redirect: "manual"` plus 3xx/`redirected` rejection; no retries; typed `ok`/`error` result with fixed safe messages) and pure `reconcileGroqModels` (endpoint ∩ catalog; non-chat and populated-without-`tools` excluded; uncatalogued or capability-less IDs `unverified`; endpoint order). No settings reads/writes; no hook wiring (Task 9.2).
+- **Verified:** Red first: `bun -F @cline/cli test:unit src/utils/groq-model-discovery.test.ts` → exit 1, module missing ([log](WORK/2026-10-07/task-9.1-red.log)). Green from root: `bun -F @cline/cli test:unit src/utils/groq-model-discovery.test.ts src/utils/chat-models.test.ts` → 37/37 (34 new, 3 existing unchanged); `bun -F @cline/cli typecheck` → exit 0; Biome check clean on both files; `git diff --check` clean. Mutation check: replacing the body deadline, payload validation and cancel-first classification with naive code failed 11 targeted tests ([log](WORK/2026-10-07/task-9.1-mutation.log)); original restored byte-identical.
+- **Surprises:** Plan did not classify an unparsable base URL; it returns `network` without sending a request (same-intent detail, no plan issue). Added an optional `timeoutMs` input only so tests can bound the deadline; the default stays 5,000 ms and is tested with fake timers. Correction to the previous entry: modified tracked files only staged under the lowercase `docs/` path; new files staged correctly from `DOCS/`.
+- **Next:** Task 9.2 — integrate discovery and transactional selection.
+- **Commit:** `feat(cli): add bounded Groq model discovery` (hash in STATUS).

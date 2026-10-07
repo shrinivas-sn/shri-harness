@@ -1,0 +1,25 @@
+@cline/cli test:unit:
+@cline/cli test:unit:  RUN  v4.1.11 E:/shri-harness/apps/cli
+@cline/cli test:unit:
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts (0 test)
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+@cline/cli test:unit:
+@cline/cli test:unit:  FAIL  src/utils/groq-model-discovery.test.ts [ src/utils/groq-model-discovery.test.ts ]
+@cline/cli test:unit: Error: Cannot find module './groq-model-discovery' imported from E:/shri-harness/apps/cli/src/utils/groq-model-discovery.test.ts
+@cline/cli test:unit:  ❯ src/utils/groq-model-discovery.test.ts:2:1
+@cline/cli test:unit:       1| import { describe, expect, it, vi } from "vitest";
+@cline/cli test:unit:       2| import {
+@cline/cli test:unit:        | ^
+@cline/cli test:unit:       3|  type DiscoveryFetch,
+@cline/cli test:unit:       4|  discoverGroqModels,
+@cline/cli test:unit:
+@cline/cli test:unit: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+@cline/cli test:unit:
+@cline/cli test:unit:
+@cline/cli test:unit:  Test Files  1 failed (1)
+@cline/cli test:unit:       Tests  no tests
+@cline/cli test:unit:    Start at  12:41:20
+@cline/cli test:unit:    Duration  867ms (transform 273ms, setup 184ms, import 0ms, tests 0ms, environment 0ms)
+@cline/cli test:unit:
+@cline/cli test:unit: Exited with code 1
