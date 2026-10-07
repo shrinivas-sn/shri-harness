@@ -17,6 +17,7 @@
 - **Plan issue 4:** after a failed model apply, should the saved model also roll back? (`applyInteractiveModelChange` saves before restarting.)
 - **Plan issue 6:** does Groq accept `reasoning_effort` for `openai/gpt-oss-safeguard-20b`? Docs and catalog disagree; live check in Task 12.2.
 - Phase 5 needs owner authorization: push/hosted CI (12.1), live key + candidate tag (12.2), publish/global update (12.3).
+- **Groq API key expired (owner, 07/10/2026).** Owner will supply a new key in a coming session. Until then, run no live Groq calls and don't read or reuse the saved key; ask for the new key before starting Task 12.2 live acceptance (it also settles Plan issue 6).
 
 ## Execution constraints and pending evidence
 
