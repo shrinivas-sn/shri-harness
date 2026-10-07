@@ -66,6 +66,21 @@ function globalShriSnapshot(): string {
 	);
 }
 
+/** Reads GROQ_API_KEY from a dotenv file without echoing it anywhere. */
+function readGroqKey(path: string): string {
+	for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
+		const index = line.indexOf("=");
+		if (index === -1 || line.trim().startsWith("#")) continue;
+		if (line.slice(0, index).trim() !== "GROQ_API_KEY") continue;
+		const value = line
+			.slice(index + 1)
+			.trim()
+			.replace(/^["']|["']$/g, "");
+		if (/^gsk_\S{20,}$/.test(value)) return value;
+	}
+	fail("live-key-missing");
+}
+
 function sha256(path: string): string {
 	return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
@@ -255,6 +270,8 @@ export async function runInstalledSmoke(
 		authPty?: boolean;
 		modelPty?: boolean;
 		conversationPty?: boolean;
+		/** .env file holding GROQ_API_KEY for live acceptance (Task 12.2). */
+		liveEnv?: string;
 		renderPty?: boolean;
 		daemon?: boolean;
 		providerFixture?: boolean;
@@ -263,6 +280,7 @@ export async function runInstalledSmoke(
 	target: string;
 	version: string;
 	checks: Record<string, boolean>;
+	live?: unknown;
 }> {
 	const cliDir = resolve(import.meta.dir, "..");
 	const reportDir = join(cliDir, "dist", "npm");
@@ -633,6 +651,41 @@ export async function runInstalledSmoke(
 				);
 			}
 		}
+		let live: unknown;
+		if (options.liveEnv) {
+			const liveKey = readGroqKey(options.liveEnv);
+			const liveResult = run(
+				"node",
+				[
+					join(cliDir, "script", "smoke-installed-live-pty.mjs"),
+					join(
+						installedPlatform,
+						"bin",
+						process.platform === "win32" ? "shri.exe" : "shri",
+					),
+					unrelated,
+					settingsPath,
+				],
+				unrelated,
+				{ ...env, GROQ_API_KEY: liveKey },
+			);
+			try {
+				live = JSON.parse(liveResult.stdout);
+			} catch {
+				// The live helper prints one JSON report on success or failure.
+			}
+			checks.liveAcceptance = liveResult.status === 0;
+			if (!checks.liveAcceptance) {
+				const diagnostic = liveResult.stderr
+					.split(liveKey)
+					.join("[REDACTED]")
+					.trim()
+					.split(/\r?\n/)[0];
+				fail(
+					`live-pty: ${diagnostic?.slice(0, 1_700) || JSON.stringify(live)}`,
+				);
+			}
+		}
 		if (options.conversationPty) {
 			const conversationResult = run(
 				"node",
@@ -860,7 +913,12 @@ export async function runInstalledSmoke(
 		if (!checks.stateIsolation) fail("state-isolation");
 		checks.globalInstallUnchanged = globalShriSnapshot() === globalBefore;
 		if (!checks.globalInstallUnchanged) fail("global-install-changed");
-		return { target, version: wrapper.version, checks };
+		return {
+			target,
+			version: wrapper.version,
+			checks,
+			...(live === undefined ? {} : { live }),
+		};
 	} finally {
 		await removeTemporary(root);
 	}
@@ -878,6 +936,7 @@ if (import.meta.main) {
 			"render-pty": { type: "boolean" },
 			daemon: { type: "boolean" },
 			"provider-fixture": { type: "boolean" },
+			"live-env": { type: "string" },
 		},
 		strict: true,
 	});
@@ -899,6 +958,7 @@ if (import.meta.main) {
 					renderPty: values["render-pty"],
 					daemon: values.daemon,
 					providerFixture: values["provider-fixture"],
+					liveEnv: values["live-env"],
 				}),
 			),
 		);

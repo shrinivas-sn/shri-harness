@@ -102,6 +102,7 @@ Acceptance: a reproducible task produces actual changed files or inspected evide
 - Editor/ACP, schedules, connectors and dashboard: select by owner need; each needs its own installed acceptance journey. Their presence in source does not commit Shri to supporting them.
 - Linux/macOS: add one native build/install/PTY gate per advertised architecture before publishing its package.
 - Release automation: prove npm trusted publishing on a real release and test the registry artifact, retaining exact-tarball integrity checks.
+- Stable version line (owner idea, 08/10/2026): after the `0.1.0-next.N` previews prove out, release a plain version such as `0.2.0` under npm `latest`. Needs, without breaking preview releases: `release.yml` preflight accepting plain `x.y.z` as well as `-next.N`, the publish step choosing `latest` for plain versions and `next` for previews, and RELEASE.md gates updated to match.
 
 ## Documentation and scope discipline
 

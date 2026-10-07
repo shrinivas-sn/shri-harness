@@ -1,6 +1,6 @@
 # Project status
 
-## Current state - 08/10/2026, Task 12.1 done; next Task 12.2 (needs owner yes)
+## Current state - 08/10/2026, Task 12.2: next.2 candidate passed live acceptance; tag and dry-run release next
 
 - **Project:** `E:shri-harness`, branch `main`. Live plan [PLAN.md](PLAN.md) (Groq conversation and model reliability).
 - **Done and committed:** Phase 1 Task 8 (`8b16b5a`), Phase 2 Tasks 9.1 (`4e107a2`) and 9.2 (`75db91c`), Phase 3 Task 10 (`ab3fa24`), Phase 4 Task 11.1 matrix (`d687d61`), Plan issue 7 focus fix and Task 11.2 checkpoint (hashes: see `git log`, messages `fix(tui): refocus prompt after dialog focus restore` and `test(cli): cover installed Groq conversations and model switches`). Older detail: [archive](WORK/archive.md).
@@ -14,7 +14,9 @@
 
 - **Plan issue 6:** does Groq accept `reasoning_effort` for `openai/gpt-oss-safeguard-20b`? Docs and catalog disagree; live check in Task 12.2.
 - Phase 5: push authorized (08/10); Task 12.1 done, [hosted run](https://github.com/shrinivas-sn/shri-harness/actions/runs/37671691809) green. Live calls and candidate tag (12.2) and publish/global update (12.3) still need owner authorization.
-- Plan issue 4 fixed 08/10 (`70e9d81`); not yet in a built artifact (12.2 rebuilds).
+- Plan issue 4 fixed 08/10 (`70e9d81`); included in the next.2 candidate.
+- **next.2 candidate:** built, installed E2E 9/9, live Groq acceptance passed. Evidence: [release evidence](RESEARCH/groq-repair-release-evidence.md). Your global `shri` is still the old next.1 until next.2 is published and installed.
+- Stable plain versions (e.g. `0.2.0`) are a future roadmap item, not now.
 - **New Groq key ready (owner, 07/10/2026):** in the git-ignored root `.env` as `GROQ_API_KEY` (presence and `gsk_` shape checked, value not read or printed). Use it only for Task 12.2 live acceptance, in disposable config, never in commands, logs or CI. The old saved key is expired; don't reuse it.
 
 ## Execution constraints and pending evidence

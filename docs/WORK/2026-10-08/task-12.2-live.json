@@ -1,0 +1,85 @@
+{
+  "version": "0.1.0-next.2",
+  "target": "windows-x64",
+  "checks": {
+    "hashes": true,
+    "noBunPath": true,
+    "install": true,
+    "shimVersion": true,
+    "npxVersion": true,
+    "help": true,
+    "missingKey": true,
+    "savedAuth": true,
+    "missingPlatform": true,
+    "hubStatusIsolated": true,
+    "liveAcceptance": true,
+    "stateIsolation": true,
+    "globalInstallUnchanged": true
+  },
+  "live": {
+    "startModel": "openai/gpt-oss-120b",
+    "turns": [
+      {
+        "marker": "READY1",
+        "outcome": "ok"
+      },
+      {
+        "marker": "PAPAYA2",
+        "outcome": "ok"
+      },
+      {
+        "marker": "MANGO3",
+        "outcome": "ok"
+      },
+      {
+        "marker": "PAPAYA4",
+        "outcome": "ok"
+      }
+    ],
+    "switches": [
+      {
+        "name": "Llama 3.1 8B",
+        "id": "llama-3.1-8b-instant",
+        "digit": 5,
+        "outcome": "unavailable"
+      },
+      {
+        "name": "Llama 3.3 70B",
+        "id": "llama-3.3-70b-versatile",
+        "digit": 9,
+        "outcome": "unavailable"
+      },
+      {
+        "name": "GPT OSS 20B",
+        "id": "openai/gpt-oss-20b",
+        "digit": 6,
+        "saved": "openai/gpt-oss-20b",
+        "marker": "KIWI6",
+        "outcome": "ok"
+      },
+      {
+        "name": "Qwen3.8 27B",
+        "id": "qwen/qwen3.8-27b",
+        "digit": 7,
+        "saved": "qwen/qwen3.8-27b",
+        "marker": "KIWI7",
+        "outcome": "ok"
+      },
+      {
+        "name": "Safety GPT OSS 20B",
+        "id": "openai/gpt-oss-safeguard-20b",
+        "digit": 8,
+        "saved": "openai/gpt-oss-safeguard-20b",
+        "marker": "KIWI8",
+        "outcome": "account-limit",
+        "error": "Error: Request too large for model `openai/gpt-oss-safeguard-20b` in organization `org_[REDACTED]` █ service tier `on_demand` on tokens per minute (TPM): Limit 2000, Requested 5264"
+      }
+    ],
+    "firstExited": true,
+    "resumeFound": true,
+    "resumeShowsTurn2": true,
+    "secondExited": true,
+    "reasoningContentRejected": false,
+    "passed": true
+  }
+}
